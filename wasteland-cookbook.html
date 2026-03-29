@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WASTELAND COOKBOOK</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Share+Tech+Mono&family=Special+Elite&family=Courier+Prime:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --nero: #0a0804;
+  --ruggine: #8b3a0f;
+  --ruggine-chiara: #c4511a;
+  --arancio: #e8640a;
+  --giallo-acido: #d4a017;
+  --metallo: #3a3028;
+  --metallo-chiaro: #5a4a38;
+  --sangue: #6b1010;
+  --testo: #c8b090;
+  --testo-sbiadito: #7a6850;
+  --verde-muffa: #4a5a2a;
+  --bianco-sporco: #d8c8a8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Share Tech Mono', monospace;
+  background-color: var(--nero);
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(139,58,15,0.03) 3px, rgba(139,58,15,0.03) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(139,58,15,0.04) 60px, rgba(139,58,15,0.04) 61px);
+  min-height: 100vh;
+  color: var(--testo);
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.05'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 1000; opacity: .6;
+}
+@keyframes glitch {
+  0%,95%,100% { transform:none; text-shadow:2px 0 var(--ruggine-chiara),-2px 0 var(--sangue); }
+  96% { transform:skew(-1deg); text-shadow:4px 0 var(--arancio),-4px 0 var(--sangue); }
+  97% { transform:skew(1deg) translateX(-3px); text-shadow:-3px 0 var(--giallo-acido); }
+}
+@keyframes flicker {
+  0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:.3} 94%{opacity:1} 96%{opacity:.7}
+}
+@keyframes scanline {
+  0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)}
+}
+@keyframes fadeInUp {
+  from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)}
+}
+@keyframes rust-in {
+  from{opacity:0;transform:scale(.96) rotate(-.5deg)} to{opacity:1;transform:scale(1) rotate(0)}
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+body::after {
+  content:''; position:fixed; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(transparent,rgba(232,100,10,.15),transparent);
+  animation:scanline 8s linear infinite; pointer-events:none; z-index:999;
+}
+/* HEADER */
+.header {
+  background:linear-gradient(180deg,#1a0e06 0%,#0f0804 100%);
+  border-bottom:3px solid var(--ruggine);
+  position:relative; overflow:hidden;
+}
+.header::before {
+  content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(90deg,transparent 0,transparent 18px,rgba(139,58,15,.12) 18px,rgba(139,58,15,.12) 19px),
+    repeating-linear-gradient(0deg,transparent 0,transparent 18px,rgba(139,58,15,.08) 18px,rgba(139,58,15,.08) 19px);
+}
+.header-inner {
+  max-width:960px; margin:0 auto; padding:22px 24px 18px;
+  display:flex; align-items:flex-end; justify-content:space-between;
+  position:relative; gap:16px; flex-wrap:wrap;
+}
+.logo-eyebrow {
+  font-family:'Share Tech Mono'; font-size:.7rem; color:var(--ruggine-chiara);
+  letter-spacing:4px; text-transform:uppercase; margin-bottom:4px;
+  animation:flicker 7s infinite;
+}
+.logo-titolo {
+  font-family:'Special Elite',cursive; font-size:clamp(1.8rem,5vw,3rem);
+  color:var(--bianco-sporco); letter-spacing:6px; line-height:1;
+  animation:glitch 9s infinite; text-transform:uppercase;
+  font-weight:400;
+}
+.logo-titolo span{color:var(--arancio)}
+.logo-sub {
+  font-family:'Share Tech Mono'; font-size:.7rem; color:var(--testo-sbiadito);
+  letter-spacing:2px; margin-top:4px;
+}
+.damage-mark {
+  font-family:'Share Tech Mono'; font-size:.65rem; color:var(--sangue);
+  border:1px solid var(--sangue); padding:1px 5px; margin-left:10px; letter-spacing:1px; opacity:.8;
+}
+.header-actions { display:flex; gap:10px; flex-shrink:0; align-items:center; }
+/* BTN */
+.btn {
+  font-family:'Oswald',sans-serif; font-size:.85rem; letter-spacing:2px;
+  text-transform:uppercase; border:2px solid currentColor; background:transparent;
+  padding:8px 16px; cursor:pointer; transition:all .12s; position:relative;
+  overflow:hidden; clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);
+}
+.btn::before {
+  content:''; position:absolute; inset:0; background:currentColor;
+  transform:scaleX(0); transform-origin:left; transition:transform .15s; z-index:-1;
+}
+.btn:hover::before{transform:scaleX(1)} .btn:hover{color:var(--nero)}
+.btn-fuoco{color:var(--arancio)} .btn-ghost{color:var(--testo-sbiadito)}
+/* MAIN */
+.main { max-width:960px; margin:0 auto; padding:24px 20px 60px; }
+.toolbar { display:flex; gap:12px; margin-bottom:18px; align-items:center; flex-wrap:wrap; }
+.search-wrap { flex:1; min-width:200px; position:relative; }
+.search-wrap::before {
+  content:'//'; position:absolute; left:10px; top:50%; transform:translateY(-50%);
+  color:var(--ruggine-chiara); font-family:'Share Tech Mono'; font-size:.9rem; pointer-events:none;
+}
+.search-input {
+  width:100%; font-family:'Share Tech Mono',monospace; font-size:.9rem;
+  background:rgba(139,58,15,.1); border:1px solid var(--metallo-chiaro);
+  border-bottom:2px solid var(--ruggine); color:var(--testo);
+  padding:8px 12px 8px 32px; outline:none; transition:border-color .15s; letter-spacing:1px;
+}
+.search-input:focus{border-color:var(--arancio)}
+.search-input::placeholder{color:var(--testo-sbiadito)}
+.filtri-wrap {
+  display:flex; gap:6px; flex-wrap:wrap; margin-bottom:20px;
+  padding-bottom:16px; border-bottom:1px solid var(--metallo);
+}
+.tag-btn {
+  font-family:'Share Tech Mono',monospace; font-size:.7rem; letter-spacing:1px;
+  text-transform:uppercase; padding:3px 10px; border:1px solid var(--metallo-chiaro);
+  background:transparent; color:var(--testo-sbiadito); cursor:pointer; transition:all .12s;
+  clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);
+}
+.tag-btn:hover,.tag-btn.attivo{background:var(--ruggine);border-color:var(--ruggine-chiara);color:var(--bianco-sporco)}
+.contatore {
+  font-family:'Share Tech Mono'; font-size:.7rem; color:var(--testo-sbiadito);
+  letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;
+}
+.contatore span{color:var(--arancio)}
+.griglia {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px;
+}
+.card {
+  background:linear-gradient(135deg,#1c1208 0%,#140e06 100%);
+  border:1px solid var(--metallo-chiaro); border-left:3px solid var(--ruggine);
+  position:relative; padding:16px 14px 14px; cursor:pointer;
+  transition:transform .15s,box-shadow .15s,border-color .15s;
+  animation:rust-in .3s ease both; overflow:hidden;
+}
+.card::before {
+  content:''; position:absolute; top:0; right:0;
+  width:0; height:0; border-style:solid;
+  border-width:0 22px 22px 0; border-color:transparent var(--ruggine) transparent transparent;
+}
+.card::after {
+  content:''; position:absolute; bottom:0; left:0; right:0;
+  height:1px; background:linear-gradient(90deg,var(--ruggine),transparent);
+}
+.card:hover {
+  transform:translateY(-4px) rotate(-.3deg);
+  border-color:var(--arancio); border-left-color:var(--arancio);
+  box-shadow:0 8px 24px rgba(232,100,10,.25),inset 0 0 20px rgba(139,58,15,.1);
+}
+.card-num { font-family:'Share Tech Mono'; font-size:.6rem; color:var(--ruggine-chiara); letter-spacing:2px; margin-bottom:6px; }
+.card-titolo {
+  font-family:'Oswald',sans-serif; font-size:1.15rem; font-weight:700;
+  letter-spacing:1px; text-transform:uppercase; color:var(--bianco-sporco);
+  margin-bottom:6px; line-height:1.2;
+}
+.card-meta { font-size:.7rem; color:var(--testo-sbiadito); margin-bottom:10px; letter-spacing:1px; }
+.card-meta span{color:var(--giallo-acido)}
+.card-tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag-mini {
+  font-family:'Share Tech Mono'; font-size:.6rem; text-transform:uppercase;
+  letter-spacing:1px; padding:1px 6px; border:1px solid var(--verde-muffa);
+  color:#7a9a4a; background:rgba(74,90,42,.15);
+}
+.card-del {
+  position:absolute; top:24px; right:8px; background:none; border:none;
+  color:var(--metallo-chiaro); cursor:pointer; font-size:.85rem;
+  transition:color .12s; font-family:'Share Tech Mono'; line-height:1;
+}
+.card-del:hover{color:var(--sangue)}
+.vuoto {
+  grid-column:1/-1; text-align:center; padding:60px 20px;
+  color:var(--testo-sbiadito); font-family:'Share Tech Mono'; font-size:.85rem;
+  letter-spacing:2px; line-height:2; border:1px dashed var(--metallo);
+}
+.vuoto strong {
+  display:block; font-family:'Special Elite'; font-size:1.6rem;
+  color:var(--ruggine); letter-spacing:4px; margin-bottom:8px;
+}
+/* OVERLAY */
+.overlay {
+  display:none; position:fixed; inset:0; background:rgba(5,3,1,.85);
+  z-index:500; align-items:center; justify-content:center; padding:16px;
+  backdrop-filter:blur(2px);
+}
+.overlay.aperto{display:flex}
+.modale {
+  background:#110b05; border:1px solid var(--metallo-chiaro);
+  border-top:3px solid var(--ruggine-chiara); width:100%; max-width:660px;
+  max-height:92vh; overflow-y:auto; padding:28px 26px; position:relative;
+  box-shadow:0 0 60px rgba(139,58,15,.3),inset 0 0 40px rgba(0,0,0,.5);
+  animation:fadeInUp .2s ease;
+}
+.modale::before {
+  content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(139,58,15,.04) 27px,rgba(139,58,15,.04) 28px);
+  pointer-events:none;
+}
+.modale-titolo {
+  font-family:'Special Elite',cursive; font-size:1.5rem; letter-spacing:3px;
+  color:var(--arancio); margin-bottom:20px; padding-bottom:10px;
+  border-bottom:1px solid var(--ruggine); text-shadow:0 0 20px rgba(232,100,10,.4);
+}
+.modale-titolo::before{content:'// ';color:var(--ruggine-chiara);font-size:1rem}
+.chiudi-modale {
+  position:absolute; top:16px; right:16px; background:none;
+  border:1px solid var(--metallo-chiaro); color:var(--testo-sbiadito);
+  cursor:pointer; font-family:'Share Tech Mono'; font-size:.75rem;
+  padding:4px 8px; letter-spacing:1px; transition:all .12s;
+}
+.chiudi-modale:hover{border-color:var(--sangue);color:var(--sangue)}
+/* FORM */
+.form-group{margin-bottom:18px}
+.form-label {
+  display:block; font-family:'Share Tech Mono'; font-size:.7rem;
+  letter-spacing:2px; text-transform:uppercase; color:var(--ruggine-chiara); margin-bottom:6px;
+}
+.form-label::before{content:'> '}
+.form-input,.form-textarea {
+  width:100%; font-family:'Share Tech Mono',monospace; font-size:.85rem;
+  background:rgba(139,58,15,.08); border:1px solid var(--metallo-chiaro);
+  border-bottom:2px solid var(--ruggine); color:var(--testo);
+  padding:8px 10px; outline:none; transition:border-color .12s; letter-spacing:1px;
+}
+.form-input:focus,.form-textarea:focus{border-color:var(--arancio);background:rgba(232,100,10,.05)}
+.form-textarea{resize:vertical;min-height:130px;border:1px solid var(--metallo-chiaro);border-bottom:2px solid var(--ruggine)}
+.import-box {
+  border:1px dashed var(--metallo-chiaro); padding:16px;
+  background:rgba(0,0,0,.2); margin-bottom:14px; position:relative;
+}
+.import-box::before {
+  content:'PASTE_ZONE'; position:absolute; top:-8px; left:14px;
+  font-family:'Share Tech Mono'; font-size:.6rem; letter-spacing:2px;
+  color:var(--ruggine-chiara); background:#110b05; padding:0 6px;
+}
+.ai-status {
+  font-family:'Share Tech Mono'; font-size:.75rem; letter-spacing:1px;
+  color:var(--verde-muffa); margin-top:8px; min-height:18px;
+}
+.ai-status.errore{color:var(--sangue)} .ai-status.ok{color:#7a9a4a}
+.spinner {
+  display:inline-block; width:10px; height:10px;
+  border:1.5px solid var(--metallo-chiaro); border-top-color:var(--arancio);
+  border-radius:50%; animation:spin .6s linear infinite;
+  vertical-align:middle; margin-right:6px;
+}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:10px}
+/* DETTAGLIO */
+.det-header{margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--metallo)}
+.det-eyebrow{font-family:'Share Tech Mono';font-size:.65rem;letter-spacing:3px;color:var(--ruggine-chiara);text-transform:uppercase;margin-bottom:4px}
+.det-titolo{font-family:'Special Elite',cursive;font-size:2rem;letter-spacing:3px;color:var(--bianco-sporco);line-height:1.1;text-shadow:2px 2px 0 rgba(139,58,15,.5)}
+.det-meta{font-family:'Share Tech Mono';font-size:.72rem;color:var(--testo-sbiadito);letter-spacing:2px;margin-top:8px}
+.det-meta b{color:var(--giallo-acido)}
+.det-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+.scala {
+  display:flex; align-items:center; gap:12px; padding:10px 14px;
+  border:1px solid var(--metallo-chiaro); background:rgba(139,58,15,.08); margin-bottom:18px;
+}
+.scala-label{font-family:'Share Tech Mono';font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--testo-sbiadito);flex:1}
+.scala-label::before{content:'RAZIONE × ';color:var(--ruggine-chiara)}
+.scala-sbtn {
+  background:none; border:1px solid var(--metallo-chiaro); color:var(--testo);
+  width:24px; height:24px; cursor:pointer; font-family:'Share Tech Mono'; font-size:.9rem;
+  transition:all .1s; display:flex; align-items:center; justify-content:center;
+  clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);
+}
+.scala-sbtn:hover{background:var(--ruggine);border-color:var(--arancio)}
+.scala-val{font-family:'Special Elite';font-size:1.4rem;color:var(--arancio);min-width:28px;text-align:center;line-height:1}
+.sezione-head {
+  font-family:'Oswald',sans-serif; font-size:.85rem; letter-spacing:3px;
+  text-transform:uppercase; color:var(--ruggine-chiara); margin-bottom:10px;
+  display:flex; align-items:center; gap:8px;
+}
+.sezione-head::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--ruggine),transparent)}
+.ing-lista{list-style:none;margin-bottom:20px}
+.ing-lista li {
+  display:flex; justify-content:space-between; align-items:baseline;
+  padding:5px 0; border-bottom:1px solid rgba(90,74,56,.3);
+  font-family:'Share Tech Mono'; font-size:.82rem; gap:10px;
+}
+.ing-nome{color:var(--testo)} .ing-qty{color:var(--giallo-acido);white-space:nowrap;font-size:.78rem}
+.passi-lista{list-style:none;margin-bottom:20px}
+.passi-lista li {
+  padding:8px 0 8px 36px; position:relative;
+  border-bottom:1px solid rgba(90,74,56,.3);
+  font-family:'Share Tech Mono'; font-size:.82rem; line-height:1.6; color:var(--testo);
+}
+.passi-lista li::before {
+  content:attr(data-n); position:absolute; left:0;
+  font-family:'Bebas Neue'; font-size:1.1rem; color:var(--ruggine-chiara);
+  line-height:1; top:8px;
+}
+.note-box {
+  border-left:3px solid var(--giallo-acido); padding:10px 14px;
+  background:rgba(212,160,23,.06); font-family:'Share Tech Mono';
+  font-size:.78rem; color:var(--testo); letter-spacing:.5px; line-height:1.6; margin-bottom:14px;
+}
+.note-box::before{content:'! ';color:var(--giallo-acido)}
+.cfg-nota{font-family:'Share Tech Mono';font-size:.7rem;color:var(--testo-sbiadito);margin-top:4px;letter-spacing:.5px}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#0a0804}
+::-webkit-scrollbar-thumb{background:var(--ruggine)}
+
+/* ── PANNELLO LISTA SPESA ── */
+@keyframes slideIn {
+  from{transform:translateX(100%);opacity:0}
+  to{transform:translateX(0);opacity:1}
+}
+@keyframes slideOut {
+  from{transform:translateX(0);opacity:1}
+  to{transform:translateX(100%);opacity:0}
+}
+.spesa-panel {
+  position:fixed; top:0; right:0; bottom:0;
+  width:320px; max-width:90vw;
+  background:#0e0906;
+  border-left:2px solid var(--ruggine);
+  z-index:400;
+  display:flex; flex-direction:column;
+  box-shadow:-8px 0 40px rgba(139,58,15,.35);
+  transform:translateX(100%);
+  transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+.spesa-panel.aperto {
+  transform:translateX(0);
+  animation:slideIn .28s cubic-bezier(.4,0,.2,1);
+}
+.spesa-panel::before {
+  content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(139,58,15,.04) 27px,rgba(139,58,15,.04) 28px);
+  pointer-events:none;
+}
+.spesa-header {
+  padding:16px 14px 12px;
+  border-bottom:1px solid var(--metallo);
+  flex-shrink:0; position:relative;
+}
+.spesa-eyebrow {
+  font-family:'Share Tech Mono'; font-size:.6rem; letter-spacing:3px;
+  color:var(--ruggine-chiara); text-transform:uppercase; margin-bottom:4px;
+}
+.spesa-titolo {
+  font-family:'Special Elite',cursive; font-size:1.3rem; letter-spacing:3px;
+  color:var(--arancio); line-height:1;
+  text-shadow:0 0 16px rgba(232,100,10,.4);
+}
+.spesa-ricetta-nome {
+  font-family:'Share Tech Mono'; font-size:.65rem; color:var(--testo-sbiadito);
+  letter-spacing:1px; margin-top:4px; text-transform:uppercase;
+}
+.spesa-chiudi {
+  position:absolute; top:14px; right:12px;
+  background:none; border:1px solid var(--metallo-chiaro);
+  color:var(--testo-sbiadito); cursor:pointer;
+  font-family:'Share Tech Mono'; font-size:.7rem;
+  padding:3px 7px; letter-spacing:1px; transition:all .12s;
+}
+.spesa-chiudi:hover{border-color:var(--sangue);color:var(--sangue)}
+
+.spesa-toolbar {
+  padding:10px 14px;
+  border-bottom:1px solid var(--metallo);
+  display:flex; gap:8px; flex-shrink:0; align-items:center; flex-wrap:wrap;
+}
+.spesa-progress {
+  flex:1; font-family:'Share Tech Mono'; font-size:.65rem;
+  color:var(--testo-sbiadito); letter-spacing:1px;
+}
+.spesa-progress span{color:var(--arancio)}
+.progress-bar-wrap {
+  width:100%; height:3px; background:var(--metallo);
+  margin-top:4px; overflow:hidden;
+}
+.progress-bar {
+  height:100%; background:var(--arancio);
+  transition:width .3s ease;
+}
+.btn-sm {
+  font-family:'Share Tech Mono'; font-size:.65rem; letter-spacing:1px;
+  text-transform:uppercase; border:1px solid currentColor;
+  background:transparent; padding:4px 9px; cursor:pointer; transition:all .12s;
+  clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);
+}
+.btn-sm:hover{background:currentColor;color:var(--nero)}
+.btn-sm-arancio{color:var(--arancio)}
+.btn-sm-ghost{color:var(--testo-sbiadito)}
+.btn-sm-sangue{color:var(--sangue)}
+
+.spesa-lista {
+  flex:1; overflow-y:auto; padding:8px 0;
+}
+.spesa-item {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 14px;
+  border-bottom:1px solid rgba(90,74,56,.2);
+  transition:background .12s; cursor:pointer;
+}
+.spesa-item:hover{background:rgba(139,58,15,.08)}
+.spesa-item.spuntato{opacity:.45}
+.spesa-item.spuntato .spesa-ing-nome{text-decoration:line-through;color:var(--testo-sbiadito)}
+.spesa-cb {
+  width:16px; height:16px; flex-shrink:0;
+  border:1.5px solid var(--metallo-chiaro); background:transparent;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .12s; border-radius:1px;
+}
+.spesa-item.spuntato .spesa-cb {
+  background:var(--ruggine-chiara); border-color:var(--ruggine-chiara);
+}
+.spesa-cb::after {
+  content:''; display:none;
+  width:9px; height:5px;
+  border-left:2px solid var(--nero); border-bottom:2px solid var(--nero);
+  transform:rotate(-45deg) translateY(-1px);
+}
+.spesa-item.spuntato .spesa-cb::after{display:block}
+.spesa-ing-nome {
+  flex:1; font-family:'Share Tech Mono'; font-size:.78rem;
+  color:var(--testo); letter-spacing:.5px;
+}
+.spesa-ing-qty {
+  font-family:'Share Tech Mono'; font-size:.72rem;
+  color:var(--giallo-acido); white-space:nowrap; text-align:right;
+}
+
+.spesa-vuoto {
+  padding:40px 20px; text-align:center;
+  font-family:'Share Tech Mono'; font-size:.75rem;
+  color:var(--testo-sbiadito); letter-spacing:2px; line-height:2;
+}
+.spesa-vuoto strong{
+  display:block; font-family:'Special Elite'; font-size:1.2rem;
+  color:var(--metallo-chiaro); letter-spacing:3px; margin-bottom:8px;
+}
+
+/* overlay scuro dietro il panel */
+.spesa-scrim {
+  position:fixed; inset:0; background:rgba(0,0,0,.4);
+  z-index:399; display:none;
+}
+.spesa-scrim.aperto{display:block}
+
+/* shift del main quando panel aperto */
+.main-wrap {
+  transition:margin-right .28s cubic-bezier(.4,0,.2,1);
+}
+.main-wrap.panel-aperto {
+  margin-right:320px;
+}
+
+@media(max-width:760px){
+  .main-wrap.panel-aperto{margin-right:0}
+  .spesa-panel{width:100vw;max-width:100vw}
+}
+@media(max-width:560px){
+  .header-inner{flex-direction:column;align-items:flex-start}
+  .logo-titolo{font-size:2rem}
+  .modale{padding:20px 16px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <div class="logo-eyebrow">[ SURVIVAL ARCHIVE v2.7 ]</div>
+      <div class="logo-titolo">WASTELAND <span>COOKBOOK</span></div>
+      <div class="logo-sub">RICETTE PER IL DOPO &nbsp;<span class="damage-mark">☢ CLASSIFIED</span></div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-fuoco" onclick="apriImport()">⚡ IMPORTA</button>
+      <button class="btn btn-ghost" onclick="apriConfig()" title="Config Firebase">⚙</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCRIM -->
+<div class="spesa-scrim" id="spesaScrim" onclick="chiudiSpesa()"></div>
+
+<!-- PANNELLO LISTA SPESA -->
+<div class="spesa-panel" id="spesaPanel">
+  <div class="spesa-header">
+    <div class="spesa-eyebrow">[ SUPPLY LIST ]</div>
+    <div class="spesa-titolo">LISTA SPESA</div>
+    <div class="spesa-ricetta-nome" id="spesaRicettaNome"></div>
+    <button class="spesa-chiudi" onclick="chiudiSpesa()">[ ESC ]</button>
+  </div>
+  <div class="spesa-toolbar">
+    <div class="spesa-progress">
+      <div id="spesaProgressTxt">0 / 0 ITEMS</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="spesaBar" style="width:0%"></div></div>
+    </div>
+    <button class="btn-sm btn-sm-ghost" onclick="resetSpesa()" title="Deseleziona tutto">RESET</button>
+    <button class="btn-sm btn-sm-sangue" onclick="svuotaSpesa()" title="Svuota lista">✕</button>
+  </div>
+  <div class="spesa-lista" id="spesaLista">
+    <div class="spesa-vuoto"><strong>LISTA VUOTA</strong>APRI UNA RICETTA E PREMI<br>«AGGIUNGI A SPESA»</div>
+  </div>
+</div>
+
+<div class="main-wrap" id="mainWrap">
+<div class="main">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <input type="text" class="search-input" id="searchBox" placeholder="CERCA NELL'ARCHIVIO..." oninput="filtra()">
+    </div>
+  </div>
+  <div class="filtri-wrap" id="filtriTag">
+    <button class="tag-btn attivo" onclick="selezionaTag('tutti',this)">ALL</button>
+  </div>
+  <div class="contatore" id="contatore"></div>
+  <div class="griglia" id="griglia">
+    <div class="vuoto">
+      <strong>ARCHIVIO VUOTO</strong>
+      NESSUNA RICETTA RILEVATA<br>IMPORTA LA PRIMA DA CLAUDE PER SOPRAVVIVERE
+    </div>
+  </div>
+</div><!-- /main -->
+</div><!-- /main-wrap -->
+<div class="overlay" id="overlayImport">
+  <div class="modale">
+    <div class="modale-titolo">IMPORTA DA CLAUDE</div>
+    <button class="chiudi-modale" onclick="chiudiTutti()">[ ESC ]</button>
+    <div class="form-group">
+      <label class="form-label">Testo ricetta</label>
+      <div class="import-box">
+        <textarea class="form-textarea" id="testoImport" placeholder="INCOLLA QUI IL TESTO DELLA RICETTA — RILEVO AUTOMATICAMENTE INGREDIENTI E PASSI..." rows="8"></textarea>
+        <div class="ai-status" id="aiStatus"></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tag aggiuntivi (separati da virgola)</label>
+      <input type="text" class="form-input" id="importTag" placeholder="es: veloce, domenica, invernale">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-fuoco" onclick="analizzaEImporta()">⚡ ANALIZZA E SALVA</button>
+      <button class="btn btn-ghost" onclick="chiudiTutti()">ABORT</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETTAGLIO -->
+<div class="overlay" id="overlayDettaglio">
+  <div class="modale">
+    <button class="chiudi-modale" onclick="chiudiTutti()">[ ESC ]</button>
+    <div id="contenutoDettaglio"></div>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div class="overlay" id="overlayConfig">
+  <div class="modale">
+    <div class="modale-titolo">CONFIG FIREBASE</div>
+    <button class="chiudi-modale" onclick="chiudiTutti()">[ ESC ]</button>
+    <p style="font-family:'Share Tech Mono';font-size:.78rem;color:var(--testo-sbiadito);margin-bottom:20px;line-height:1.6;letter-spacing:.5px;">
+      PROGETTO CONSIGLIATO: <span style="color:var(--arancio)">depotrack-d1d28</span>
+    </p>
+    <div class="form-group"><label class="form-label">API Key</label><input type="text" class="form-input" id="cfg-apiKey" placeholder="AIza..."></div>
+    <div class="form-group"><label class="form-label">Auth Domain</label><input type="text" class="form-input" id="cfg-authDomain" placeholder="progetto.firebaseapp.com"></div>
+    <div class="form-group"><label class="form-label">Database URL</label><input type="text" class="form-input" id="cfg-dbUrl" placeholder="https://progetto-default-rtdb.firebaseio.com"></div>
+    <div class="form-group"><label class="form-label">Project ID</label><input type="text" class="form-input" id="cfg-projectId" placeholder="depotrack-d1d28"></div>
+    <p class="cfg-nota">// config salvata in localStorage</p>
+    <div class="form-actions">
+      <button class="btn btn-fuoco" onclick="salvaConfig()">💾 SALVA E CONNETTI</button>
+      <button class="btn btn-ghost" onclick="chiudiTutti()">ABORT</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+let db=null, ricette={}, tagAttivo='tutti', porzioniBase=4, porzioniCorrente=4, ricettaAperta=null;
+
+function getConfig(){ try{return JSON.parse(localStorage.getItem('ricettario_firebase_config'))}catch{return null} }
+
+function initFirebase(cfg){
+  try{
+    const app=initializeApp(cfg,'ricettario_'+Date.now());
+    db=getDatabase(app); listenRicette(); return true;
+  }catch(e){console.error(e);return false;}
+}
+
+const cfgSalvata = {
+  apiKey: "AIzaSyB6iU__138sUB4Tw_9DKWeat4WkN2RkVng",
+  authDomain: "depotrack-d1d28.firebaseapp.com",
+  databaseURL: "https://depotrack-d1d28-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "depotrack-d1d28",
+  storageBucket: "depotrack-d1d28.firebasestorage.app",
+  messagingSenderId: "967480447300",
+  appId: "1:967480447300:web:7e79395a45964cdf348711"
+};
+initFirebase(cfgSalvata);
+
+window.apriConfig=()=>{
+  const c=getConfig()||{};
+  document.getElementById('cfg-apiKey').value=c.apiKey||'';
+  document.getElementById('cfg-authDomain').value=c.authDomain||'';
+  document.getElementById('cfg-dbUrl').value=c.databaseURL||'';
+  document.getElementById('cfg-projectId').value=c.projectId||'';
+  document.getElementById('overlayConfig').classList.add('aperto');
+};
+
+window.salvaConfig=()=>{
+  const cfg={
+    apiKey:document.getElementById('cfg-apiKey').value.trim(),
+    authDomain:document.getElementById('cfg-authDomain').value.trim(),
+    databaseURL:document.getElementById('cfg-dbUrl').value.trim(),
+    projectId:document.getElementById('cfg-projectId').value.trim(),
+    storageBucket:document.getElementById('cfg-projectId').value.trim()+'.appspot.com',
+    messagingSenderId:'',appId:''
+  };
+  if(!cfg.apiKey||!cfg.databaseURL){alert('API Key e Database URL obbligatori!');return;}
+  localStorage.setItem('ricettario_firebase_config',JSON.stringify(cfg));
+  if(initFirebase(cfg)){chiudiTutti();setTimeout(()=>alert('✅ FIREBASE CONNESSO'),100);}
+  else alert('❌ ERRORE CONNESSIONE');
+};
+
+function listenRicette(){
+  if(!db)return;
+  onValue(ref(db,'ricette'),snap=>{ricette=snap.val()||{};renderTutto();});
+}
+
+function renderTutto(){aggiornaTag();renderGriglia();}
+
+function aggiornaTag(){
+  const tutti=new Set();
+  Object.values(ricette).forEach(r=>(r.tags||[]).forEach(t=>tutti.add(t)));
+  const el=document.getElementById('filtriTag');
+  el.innerHTML=`<button class="tag-btn ${tagAttivo==='tutti'?'attivo':''}" onclick="selezionaTag('tutti',this)">ALL</button>`;
+  tutti.forEach(t=>{
+    el.innerHTML+=`<button class="tag-btn ${tagAttivo===t?'attivo':''}" onclick="selezionaTag('${t}',this)">${t.toUpperCase()}</button>`;
+  });
+}
+
+window.selezionaTag=(tag,el)=>{
+  tagAttivo=tag;
+  document.querySelectorAll('.tag-btn').forEach(b=>b.classList.remove('attivo'));
+  el.classList.add('attivo'); renderGriglia();
+};
+
+function renderGriglia(){
+  const q=document.getElementById('searchBox').value.toLowerCase();
+  const griglia=document.getElementById('griglia');
+  const cont=document.getElementById('contatore');
+  let lista=Object.entries(ricette).map(([id,r])=>({id,...r}));
+  if(tagAttivo!=='tutti') lista=lista.filter(r=>(r.tags||[]).includes(tagAttivo));
+  if(q) lista=lista.filter(r=>(r.titolo||'').toLowerCase().includes(q)||(r.tags||[]).some(t=>t.toLowerCase().includes(q)));
+  cont.innerHTML=lista.length?`// <span>${lista.length}</span> RICETT${lista.length===1?'A':'E'} TROVATE`:'';
+  if(!lista.length){
+    griglia.innerHTML=`<div class="vuoto"><strong>${Object.keys(ricette).length?'NESSUN RISULTATO':'ARCHIVIO VUOTO'}</strong>${Object.keys(ricette).length?'CERCA CON ALTRI TERMINI':'IMPORTA LA PRIMA DA CLAUDE PER SOPRAVVIVERE'}</div>`;
+    return;
+  }
+  griglia.innerHTML=lista.map((r,i)=>`
+    <div class="card" onclick="apriDettaglio('${r.id}')" style="animation-delay:${i*.04}s">
+      <button class="card-del" onclick="event.stopPropagation();eliminaRicetta('${r.id}')" title="ELIMINA">✕</button>
+      <div class="card-num">REC-${String(i+1).padStart(3,'0')}</div>
+      <div class="card-titolo">${r.titolo||'SENZA TITOLO'}</div>
+      <div class="card-meta">${r.porzioni?`<span>${r.porzioni}P</span> `:''}${r.tempo?`· <span>${r.tempo}</span> `:''}${r.difficolta?`· ${r.difficolta.toUpperCase()}`:''}
+      </div>
+      <div class="card-tags">${(r.tags||[]).map(t=>`<span class="tag-mini">${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+}
+
+window.filtra=renderGriglia;
+
+window.apriDettaglio=id=>{
+  ricettaAperta=ricette[id]; if(!ricettaAperta)return;
+  porzioniBase=ricettaAperta.porzioni||4; porzioniCorrente=porzioniBase;
+  renderDettaglio(); document.getElementById('overlayDettaglio').classList.add('aperto');
+};
+
+function renderDettaglio(){
+  const r=ricettaAperta;
+  const scala=porzioniCorrente/porzioniBase;
+  const fmt=n=>{const v=n*scala;return v%1===0?v:parseFloat(v.toFixed(1));};
+  const ingHtml=(r.ingredienti||[]).map(i=>`<li><span class="ing-nome">${i.nome}</span><span class="ing-qty">${i.quantita?fmt(i.quantita)+' '+(i.unita||''):i.unita||''}</span></li>`).join('');
+  const passiHtml=(r.passi||[]).map((p,idx)=>`<li data-n="${idx+1}.">${p}</li>`).join('');
+  document.getElementById('contenutoDettaglio').innerHTML=`
+    <div class="det-header">
+      <div class="det-eyebrow">[ RICETTA CLASSIFICATA ]</div>
+      <div class="det-titolo">${r.titolo||'SENZA TITOLO'}</div>
+      <div class="det-meta">${r.tempo?`TEMPO: <b>${r.tempo}</b>&nbsp;&nbsp;`:''}${r.difficolta?`DIFF: <b>${r.difficolta.toUpperCase()}</b>`:''}</div>
+      <div class="det-tags">${(r.tags||[]).map(t=>`<span class="tag-mini">${t}</span>`).join('')}</div>
+    </div>
+    ${(r.ingredienti||[]).length?`
+    <div class="scala">
+      <span class="scala-label">${porzioniCorrente}</span>
+      <button class="scala-sbtn" onclick="cambiaP(-1)">−</button>
+      <span class="scala-val">${porzioniCorrente}</span>
+      <button class="scala-sbtn" onclick="cambiaP(1)">＋</button>
+    </div>
+    <div class="sezione-head">☢ Ingredienti</div>
+    <ul class="ing-lista">${ingHtml}</ul>`:''}
+    ${(r.passi||[]).length?`<div class="sezione-head">⚙ Procedimento</div><ol class="passi-lista">${passiHtml}</ol>`:''}
+    ${r.note?`<div class="note-box">${r.note}</div>`:''}
+    <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--metallo);display:flex;justify-content:flex-end;">
+      <button class="btn btn-fuoco" onclick="aggiungiASpesa()">🛒 AGGIUNGI A SPESA</button>
+    </div>
+  `;
+}
+
+window.cambiaP=delta=>{porzioniCorrente=Math.max(1,porzioniCorrente+delta);renderDettaglio();};
+
+window.eliminaRicetta=id=>{
+  if(!db){alert('FIREBASE NON CONFIGURATO');return;}
+  if(confirm('ELIMINARE QUESTA RICETTA?')) remove(ref(db,`ricette/${id}`));
+};
+
+window.apriImport=()=>{
+  document.getElementById('testoImport').value='';
+  document.getElementById('importTag').value='';
+  document.getElementById('aiStatus').textContent='';
+  document.getElementById('aiStatus').className='ai-status';
+  document.getElementById('overlayImport').classList.add('aperto');
+};
+
+window.analizzaEImporta=async()=>{
+  if(!db){alert('PRIMA CONFIGURA FIREBASE!');return;}
+  const testo=document.getElementById('testoImport').value.trim();
+  if(!testo){alert('INCOLLA PRIMA IL TESTO!');return;}
+  const tagsExtra=document.getElementById('importTag').value.split(',').map(t=>t.trim().toLowerCase()).filter(Boolean);
+  const st=document.getElementById('aiStatus');
+  st.innerHTML='<span class="spinner"></span> ANALISI IN CORSO...'; st.className='ai-status';
+
+  try {
+    const righe = testo.split('\n').map(r=>r.trim()).filter(Boolean);
+
+    // ── TITOLO: prima riga non vuota ──
+    const titolo = righe[0].replace(/^#+\s*/, '').replace(/[*_]/g,'').trim();
+
+    // ── TEMPO: cerca pattern tipo "30 minuti", "1 ora", "45 min" ──
+    const tempoMatch = testo.match(/(\d+\s*(?:ore?|h|minuti?|min)(?:\s*e\s*\d+\s*(?:minuti?|min))?)/i);
+    const tempo = tempoMatch ? tempoMatch[1].trim() : null;
+
+    // ── PORZIONI: cerca pattern precisi vicino a parole chiave ──
+    const porzioniMatch =
+      testo.match(/ingredienti\s*\(?\s*(?:per\s+)?(\d+)\s*(?:person[ae]|porzioni?|dosi?)\s*\)?/i) ||
+      testo.match(/(?:per|dosi\s+per|porzioni?:?)\s*(\d+)\s*(?:person[ae]|porzioni?)/i) ||
+      testo.match(/(\d+)\s*(?:person[ae]|porzioni?)\b/i);
+    const porzioni = porzioniMatch ? parseInt(porzioniMatch[1]) : 4;
+
+    // ── DIFFICOLTA ──
+    let difficolta = 'facile';
+    if (/difficil[ei]/i.test(testo)) difficolta = 'difficile';
+    else if (/medi[ao]/i.test(testo)) difficolta = 'media';
+
+    // ── SEZIONI: trova blocchi ingredienti e procedimento ──
+    const testoLower = testo.toLowerCase();
+    let inizioIng = -1, fineIng = -1, inizioPasri = -1;
+
+    // Cerca header sezioni
+    const keyIngredenti = ['ingredienti','ingrediente','occorrente','cosa serve','cosa occorre'];
+    const keyProcedimento = ['procedimento','preparazione','istruzioni','metodo','come si fa','passi','steps'];
+
+    for(let i=0;i<righe.length;i++){
+      const r=righe[i].toLowerCase().replace(/[:#*_]/g,'').trim();
+      if(inizioIng===-1 && keyIngredenti.some(k=>r.includes(k))) inizioIng=i+1;
+      if(keyProcedimento.some(k=>r.includes(k))){
+        if(inizioIng!==-1 && fineIng===-1) fineIng=i;
+        inizioPasri=i+1;
+      }
+    }
+
+    // Se non trova sezioni esplicite — euristica: righe con quantità = ingredienti
+    let ingredienti = [];
+    let passi = [];
+
+    const regQty = /^[\-\*•·]?\s*(\d+[\.,]?\d*)\s*(g|kg|ml|cl|l|dl|litri?|grammi?|cucchiai[oi]?|cucchiaini?|tazze?|spicchi?|foglie?|pizzic[oi]|fette?|pezzi?|n\.?|q\.b\.?|rametti?|mazzi?|bustine?|bicchieri?|etti?|filetti?|fettine?|rondelle?|spicchi?)[\s\.]*(.*)/i;
+    const regIng = /^[\-\*•·]\s*(.+)/;
+
+    if(inizioIng !== -1){
+      const fine = fineIng !== -1 ? fineIng : (inizioPasri !== -1 ? inizioPasri-1 : righe.length);
+      for(let i=inizioIng; i<fine; i++){
+        const r=righe[i];
+        const parsed = parseIngrediente(r);
+        if(parsed) ingredienti.push(parsed);
+      }
+    } else {
+      // fallback: prende tutte le righe che sembrano ingredienti
+      for(const r of righe){
+        const parsed = parseIngrediente(r);
+        if(parsed) ingredienti.push(parsed);
+      }
+    }
+
+    if(inizioPasri !== -1){
+      for(let i=inizioPasri; i<righe.length; i++){
+        const r=righe[i].replace(/^[\d]+[\.\)]\s*/,'').replace(/^[\-\*•·]\s*/,'').trim();
+        if(r.length > 10) passi.push(r);
+      }
+    } else {
+      // fallback: righe lunghe senza quantità = passi
+      for(const r of righe.slice(1)){
+        if(r.length > 40 && !parseIngrediente(r)) passi.push(r);
+      }
+    }
+
+    // ── NOTE: cerca "nota", "consiglio", "suggerimento" ──
+    let note = '';
+    const notaMatch = testo.match(/(?:nota[:\s]|consiglio[:\s]|suggerimento[:\s])(.+?)(?:\n|$)/i);
+    if(notaMatch) note = notaMatch[1].trim();
+
+    // ── TAG automatici ──
+    const tagsAuto = [];
+    if(/past[ae]|spaghett|penne|rigatoni|fusilli|tagliat|lasagn/i.test(testo)) tagsAuto.push('pasta');
+    if(/ris[oo]\b|risotto/i.test(testo)) tagsAuto.push('riso');
+    if(/zuppa|minestra|brodo|vellutata/i.test(testo)) tagsAuto.push('zuppa');
+    if(/torta|dolce|biscott|crostat|tiramis|pannacott|gelato/i.test(testo)) tagsAuto.push('dolce');
+    if(/poll[oa]|manzo|maiale|agnello|tacchino|coniglio|bistecca/i.test(testo)) tagsAuto.push('carne');
+    if(/pesce|salmon|tonno|merluzzo|branzino|orata|gamberi|calamari/i.test(testo)) tagsAuto.push('pesce');
+    if(/(?:^|\s)(?:uov[ao]|legumi|ceci|lenticchie|fagioli|tofu)/i.test(testo) && !/carne|pesce|poll/i.test(testo)) tagsAuto.push('vegetariano');
+    if(tempo && /\b([1-2]\d|[1-9])\s*min/i.test(tempo)) tagsAuto.push('veloce');
+    if(/antipasto|bruschett|crostini/i.test(testo)) tagsAuto.push('antipasto');
+    if(/primo/i.test(testo)) tagsAuto.push('primo');
+    if(/second[oo]/i.test(testo)) tagsAuto.push('secondo');
+
+    const tagsFinal = [...new Set([...tagsAuto, ...tagsExtra])].slice(0,4);
+
+    const ricetta = {
+      titolo, porzioni, tempo, difficolta,
+      tags: tagsFinal,
+      ingredienti: ingredienti.length ? ingredienti : [],
+      passi: passi.length ? passi : [],
+      note,
+      creatoIl: new Date().toISOString()
+    };
+
+    await set(push(ref(db,'ricette')), ricetta);
+    st.textContent=`✅ "${ricetta.titolo}" SALVATA NELL'ARCHIVIO`; st.className='ai-status ok';
+    setTimeout(chiudiTutti, 1400);
+
+  } catch(e) {
+    st.textContent='❌ '+(e.message||'ERRORE SCONOSCIUTO'); st.className='ai-status errore';
+  }
+};
+
+function parseIngrediente(riga) {
+  const r = riga.replace(/^[\-\*•·]\s*/,'').trim();
+  if(!r || r.length < 2) return null;
+
+  // Normalizza frazioni testuali e unicode
+  const normalizza = s => s
+    .replace(/½/g,'0.5').replace(/¼/g,'0.25').replace(/¾/g,'0.75')
+    .replace(/1\/2/g,'0.5').replace(/1\/4/g,'0.25').replace(/3\/4/g,'0.75')
+    .replace(/2\/3/g,'0.67').replace(/1\/3/g,'0.33')
+    .replace(',','.');
+
+  // Mappa unità anglosassoni → standard
+  const mappaUnita = u => {
+    const m = {
+      'tbsp':'cucchiai','tablespoon':'cucchiai','tablespoons':'cucchiai',
+      'tsp':'cucchiaini','teaspoon':'cucchiaini','teaspoons':'cucchiaini',
+      'cup':'tazze','cups':'tazze',
+      'oz':'oz','lb':'lb','l':'l','ml':'ml','cl':'cl','dl':'dl',
+      'g':'g','gr':'g','grammi':'g','gramo':'g',
+      'kg':'kg','etti':'etti',
+      'lt':'l','litri':'l','litro':'l'
+    };
+    return m[u.toLowerCase()] || u.toLowerCase();
+  };
+
+  const rn = normalizza(r);
+
+  // Pattern 1: quantità + unità + nome  (es: "300g carne", "20 g burro", "3 tbsp mayo")
+  const m1 = rn.match(/^([\d\.]+)\s*(g|gr|grammi?|kg|etti|ml|cl|dl|l|lt|litri?|cucchiai[oi]?|cucchiaini?|tbsp|tsp|tablespoons?|teaspoons?|tazze?|cups?|oz|lb|bustine?|fette?|pezzi?|spicchi?|rametti?|foglie?|mazzi?|bicchieri?)\.?\s+(.+)/i);
+  if(m1) return { nome: m1[3].replace(/\s*\(.*?\)/g,'').trim(), quantita: parseFloat(m1[1]), unita: mappaUnita(m1[2]) };
+
+  // Pattern 2: numero intero + nome senza unità (es: "2 uova", "4 fette American cheese")
+  const m2 = rn.match(/^(\d+(?:\.\d+)?)\s+([a-zA-ZàèéìòùÀÈÉÌÒÙ].{1,60})/);
+  if(m2 && parseFloat(m2[1]) < 100) return { nome: m2[2].replace(/\s*\(.*?\)/g,'').trim(), quantita: parseFloat(m2[1]), unita: '' };
+
+  // Pattern 3: "nome + quantità a fine riga" (es: "farina 200g")
+  const m3 = rn.match(/^(.+?)\s+([\d\.]+)\s*(g|kg|ml|l|cl)$/i);
+  if(m3) return { nome: m3[1].trim(), quantita: parseFloat(m3[2]), unita: mappaUnita(m3[3]) };
+
+  // Pattern 4: q.b. / ingredienti senza quantità esplicita
+  if(/q\.?\s*b\.?/i.test(r)) {
+    const nome = r.replace(/q\.?\s*b\.?/i,'').replace(/^[\-\*•·:,\s]+/,'').trim();
+    if(nome) return { nome, quantita: null, unita: 'q.b.' };
+  }
+
+  // Pattern 5: ingrediente puro senza quantità (sale, pepe, olio ecc.)
+  if(r.length < 40 && /^[a-zA-ZàèéìòùÀÈÉÌÒÙ]/.test(r) && !/\d/.test(r)) {
+    if(/sale|pepe|olio|burro|aglio|prezzemolo|basilico|origano|rosmarino|timo|alloro|noce\s*moscata|cannella|curry|paprika|zafferano|aceto/i.test(r))
+      return { nome: r.trim(), quantita: null, unita: 'q.b.' };
+  }
+
+  return null;
+}
+
+// ── LISTA SPESA ────────────────────────────────────
+// struttura: { id: { nome, qty, unita, spuntato, ricetta } }
+let spesaItems = {};
+try { spesaItems = JSON.parse(localStorage.getItem('wasteland_spesa') || '{}'); } catch {}
+
+function salvaSpesaStorage() {
+  localStorage.setItem('wasteland_spesa', JSON.stringify(spesaItems));
+}
+
+window.aggiungiASpesa = () => {
+  if (!ricettaAperta) return;
+  const r = ricettaAperta;
+  const scala = porzioniCorrente / porzioniBase;
+  const fmt = n => { const v = n * scala; return v % 1 === 0 ? v : parseFloat(v.toFixed(1)); };
+
+  (r.ingredienti || []).forEach(ing => {
+    // chiave univoca per ingrediente (nome normalizzato)
+    const key = ing.nome.toLowerCase().replace(/\s+/g, '_') + '_' + (r.titolo || '').replace(/\s+/g,'_').toLowerCase();
+    spesaItems[key] = {
+      nome: ing.nome,
+      qty: ing.quantita ? fmt(ing.quantita) : null,
+      unita: ing.unita || '',
+      spuntato: false,
+      ricetta: r.titolo || '?'
+    };
+  });
+
+  salvaSpesaStorage();
+  renderSpesa();
+  apriSpesa(r.titolo);
+  chiudiTutti(); // chiude il modale dettaglio
+};
+
+function apriSpesa(nomeRicetta) {
+  document.getElementById('spesaPanel').classList.add('aperto');
+  document.getElementById('spesaScrim').classList.add('aperto');
+  document.getElementById('mainWrap').classList.add('panel-aperto');
+  if (nomeRicetta) {
+    document.getElementById('spesaRicettaNome').textContent = '// ' + nomeRicetta.toUpperCase();
+  }
+}
+
+window.chiudiSpesa = () => {
+  document.getElementById('spesaPanel').classList.remove('aperto');
+  document.getElementById('spesaScrim').classList.remove('aperto');
+  document.getElementById('mainWrap').classList.remove('panel-aperto');
+};
+
+window.toggleSpesaItem = key => {
+  if (spesaItems[key]) {
+    spesaItems[key].spuntato = !spesaItems[key].spuntato;
+    salvaSpesaStorage();
+    renderSpesa();
+  }
+};
+
+window.resetSpesa = () => {
+  Object.keys(spesaItems).forEach(k => spesaItems[k].spuntato = false);
+  salvaSpesaStorage(); renderSpesa();
+};
+
+window.svuotaSpesa = () => {
+  if (!Object.keys(spesaItems).length) return;
+  if (confirm('SVUOTARE TUTTA LA LISTA?')) {
+    spesaItems = {};
+    salvaSpesaStorage(); renderSpesa();
+    document.getElementById('spesaRicettaNome').textContent = '';
+  }
+};
+
+function renderSpesa() {
+  const lista = document.getElementById('spesaLista');
+  const keys = Object.keys(spesaItems);
+
+  if (!keys.length) {
+    lista.innerHTML = `<div class="spesa-vuoto"><strong>LISTA VUOTA</strong>APRI UNA RICETTA E PREMI<br>«AGGIUNGI A SPESA»</div>`;
+    document.getElementById('spesaProgressTxt').textContent = '0 / 0 ITEMS';
+    document.getElementById('spesaBar').style.width = '0%';
+    return;
+  }
+
+  const spuntati = keys.filter(k => spesaItems[k].spuntato).length;
+  const perc = Math.round((spuntati / keys.length) * 100);
+  document.getElementById('spesaProgressTxt').innerHTML = `<span>${spuntati}</span> / ${keys.length} ACQUISITI`;
+  document.getElementById('spesaBar').style.width = perc + '%';
+
+  // Raggruppa per ricetta
+  const byRicetta = {};
+  keys.forEach(k => {
+    const item = spesaItems[k];
+    if (!byRicetta[item.ricetta]) byRicetta[item.ricetta] = [];
+    byRicetta[item.ricetta].push({ key: k, ...item });
+  });
+
+  lista.innerHTML = Object.entries(byRicetta).map(([ric, items]) => `
+    <div style="padding:6px 14px 2px;font-family:'Share Tech Mono';font-size:.6rem;letter-spacing:2px;color:var(--ruggine-chiara);text-transform:uppercase;border-bottom:1px solid var(--metallo);">
+      // ${ric}
+    </div>
+    ${items.map(item => `
+      <div class="spesa-item ${item.spuntato ? 'spuntato' : ''}" onclick="toggleSpesaItem('${item.key}')">
+        <div class="spesa-cb"></div>
+        <span class="spesa-ing-nome">${item.nome}</span>
+        <span class="spesa-ing-qty">${item.qty ? item.qty + ' ' + item.unita : item.unita || ''}</span>
+      </div>
+    `).join('')}
+  `).join('');
+}
+
+// Bottone spesa nell'header (sempre visibile)
+const spesaHeaderBtn = document.createElement('button');
+spesaHeaderBtn.className = 'btn btn-ghost';
+spesaHeaderBtn.style.cssText = 'color:var(--giallo-acido);border-color:var(--giallo-acido);font-size:.75rem;position:relative;';
+spesaHeaderBtn.innerHTML = '🛒 SPESA';
+spesaHeaderBtn.onclick = () => {
+  if (document.getElementById('spesaPanel').classList.contains('aperto')) chiudiSpesa();
+  else { renderSpesa(); apriSpesa(); }
+};
+document.querySelector('.header-actions').insertBefore(spesaHeaderBtn, document.querySelector('.header-actions').firstChild);
+
+// Init render spesa se ci sono items salvati
+if (Object.keys(spesaItems).length) renderSpesa();
+
+window.chiudiTutti=()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('aperto'));
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)chiudiTutti();}));
+if(!cfgSalvata)renderGriglia();
+</script>
+</body>
+</html>
