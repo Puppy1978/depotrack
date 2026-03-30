@@ -1,0 +1,2938 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USCITETRACK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root {
+  --bg:       #07080d;
+  --bg2:      #0d0f1a;
+  --bg3:      #13162100;
+  --panel:    #111420;
+  --border:   #1e2235;
+  --border2:  #2a2f4a;
+  --text:     #c8cee8;
+  --muted:    #555f80;
+  --bright:   #e8ecff;
+
+  --u1:       #2563eb;
+  --u1l:      #3b82f6;
+  --u1dim:    #1e3a5f;
+  --u2:       #d97706;
+  --u2l:      #f59e0b;
+  --u2dim:    #5c3a0a;
+  --u3:       #7c3aed;
+  --u3l:      #a855f7;
+  --u3dim:    #3b1f6e;
+
+  --green:    #10b981;
+  --red:      #ef4444;
+  --orange:   #f97316;
+  --yellow:   #eab308;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Barlow', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ───────── LOGIN ───────── */
+#loginScreen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 30% 50%, #1a1f40 0%, var(--bg) 60%);
+}
+.login-box {
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 48px 40px;
+  width: 360px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.6);
+}
+.login-logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 32px; font-weight: 800;
+  letter-spacing: 4px; color: var(--bright);
+  text-align: center; margin-bottom: 6px;
+}
+.login-logo span { color: var(--u1l); }
+.login-sub {
+  text-align: center; color: var(--muted);
+  font-size: 12px; letter-spacing: 2px;
+  text-transform: uppercase; margin-bottom: 36px;
+}
+.login-box label {
+  display: block; font-size: 11px; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 6px;
+}
+.login-box input {
+  width: 100%; padding: 11px 14px;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 7px; color: var(--bright); font-size: 15px;
+  font-family: 'Barlow', sans-serif;
+  outline: none; transition: border .2s;
+  margin-bottom: 18px;
+}
+.login-box input:focus { border-color: var(--u1l); }
+.btn-login {
+  width: 100%; padding: 13px;
+  background: var(--u1); border: none;
+  border-radius: 7px; color: #fff;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; cursor: pointer;
+  transition: background .2s;
+}
+.btn-login:hover { background: var(--u1l); }
+.login-err {
+  color: var(--red); font-size: 13px; text-align: center;
+  margin-top: 12px; min-height: 20px;
+}
+
+/* ───────── APP SHELL ───────── */
+#app { display: none; height: 100vh; flex-direction: column; }
+#app.visible { display: flex; }
+
+/* ── HEADER ── */
+.header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 20px; height: 52px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px; font-weight: 800;
+  letter-spacing: 3px; color: var(--bright);
+  flex-shrink: 0;
+}
+.logo span { color: var(--u1l); }
+.header-sep { flex: 1; }
+.date-nav {
+  display: flex; align-items: center; gap: 8px;
+}
+.date-nav button {
+  background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--text); padding: 5px 10px; border-radius: 5px;
+  cursor: pointer; font-size: 18px; transition: background .15s;
+}
+.date-nav button:hover { background: var(--border2); }
+#currentDate {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px; font-weight: 600; letter-spacing: 1px;
+  color: var(--bright); min-width: 160px; text-align: center;
+  cursor: pointer; padding: 4px 10px;
+  border-radius: 5px; border: 1px solid transparent;
+  transition: border .15s;
+}
+#currentDate:hover { border-color: var(--border2); }
+#dateInput {
+  display: none; background: var(--bg2);
+  border: 1px solid var(--u1l); color: var(--bright);
+  padding: 4px 10px; border-radius: 5px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 15px;
+}
+.sync-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green); flex-shrink: 0;
+  box-shadow: 0 0 6px var(--green);
+  transition: background .3s, box-shadow .3s;
+}
+.sync-dot.syncing { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); animation: pulse 1s infinite; }
+.sync-dot.err { background: var(--red); box-shadow: 0 0 6px var(--red); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.user-badge {
+  background: var(--bg2); border: 1px solid var(--border2);
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 600; letter-spacing: 1px;
+  color: var(--muted); text-transform: uppercase;
+}
+.btn-logout {
+  background: none; border: 1px solid var(--border2);
+  color: var(--muted); padding: 5px 12px; border-radius: 5px;
+  cursor: pointer; font-size: 12px; transition: all .15s;
+  font-family: 'Barlow', sans-serif;
+}
+.btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+/* ── BODY ── */
+.body-wrap {
+  display: flex; flex: 1; overflow: hidden;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 200px; flex-shrink: 0;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.sidebar-section { padding: 16px 12px 8px; }
+.sidebar-label {
+  font-size: 10px; letter-spacing: 2px; font-weight: 700;
+  text-transform: uppercase; color: var(--muted);
+  padding: 0 4px; margin-bottom: 8px;
+}
+.nav-btn {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 9px 12px;
+  background: none; border: none;
+  border-radius: 7px; cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--muted);
+  transition: all .15s; text-align: left;
+}
+.nav-btn:hover { background: var(--bg2); color: var(--text); }
+.nav-btn.active { color: var(--bright); }
+.nav-btn .nav-icon { font-size: 16px; flex-shrink: 0; }
+
+.nav-btn[data-view="u1"].active { background: var(--u1dim); color: var(--u1l); }
+.nav-btn[data-view="u2"].active { background: var(--u2dim); color: var(--u2l); }
+.nav-btn[data-view="u3"].active { background: var(--u3dim); color: var(--u3l); }
+.nav-btn[data-view="vetture"].active { background: #0d2a1a; color: var(--green); }
+.nav-btn[data-view="rientri"].active { background: #001a2e; color: #3b82f6; }
+.nav-btn[data-view="linee"].active { background: #1a1400; color: var(--yellow); }
+.nav-btn[data-view="servizi"].active { background: #001a1a; color: #22d3ee; }
+.serv-tab {
+  display: flex; gap: 4px; padding: 8px 12px 4px;
+}
+.serv-tab-btn {
+  flex: 1; padding: 6px 4px; border-radius: 6px;
+  background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--muted); font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  cursor: pointer; transition: all .15s; text-align: center;
+  text-transform: uppercase;
+}
+.serv-tab-btn:hover { border-color: #22d3ee; color: #22d3ee; }
+.serv-tab-btn.active { background: #001a1a; border-color: #22d3ee; color: #22d3ee; }
+.btn-applica-serv {
+  margin: 8px 12px 4px;
+  width: calc(100% - 24px);
+  padding: 8px; border-radius: 6px;
+  background: #001a1a; border: 1px solid #22d3ee;
+  color: #22d3ee; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  cursor: pointer; transition: all .15s; text-transform: uppercase;
+}
+.btn-applica-serv:hover { background: #003333; }
+
+.nav-badge {
+  margin-left: auto; min-width: 20px; height: 20px;
+  border-radius: 10px; padding: 0 6px;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── CONTENT ── */
+.content-wrap {
+  display: flex; flex: 1; overflow: hidden; gap: 0;
+}
+.content {
+  flex: 1; overflow-y: auto;
+  padding: 10px 12px; min-width: 0;
+  position: relative;
+}
+.content::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url('blueprint_bus.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.07;
+}
+.content > * { position: relative; z-index: 1; }
+
+/* ── PANNELLO PARCO VETTURE ── */
+.parco-panel {
+  width: 148px; flex-shrink: 0;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.parco-panel.hidden { display: none; }
+.parco-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 8px 4px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 800; letter-spacing: 2px;
+  color: var(--bright); border-bottom: 1px solid var(--border);
+  text-transform: uppercase; flex-shrink: 0;
+}
+.parco-search-wrap { padding: 5px 6px; flex-shrink: 0; }
+.parco-search {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--bright); padding: 4px 7px; border-radius: 5px;
+  font-size: 13px; outline: none; font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; letter-spacing: 1px;
+}
+.parco-search:focus { border-color: var(--u1l); }
+.parco-filter-wrap {
+  display: flex; gap: 3px; padding: 0 6px 5px; flex-shrink: 0;
+}
+.parco-filter-btn {
+  flex: 1; padding: 2px 0; border-radius: 4px;
+  background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--muted); font-size: 9px; font-weight: 700;
+  cursor: pointer; letter-spacing: .5px; text-transform: uppercase;
+  font-family: 'Barlow Condensed', sans-serif; transition: all .15s;
+}
+.parco-filter-btn.active { background: var(--u1dim); border-color: var(--u1l); color: var(--u1l); }
+.parco-list {
+  flex: 1; overflow-y: auto; padding: 2px 4px;
+}
+.parco-item {
+  display: flex; flex-direction: column;
+  padding: 3px 6px; margin-bottom: 2px;
+  border-radius: 5px; cursor: default;
+  transition: background .1s, border-color .1s;
+  border: 1px solid transparent;
+}
+/* Disponibile → verde */
+.parco-item.disp {
+  background: #061a0a; border-color: #1a4a1a;
+}
+.parco-item.disp:hover { background: #0a2a10; border-color: var(--green); }
+/* Chiamata / a rientro → giallo */
+.parco-item.rientro-item {
+  background: #1a1400; border-color: #4a3a00;
+}
+.parco-item.rientro-item:hover { background: #2a2000; border-color: var(--yellow); }
+.parco-item.chiamata {
+  background: #001a2e; border-color: #0a4a7a;
+}
+.parco-item.chiamata:hover { background: #002a3e; border-color: #3b82f6; }
+/* Già assegnata → grigio/verde scuro */
+.parco-item.usata {
+  background: #0a140a; border-color: #1a2a1a; cursor: default; opacity: .7;
+}
+/* Ferma → rosso */
+.parco-item.ferma {
+  background: #1a0606; border-color: #4a1010; cursor: not-allowed; opacity: .8;
+}
+.parco-item.dragging { opacity: .3; }
+
+.parco-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 800; letter-spacing: 1px;
+  flex: 1; line-height: 1;
+}
+.parco-num.disp    { color: var(--green); }
+.parco-num.usata   { color: #4a7a4a; }
+.parco-num.rientro { color: var(--yellow); }
+.parco-num.chiamata { color: #3b82f6; }
+.parco-num.ferma   { color: #aa3333; }
+
+/* Resize handle */
+.parco-resize {
+  width: 4px; cursor: col-resize; flex-shrink: 0;
+  background: var(--border); transition: background .15s;
+  align-self: stretch;
+}
+.parco-resize:hover { background: var(--u1l); }
+.parco-tip {
+  font-size: 10px; font-weight: 500; letter-spacing: 0;
+  padding: 1px 4px; border-radius: 8px;
+  background: #2a2000; color: #c8a800;
+  font-family: 'Barlow', sans-serif;
+  flex-shrink: 0;
+}
+.parco-stato-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+
+/* drop target su riga uscita */
+.uscita-table tr.drop-over td { background: #0d2a1a !important; }
+
+.uscita-table tr.drop-swap td { background: #1a1a00 !important; outline: 1px solid var(--yellow); }
+.uscita-table tr.row-dragging { opacity: .4; }
+/* handle drag su riga assegnata */
+.row-drag-handle {
+  cursor: grab; color: #2a2f4a; font-size: 12px;
+  padding: 0 3px; transition: color .15s; user-select: none;
+}
+.row-drag-handle:hover { color: var(--muted); }
+
+/* ─── USCITA VIEW ─── */
+.uscita-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 6px;
+}
+.uscita-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 28px; font-weight: 800; letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.uscita-time {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px; color: var(--muted); letter-spacing: 1px;
+}
+.uscita-stats {
+  margin-left: auto; display: flex; gap: 12px;
+}
+.stat-chip {
+  padding: 3px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* tabella uscita */
+.uscita-table {
+  width: 100%; border-collapse: collapse;
+  table-layout: fixed;
+}
+/* Larghezze colonne fisse al minimo */
+.uscita-table th:nth-child(1) { width: 136px; } /* Vettura+Tipo */
+.uscita-table th:nth-child(2) { width: 0; display:none; } /* Tipologia nascosta */
+.uscita-table th:nth-child(3) { width: 44px; }  /* Ora Uscita */
+.uscita-table th:nth-child(4) { width: 36px; }  /* Linea */
+.uscita-table th:nth-child(5) { width: 30px; }  /* Tabella */
+.uscita-table th:nth-child(6) { width: 44px; }  /* Ora Rientro */
+.uscita-table th:nth-child(7) { width: 34px; }  /* Durata */
+.uscita-table th:nth-child(8) { width: 18px; }  /* 🗑 */
+.uscita-table td { overflow: hidden; text-overflow: ellipsis; }
+.uscita-table th {
+  text-align: left; padding: 3px 3px;
+  font-size: 8px; letter-spacing: 0px;
+  text-transform: uppercase; font-weight: 700;
+  color: var(--muted); border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.uscita-table td {
+  padding: 5px 4px;
+  border-bottom: 1px solid #0f1120;
+  font-size: 12px; vertical-align: middle;
+  white-space: nowrap; overflow: hidden;
+}
+.uscita-table tr:hover td { background: rgba(255,255,255,.03); }
+.cell-linea {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 0;
+}
+.cell-tab {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px; color: var(--muted); font-weight: 700;
+}
+.cell-ora {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px; color: var(--bright);
+}
+.cell-tipo {
+  font-size: 11px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--muted);
+}
+
+/* select vettura */
+.vet-select {
+  background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--bright); padding: 3px 8px;
+  border-radius: 6px; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 17px; font-weight: 800; letter-spacing: 1px;
+  min-width: 90px; cursor: pointer; outline: none;
+  text-align: center; text-align-last: center;
+}
+.vet-select:focus { border-color: var(--u1l); }
+.vet-select.assigned { border-color: var(--green); color: var(--green); }
+.vet-select.rientro-assigned { border-color: var(--yellow); color: var(--yellow); }
+
+/* Ricerca vettura */
+.vet-search-wrap { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+.vet-search-input {
+  background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--bright); padding: 2px 6px;
+  border-radius: 5px; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 800; letter-spacing: 1px;
+  width: 82px; outline: none; text-align: center;
+}
+.vet-search-input:focus { border-color: var(--u1l); }
+.vet-search-input.assigned { border-color: var(--green); color: var(--green); }
+.vet-search-input.rientro-assigned { border-color: var(--yellow); color: var(--yellow); }
+.vet-dropdown {
+  display: none; position: absolute; top: 100%; left: 0; z-index: 200;
+  background: var(--panel); border: 1px solid var(--border2);
+  border-radius: 8px; min-width: 220px; max-height: 260px;
+  overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,.6);
+  margin-top: 3px;
+}
+.vet-dropdown.open { display: block; }
+.vet-dropdown-item {
+  padding: 7px 12px; cursor: pointer; font-size: 14px;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+  letter-spacing: 1px; border-bottom: 1px solid var(--border);
+  transition: background .1s;
+}
+.vet-dropdown-item:last-child { border-bottom: none; }
+.vet-dropdown-item:hover { background: var(--bg2); }
+.vet-dropdown-item.used { color: #555; cursor: not-allowed; }
+.vet-dropdown-item.rientro { color: var(--yellow); }
+.vet-dropdown-item.selected { background: #0d2a1a; color: var(--green); }
+.vet-dropdown-item.clear { color: var(--muted); font-size: 12px; }
+.th-sort {
+  cursor: pointer; user-select: none;
+  transition: color .15s;
+}
+.th-sort:hover { color: var(--bright); }
+.th-sort.active { color: var(--bright); }
+.th-sort .sort-arrow { margin-left: 4px; font-size: 10px; opacity: .5; }
+.th-sort.active .sort-arrow { opacity: 1; color: var(--u1l); }
+
+.stallo-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; color: var(--muted);
+  background: var(--bg2); padding: 1px 4px;
+  border-radius: 3px; border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* stato vettura inline */
+.stato-tag {
+  display: inline-block; padding: 3px 9px;
+  border-radius: 20px; font-size: 11px;
+  font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ─── VETTURE VIEW ─── */
+.vetture-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.vettura-card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px;
+  transition: border-color .2s;
+}
+.vettura-card:hover { border-color: var(--border2); }
+.vettura-card.ferma { border-color: #3a1111; }
+.vettura-card.rientro { border-color: #3a2500; }
+.vc-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.vc-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 28px; font-weight: 800; letter-spacing: 2px;
+  line-height: 1;
+}
+.vc-info { flex: 1; }
+.vc-model {
+  font-size: 13px; font-weight: 600; color: var(--bright);
+  line-height: 1.2;
+}
+.vc-tipo { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+.vc-bottom {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.vc-stallo {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px; color: var(--muted);
+  background: var(--bg2); padding: 3px 8px; border-radius: 4px;
+}
+
+/* stato select */
+.stato-select {
+  background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--text); padding: 4px 8px;
+  border-radius: 6px; font-size: 12px; cursor: pointer;
+  outline: none; font-family: 'Barlow', sans-serif;
+  margin-left: auto;
+}
+
+/* ─── RIENTRI VIEW ─── */
+.rientri-day-notice {
+  background: #1a0e00; border: 1px solid #5c3a00;
+  border-radius: 8px; padding: 14px 18px;
+  margin-bottom: 20px; font-size: 13px; color: #f97316;
+  letter-spacing: .5px;
+}
+.rientri-table { width: 100%; border-collapse: collapse; }
+.rientri-table th {
+  text-align: left; padding: 8px 14px;
+  font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase; font-weight: 700;
+  color: var(--muted); border-bottom: 1px solid var(--border);
+}
+.rientri-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  font-size: 14px; vertical-align: middle;
+}
+.rientri-table tr:hover td { background: rgba(255,255,255,.02); }
+.input-time {
+  background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--bright); padding: 5px 10px;
+  border-radius: 6px; font-family: 'Share Tech Mono', monospace;
+  font-size: 13px; width: 90px; outline: none;
+}
+.input-time:focus { border-color: var(--orange); }
+.input-note {
+  background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--text); padding: 5px 10px;
+  border-radius: 6px; font-size: 13px; width: 200px; outline: none;
+  font-family: 'Barlow', sans-serif;
+}
+.input-note:focus { border-color: var(--border2); }
+.btn-remove {
+  background: none; border: 1px solid #3a1111;
+  color: var(--red); padding: 4px 10px; border-radius: 5px;
+  cursor: pointer; font-size: 12px;
+  transition: background .15s;
+}
+.btn-remove:hover { background: #3a1111; }
+.btn-add-rientro {
+  margin-top: 16px;
+  background: #001a2e; border: 1px solid #3b82f6;
+  color: #3b82f6; padding: 9px 18px; border-radius: 7px;
+  cursor: pointer; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; transition: background .15s;
+}
+.btn-add-rientro:hover { background: #002a3e; }
+
+/* ─── LINEE VIEW ─── */
+.linea-accordion {
+  border: 1px solid var(--border); border-radius: 7px;
+  overflow: hidden; margin-bottom: 6px;
+}
+.linea-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; cursor: pointer;
+  background: var(--panel);
+  transition: background .15s;
+}
+.linea-head:hover { background: var(--bg2); }
+.linea-name-big {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px; font-weight: 800; letter-spacing: 2px;
+}
+.linea-tipo-tag {
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 20px; font-weight: 700;
+}
+.tipo-urbana { background: #0d2a1a; color: var(--green); }
+.tipo-suburbana { background: #1a1400; color: var(--yellow); }
+.linea-tab-count { margin-left: auto; color: var(--muted); font-size: 13px; }
+.linea-body { display: none; }
+.linea-body.open { display: block; }
+.tab-row {
+  display: grid;
+  grid-template-columns: 80px 100px 80px 1fr 120px;
+  gap: 0; padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--bg2); font-size: 13px;
+  align-items: center;
+}
+.tab-row:hover { background: #0f1119; }
+.tab-code {
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--muted);
+}
+.tab-time {
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--bright);
+}
+.tab-ore { color: var(--muted); font-size: 12px; }
+.tab-prop {
+  font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 20px; font-weight: 700;
+  display: inline-block;
+}
+.prop-elettrico { background: #0a1f3a; color: var(--u1l); }
+.prop-diesel { background: #2a1a00; color: var(--yellow); }
+.prop-entrambi { background: #1a1a2a; color: var(--muted); }
+.tab-uscita-badge {
+  font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; padding: 3px 10px;
+  border-radius: 20px; text-align: center;
+}
+
+/* ─── MODAL (aggiunta rientro) ─── */
+.modal-bg {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.7); z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--panel); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 28px; width: 400px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.6);
+}
+.modal-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px; font-weight: 800; letter-spacing: 2px;
+  color: var(--bright); margin-bottom: 20px;
+}
+.modal label {
+  display: block; font-size: 11px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 6px; margin-top: 14px;
+}
+.modal select, .modal input[type=text], .modal input[type=time] {
+  width: 100%; padding: 9px 12px;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 7px; color: var(--bright);
+  font-family: 'Barlow', sans-serif; font-size: 14px; outline: none;
+}
+.modal select:focus, .modal input:focus { border-color: var(--orange); }
+.modal-btns { display: flex; gap: 10px; margin-top: 22px; }
+.btn-modal-ok {
+  flex: 1; padding: 11px;
+  background: var(--orange); border: none; border-radius: 7px;
+  color: #fff; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; cursor: pointer; transition: opacity .15s;
+}
+.btn-modal-ok:hover { opacity: .85; }
+.btn-modal-cancel {
+  padding: 11px 20px;
+  background: none; border: 1px solid var(--border2);
+  border-radius: 7px; color: var(--muted);
+  font-family: 'Barlow', sans-serif; font-size: 14px;
+  cursor: pointer; transition: border .15s;
+}
+.btn-modal-cancel:hover { border-color: var(--text); }
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  color: var(--muted); font-size: 14px; letter-spacing: .5px;
+}
+.empty-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
+
+/* ─── TOASTS ─── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--panel); border: 1px solid var(--border2);
+  border-radius: 8px; padding: 12px 20px;
+  font-size: 13px; color: var(--bright);
+  transform: translateY(80px); opacity: 0;
+  transition: all .3s; z-index: 9999;
+  pointer-events: none;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ─── responsive table ─── */
+.table-wrap { overflow-x: auto; }
+
+/* ─── tipologia chip ─── */
+.tipo-chip {
+  font-size: 11px; letter-spacing: 0; text-transform: uppercase;
+  padding: 1px 4px; border-radius: 20px; font-weight: 500;
+  background: #2a2000; color: #c8a800; border: 1px solid #5a4a00;
+  font-family: 'Barlow', sans-serif; white-space: nowrap;
+}
+.tipo-chip.match { background: #0d2a1a; color: var(--green); border-color: #1a5c35; }
+.tipo-chip.nomatch { background: #2a0d0d; color: var(--red); border-color: #5c1a1a; }
+
+/* ─── durata badge ─── */
+.dur-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px; color: var(--muted);
+}
+
+/* ─── vet già usata ─── */
+option.vet-used { color: var(--muted); }
+
+/* ─── linee form ─── */
+.linee-form-box {
+  background: var(--panel); border: 1px solid var(--border2);
+  border-radius: 8px; padding: 12px; margin-bottom: 12px;
+}
+.linee-form-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px; font-weight: 700; letter-spacing: 2px;
+  color: var(--bright); margin-bottom: 16px; text-transform: uppercase;
+}
+.form-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 10px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label {
+  font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+  font-weight: 700; color: var(--muted);
+}
+.form-input {
+  background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--bright); padding: 7px 10px; border-radius: 6px;
+  font-family: 'Barlow', sans-serif; font-size: 13px; outline: none;
+}
+.form-input:focus { border-color: var(--u1l); }
+.form-select {
+  background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--bright); padding: 7px 10px; border-radius: 6px;
+  font-family: 'Barlow', sans-serif; font-size: 13px; outline: none; cursor: pointer;
+}
+.form-select:focus { border-color: var(--u1l); }
+.btn-form-add {
+  background: var(--u1dim); border: 1px solid var(--u1l);
+  color: var(--u1l); padding: 8px 16px; border-radius: 6px;
+  cursor: pointer; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; transition: background .15s; white-space: nowrap;
+}
+.btn-form-add:hover { background: var(--u1); color: #fff; }
+.btn-del-linea {
+  background: none; border: 1px solid #3a1111;
+  color: var(--red); padding: 4px 10px; border-radius: 5px;
+  cursor: pointer; font-size: 11px; transition: background .15s; margin-left: auto;
+}
+.btn-del-linea:hover { background: #3a1111; }
+.btn-del-tab {
+  background: none; border: none; color: #3a1111;
+  cursor: pointer; font-size: 14px; padding: 2px 6px;
+  transition: color .15s;
+}
+.btn-del-tab:hover { color: var(--red); }
+.btn-edit-tab {
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; font-size: 13px; padding: 2px 6px;
+  transition: color .15s;
+}
+.btn-edit-tab:hover { color: var(--u1l); }
+.tab-row { grid-template-columns: 70px 80px 80px 80px 80px 1fr 28px 28px; }
+.vet-tipologia-select {
+  background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--text); padding: 3px 7px; border-radius: 5px;
+  font-size: 11px; cursor: pointer; outline: none;
+  font-family: 'Barlow', sans-serif; max-width: 130px;
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE MOBILE
+   ═══════════════════════════════════════════════ */
+
+/* ── Tablet (max 900px) ── */
+@media (max-width: 900px) {
+  .sidebar { width: 160px; }
+  .content { padding: 16px; }
+  .header { gap: 8px; padding: 0 12px; }
+  #currentDate { min-width: 120px; font-size: 14px; }
+  .user-badge { display: none; }
+  .tab-row { grid-template-columns: 60px 70px 70px 60px 70px 1fr 28px 28px; font-size: 12px; }
+}
+
+/* ── Mobile (max 640px) ── */
+@media (max-width: 640px) {
+
+  /* Header compatto */
+  .header {
+    height: auto; flex-wrap: wrap;
+    padding: 8px 10px; gap: 6px;
+  }
+  .logo { font-size: 16px; letter-spacing: 2px; }
+  .header-sep { display: none; }
+  .date-nav { order: 3; width: 100%; justify-content: center; }
+  #currentDate { min-width: 0; flex: 1; font-size: 13px; }
+  .user-badge { display: none; }
+  .btn-logout { padding: 4px 8px; font-size: 11px; }
+  .sync-dot { order: 2; }
+
+  /* Layout: sidebar diventa barra in basso */
+  .body-wrap { flex-direction: column-reverse; }
+  .parco-panel { display: none; }
+  .content-wrap { flex-direction: column; }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: none;
+    border-top: 1px solid var(--border);
+    height: 56px;
+    flex-shrink: 0;
+    padding: 0 4px;
+    align-items: center;
+  }
+  .sidebar-section {
+    display: flex;
+    flex-direction: row;
+    padding: 0;
+    gap: 2px;
+    align-items: center;
+  }
+  .sidebar-section + .sidebar-section::before {
+    content: '';
+    width: 1px;
+    height: 30px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+  .sidebar-label { display: none; }
+  .nav-btn {
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 10px;
+    font-size: 10px;
+    letter-spacing: 0;
+    white-space: nowrap;
+    border-radius: 8px;
+    min-width: 52px;
+  }
+  .nav-btn .nav-icon { font-size: 18px; }
+  .nav-badge { display: none; }
+
+  /* Content */
+  .content { padding: 12px 10px; overflow-x: hidden; }
+
+  /* Tabella uscite → card verticali su mobile */
+  .uscita-table thead { display: none; }
+  .uscita-table, .uscita-table tbody,
+  .uscita-table tr, .uscita-table td { display: block; width: 100%; }
+  .uscita-table tr {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    position: relative;
+  }
+  .uscita-table td {
+    border: none; padding: 3px 0;
+    font-size: 13px;
+  }
+  .uscita-table td::before {
+    content: attr(data-label);
+    font-size: 9px; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--muted);
+    font-weight: 700; display: block; margin-bottom: 2px;
+  }
+  .vet-select { width: 100%; }
+  .stallo-badge { display: inline-block; margin-top: 2px; }
+
+  /* Tabella linee */
+  .tab-row {
+    grid-template-columns: 60px 70px 70px 1fr 28px 28px;
+    font-size: 11px; padding: 8px 10px;
+    gap: 4px;
+  }
+
+  /* Form linee */
+  .form-row { flex-wrap: wrap; gap: 8px; }
+  .form-input, .form-select { font-size: 12px; padding: 6px 8px; }
+  .linee-form-box { padding: 14px 12px; }
+
+  /* Header uscita */
+  .uscita-header { flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 16px; }
+  .uscita-title { font-size: 22px; }
+  .uscita-stats { margin-left: 0; }
+
+  /* Vetture grid */
+  .vetture-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .vc-num { font-size: 22px; }
+
+  /* Rientri table */
+  .rientri-table thead { display: none; }
+  .rientri-table, .rientri-table tbody,
+  .rientri-table tr, .rientri-table td { display: block; }
+  .rientri-table tr {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    padding: 10px 12px;
+  }
+  .rientri-table td { border: none; padding: 3px 0; }
+  .input-time, .input-note { width: 100%; }
+
+  /* Modal */
+  .modal { width: calc(100vw - 24px); padding: 20px 16px; }
+  .modal select, .modal input[type=text], .modal input[type=time] { font-size: 16px; } /* evita zoom iOS */
+  .login-box { width: calc(100vw - 32px); padding: 32px 20px; }
+}
+
+/* ── Molto piccolo (max 380px) ── */
+@media (max-width: 380px) {
+  .vetture-grid { grid-template-columns: 1fr; }
+  .nav-btn { font-size: 9px; padding: 6px 7px; min-width: 44px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ════════ LOGIN ════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div style="font-size:56px;text-align:center;margin-bottom:8px;line-height:1">🚌</div>
+    <div class="login-logo">USCITE<span>TRACK</span></div>
+    <div class="login-sub">Gestione uscite · Deposito</div>
+    <label>Utente</label>
+    <input type="text" id="loginUser" placeholder="capoturno" autocomplete="username">
+    <label>Password</label>
+    <input type="password" id="loginPass" placeholder="••••••" autocomplete="current-password">
+    <button class="btn-login" onclick="doLogin()">Accedi</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ════════ APP ════════ -->
+<div id="app">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">USCITE<span>TRACK</span></div>
+    <div class="header-sep"></div>
+    <div class="date-nav">
+      <button onclick="changeDay(-1)">‹</button>
+      <div id="currentDate" onclick="toggleDateInput()"></div>
+      <input type="date" id="dateInput" onchange="setDateFromInput()" onblur="hideDateInput()">
+      <button onclick="changeDay(1)">›</button>
+    </div>
+    <div class="header-sep"></div>
+    <div class="sync-dot" id="syncDot" title="Sincronizzazione Firebase"></div>
+    <div class="user-badge" id="userBadge"></div>
+    <button class="btn-logout" style="border-color:#5c3a00;color:var(--orange)" onclick="sbloccaTuttoOggi()" title="Sblocca tutte le vetture per oggi">🔓 Sblocca</button>
+    <button class="btn-logout" onclick="doLogout()">Esci</button>
+  </header>
+
+  <!-- BODY -->
+  <div class="body-wrap">
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Uscite</div>
+        <button class="nav-btn" data-view="u1" onclick="switchView('u1')">
+          <span class="nav-icon">🌅</span> Prima
+          <span class="nav-badge" id="badge-u1" style="background:var(--u1dim);color:var(--u1l)">0</span>
+        </button>
+        <button class="nav-btn" data-view="u2" onclick="switchView('u2')">
+          <span class="nav-icon">☀️</span> Seconda
+          <span class="nav-badge" id="badge-u2" style="background:var(--u2dim);color:var(--u2l)">0</span>
+        </button>
+        <button class="nav-btn" data-view="u3" onclick="switchView('u3')">
+          <span class="nav-icon">🌆</span> Terza
+          <span class="nav-badge" id="badge-u3" style="background:var(--u3dim);color:var(--u3l)">0</span>
+        </button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Gestione</div>
+        <button class="nav-btn" data-view="vetture" onclick="switchView('vetture')">
+          <span class="nav-icon">🚌</span> Vetture
+          <span class="nav-badge" id="badge-vet" style="background:#0d2a1a;color:var(--green)">0</span>
+        </button>
+        <button class="nav-btn" data-view="rientri" onclick="switchView('rientri')">
+          <span class="nav-icon">🔧</span> A Rientro
+          <span class="nav-badge" id="badge-rie" style="background:#001a2e;color:#3b82f6">0</span>
+        </button>
+        <button class="nav-btn" data-view="linee" onclick="switchView('linee')">
+          <span class="nav-icon">🗺️</span> Linee
+        </button>
+        <button class="nav-btn" data-view="servizi" onclick="switchView('servizi')">
+          <span class="nav-icon">📋</span> Servizi
+        </button>
+      </div>
+    </nav>
+
+    <!-- CONTENT WRAP: tabella + pannello vetture -->
+    <div class="content-wrap">
+      <main class="content" id="mainContent"></main>
+
+      <!-- PANNELLO VETTURE DISPONIBILI -->
+      <div class="parco-resize" id="parcoResize" title="Trascina per ridimensionare"></div>
+      <div class="parco-panel" id="parcoPanel">
+        <div class="parco-header">
+          <span>🚌 PARCO</span>
+          <span id="parcoCount" style="font-size:10px;color:var(--muted)"></span>
+        </div>
+        <div style="padding:3px 6px 0">
+          <select id="parcoTipoFilter" onchange="renderParco()"
+            style="width:100%;background:var(--bg2);border:1px solid var(--border2);
+            color:var(--bright);padding:3px 6px;border-radius:5px;
+            font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;
+            cursor:pointer;outline:none">
+            <option value="">Tutti i tipi</option>
+          </select>
+        </div>
+        <div class="parco-search-wrap">
+          <input class="parco-search" id="parcoSearch" type="text"
+            placeholder="Cerca..." oninput="renderParco()">
+        </div>
+        <div class="parco-filter-wrap">
+          <button class="parco-filter-btn active" data-f="disp" onclick="setParcoFilter('disp',this)" style="color:var(--green);border-color:#1a4a1a">Disp.</button>
+          <button class="parco-filter-btn" data-f="inservizio" onclick="setParcoFilter('inservizio',this)" style="color:var(--yellow)">Ora Rien.</button>
+          <button class="parco-filter-btn" data-f="rientro" onclick="setParcoFilter('rientro',this)" style="color:#3b82f6">Chiam.</button>
+          <button class="parco-filter-btn" data-f="ferme" onclick="setParcoFilter('ferme',this)" style="color:var(--red)">Ferme</button>
+          <button class="parco-filter-btn" data-f="tutte" onclick="setParcoFilter('tutte',this)">Tutte</button>
+        </div>
+        <div class="parco-list" id="parcoList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL MODIFICA TABELLA -->
+<div class="modal-bg" id="modalEditTab">
+  <div class="modal">
+    <div class="modal-title">✏ Modifica Tabella</div>
+    <label>Tabella</label>
+    <input type="text" id="et-cod" placeholder="es. 10A">
+    <label>Uscita</label>
+    <select id="et-usc" style="width:100%;padding:9px 12px;background:var(--bg2);border:1px solid var(--border2);border-radius:7px;color:var(--bright);font-size:14px;outline:none">
+      <option value="1">🌅 Prima</option>
+      <option value="2">☀️ Seconda</option>
+      <option value="3">🌆 Terza</option>
+    </select>
+    <label>Ora uscita</label>
+    <input type="time" id="et-out">
+    <label>Ora rientro</label>
+    <input type="time" id="et-ret">
+    <label>Tipologia</label>
+    <select id="et-tip"></select>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" onclick="closeEditTab()">Annulla</button>
+      <button class="btn-modal-ok" style="background:var(--u1)" onclick="saveEditTabella()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RIENTRO -->
+<div class="modal-bg" id="modalRientro">
+  <div class="modal">
+    <div class="modal-title">🔧 Aggiungi A Rientro</div>
+    <label>Vettura</label>
+    <select id="mVettura"></select>
+    <label>Reparto richiedente</label>
+    <select id="mReparto">
+      <option value="">— Nessuno —</option>
+      <option value="VE">VE</option>
+      <option value="CA">CA</option>
+      <option value="PU">PU</option>
+      <option value="INT">INT</option>
+      <option value="PAG">PAG</option>
+      <option value="SOL">SOL</option>
+      <option value="RCC">RCC</option>
+      <option value="IGP">IGP</option>
+      <option value="COL">COL</option>
+    </select>
+    <label>Ora rientro prevista</label>
+    <input type="time" id="mOra" value="09:30">
+    <label>Note</label>
+    <input type="text" id="mNote" placeholder="es. check freni, cambio olio...">
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" onclick="closeModal()">Annulla</button>
+      <button class="btn-modal-ok" style="background:#3b82f6" onclick="saveRientro()">Aggiungi</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// FIREBASE CONFIG (stesso progetto DepoTrack)
+// ═══════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyB6iU__138sUB4Tw_9DKWeat4WkN2RkVng",
+  authDomain: "depotrack-d1d28.firebaseapp.com",
+  databaseURL: "https://depotrack-d1d28-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "depotrack-d1d28",
+  storageBucket: "depotrack-d1d28.firebasestorage.app",
+  messagingSenderId: "967480447300",
+  appId: "1:967480447300:web:7e79395a45964cdf348711"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Refs Firebase
+const DEPO_REF    = db.ref('depotrack');     // dati DepoTrack (fleet, stalli)
+const USCITE_REF  = db.ref('usciteapp');     // dati questo programma
+
+// ═══════════════════════════════════════════════
+// UTENTI (4 capoturno stessi permessi)
+// ═══════════════════════════════════════════════
+const UTENTI = {
+  'capoturno1': { pass: 'ct1pass', nome: 'Capoturno 1' },
+  'capoturno2': { pass: 'ct2pass', nome: 'Capoturno 2' },
+  'capoturno3': { pass: 'ct3pass', nome: 'Capoturno 3' },
+  'capoturno4': { pass: 'ct4pass', nome: 'Capoturno 4' },
+};
+
+// ═══════════════════════════════════════════════
+// STATO GLOBALE
+// ═══════════════════════════════════════════════
+let currentUser = null;
+let currentView = 'u1';
+let currentDate = todayStr();
+let sortField = 'orario';
+let sortDir   = 'asc';
+let currentServizio = 'LUN-VEN'; // servizio in editing nella sezione Linee
+let filtroTipologia = ''; // filtro tipologia nella vista uscite
+
+// Dati DepoTrack (letti in real-time)
+let depoData = { fleet: [], corsie: [], assign: {}, stati: {}, tipi: {} };
+// Dati UsciteApp
+let usciteData = {};  // { giorni: {}, linee: {} }
+
+// ═══════════════════════════════════════════════
+// LINEE/TABELLE (dati di esempio - da sostituire con dati reali stasera)
+// Le tabelle reali verranno caricate da Firebase o inserite manualmente
+// ═══════════════════════════════════════════════
+// Tipologie vettura disponibili
+const TIPOLOGIE = ['STANDARD', 'ARTICOLATO', 'MINIBUS', 'GRANTURISMO', 'MIDI'];
+
+// Calcola durata in minuti tra due orari (gestisce mezzanotte)
+function calcDurata(orarioU, orarioR) {
+  const [hu, mu] = orarioU.split(':').map(Number);
+  let [hr, mr] = orarioR.split(':').map(Number);
+  let minsU = hu * 60 + mu;
+  let minsR = hr * 60 + mr;
+  if (minsR <= minsU) minsR += 24 * 60; // passa mezzanotte
+  const diff = minsR - minsU;
+  const h = Math.floor(diff / 60), m = diff % 60;
+  return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2,'0')}`;
+}
+
+// Genera ID univoco semplice
+function uid6() {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+const LINEE_DEFAULT = [
+  {
+    id: 'L1', nome: 'Linea 1', tipo: 'urbana',
+    tabelle: [
+      { id: 'T1A', cod: '1A', orario: '05:30', orarioRientro: '12:30', tipologia: 'STANDARD' },
+      { id: 'T1B', cod: '1B', orario: '12:00', orarioRientro: '15:00', tipologia: 'STANDARD' },
+      { id: 'T1C', cod: '1C', orario: '15:30', orarioRientro: '23:00', tipologia: 'ARTICOLATO' },
+    ]
+  },
+  {
+    id: 'L2', nome: 'Linea 2', tipo: 'urbana',
+    tabelle: [
+      { id: 'T2A', cod: '2A', orario: '06:00', orarioRientro: '12:00', tipologia: 'STANDARD' },
+      { id: 'T2B', cod: '2B', orario: '13:30', orarioRientro: '16:30', tipologia: 'MINIBUS' },
+      { id: 'T2C', cod: '2C', orario: '16:00', orarioRientro: '23:00', tipologia: 'STANDARD' },
+    ]
+  },
+  {
+    id: 'L5', nome: 'Linea 5', tipo: 'suburbana',
+    tabelle: [
+      { id: 'T5A', cod: '5A', orario: '07:00', orarioRientro: '13:00', tipologia: 'GRANTURISMO' },
+      { id: 'T5B', cod: '5B', orario: '14:00', orarioRientro: '18:30', tipologia: 'GRANTURISMO' },
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════
+// UTILS DATE
+// ═══════════════════════════════════════════════
+function todayStr() {
+  // Usa ora locale (non UTC) per evitare sfasamento notturno
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const g = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${g}`;
+}
+function tomorrowStr() {
+  return dateAddDays(currentDate, 1);
+}
+function dateAddDays(dateStr, n) {
+  const d = new Date(dateStr + 'T12:00:00'); // mezzogiorno evita bug DST
+  d.setDate(d.getDate() + n);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const g = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${g}`;
+}
+function formatDateIT(str) {
+  const d = new Date(str + 'T00:00:00');
+  return d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+function changeDay(n) {
+  currentDate = dateAddDays(currentDate, n);
+  const lbl = document.getElementById('currentDate');
+  if (lbl) lbl.textContent = formatDateIT(currentDate);
+  render();
+}
+function toggleDateInput() {
+  const inp = document.getElementById('dateInput');
+  const lbl = document.getElementById('currentDate');
+  inp.style.display = inp.style.display === 'none' ? 'block' : 'none';
+  if (inp.style.display === 'block') {
+    inp.value = currentDate; inp.style.display = 'block'; lbl.style.display = 'none'; inp.focus();
+  }
+}
+function setDateFromInput() {
+  const inp = document.getElementById('dateInput');
+  if (inp.value) { currentDate = inp.value; }
+  hideDateInput();
+  render();
+}
+function hideDateInput() {
+  document.getElementById('dateInput').style.display = 'none';
+  const lbl = document.getElementById('currentDate');
+  lbl.style.display = '';
+  lbl.textContent = formatDateIT(currentDate);
+}
+
+// ═══════════════════════════════════════════════
+// USCITA DETECTION
+// ═══════════════════════════════════════════════
+function getUscita(orario) {
+  if (!orario || !orario.includes(':')) return '1';
+  const [h, m] = orario.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return '1';
+  const mins = h * 60 + m;
+  if (mins >= 300 && mins < 690) return '1';
+  if (mins >= 690 && mins < 900) return '2';
+  return '3';
+}
+// Ritorna l'uscita di una tabella: usa tab.uscita se esplicito, altrimenti calcola dall'orario
+function getUscitaTab(tab) {
+  if (tab && tab.uscita) return String(tab.uscita);
+  if (tab && tab.orario) return getUscita(tab.orario);
+  return '1';
+}
+// Orario e rientro di default in base all'uscita selezionata
+function defaultOraUscita() {
+  if (currentView === 'u2') return { out: '12:00', ret: '14:30' };
+  if (currentView === 'u3') return { out: '16:00', ret: '23:00' };
+  return { out: '06:00', ret: '13:00' }; // default Prima
+}
+
+// ═══════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim().toLowerCase();
+  const p = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginErr');
+  if (!UTENTI[u] || UTENTI[u].pass !== p) {
+    err.textContent = 'Credenziali non valide.'; return;
+  }
+  currentUser = { id: u, ...UTENTI[u] };
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('userBadge').textContent = currentUser.nome;
+  document.getElementById('currentDate').textContent = formatDateIT(currentDate);
+  startFirebase();
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !currentUser) doLogin();
+});
+function doLogout() {
+  currentUser = null;
+  document.getElementById('loginScreen').style.display = '';
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginErr').textContent = '';
+}
+
+// ═══════════════════════════════════════════════
+// FIREBASE SYNC
+// ═══════════════════════════════════════════════
+function startFirebase() {
+  // Leggi DepoTrack in real-time
+  DEPO_REF.on('value', snap => {
+    depoData = snap.val() || { fleet: [], corsie: [], assign: {}, stati: {}, tipi: {} };
+    if (!depoData.fleet)  depoData.fleet  = [];
+    if (!depoData.corsie) depoData.corsie = [];
+    if (!depoData.assign) depoData.assign = {};
+    if (!depoData.stati)  depoData.stati  = {};
+    if (!depoData.tipi)   depoData.tipi   = {};
+    updateBadges();
+    render();
+  });
+
+  // Leggi UsciteApp in real-time
+  USCITE_REF.on('value', snap => {
+    usciteData = snap.val() || {};
+    if (!usciteData.giorni) usciteData.giorni = {};
+    if (!usciteData.linee)  usciteData.linee  = {};
+    // Migrazione vecchi dati (solo se campo linee legacy è presente)
+    migraLineeVecchie();
+    updateBadges();
+    render();
+  });
+
+  syncDot('ok');
+}
+
+function saveUscite() {
+  syncDot('syncing');
+  USCITE_REF.set(usciteData).then(() => syncDot('ok')).catch(() => syncDot('err'));
+}
+
+// Salva stato vettura SU DEPOTRACK
+// DepoTrack salva fleet come array → Firebase lo vede come oggetto con chiavi "0","1","2"...
+// Troviamo la chiave giusta cercando per id
+function saveDepoVettura(vId, statoId) {
+  const rawFleet = depoData.fleet || {};
+  // Trova la chiave Firebase (potrebbe essere "0","1",... o l'id stesso)
+  let fbKey = null;
+  if (Array.isArray(rawFleet)) {
+    const idx = rawFleet.findIndex(v => v && v.id === vId);
+    if (idx !== -1) fbKey = String(idx);
+  } else {
+    // oggetto: cerca la chiave che ha id === vId
+    for (const [k, v] of Object.entries(rawFleet)) {
+      if (v && v.id === vId) { fbKey = k; break; }
+    }
+  }
+  if (fbKey === null) { toast('Vettura non trovata su DepoTrack', true); return; }
+  DEPO_REF.child('fleet').child(fbKey).child('stato').set(statoId)
+    .then(() => toast('Stato aggiornato'))
+    .catch(() => toast('Errore salvataggio', true));
+}
+
+function syncDot(s) {
+  const d = document.getElementById('syncDot');
+  d.className = 'sync-dot' + (s === 'ok' ? '' : s === 'syncing' ? ' syncing' : ' err');
+}
+
+// ═══════════════════════════════════════════════
+// HELPERS DEPOTRACK
+// ═══════════════════════════════════════════════
+function getVetture() {
+  // fleet in DepoTrack è un array: [{id, targa, model, type, stato, ...}]
+  // assign: { stallId: vetId }
+  const fleet = Array.isArray(depoData.fleet)
+    ? depoData.fleet
+    : Object.values(depoData.fleet || {});
+
+  const assign = depoData.assign || {};
+  // mapping inverso: vetId → stallId
+  const stallByVet = {};
+  for (const [stallId, vetId] of Object.entries(assign)) {
+    if (vetId) stallByVet[String(vetId)] = stallId;
+  }
+  return fleet.filter(Boolean).map(v => ({
+    ...v,
+    stallo: stallByVet[v.id] || '—'
+  }));
+}
+
+function getVetturaById(id) {
+  const all = getVetture();
+  return all.find(v => v.id === id);
+}
+
+function getStatoInfo(statoId) {
+  const stati = depoData.stati || {};
+  return stati[statoId] || { nome: statoId || 'N/D', colore: '#555' };
+}
+function isFermaVettura(v) {
+  if (!v || !v.stato) return false;
+  const s = getStatoInfo(v.stato);
+  const n = (s.nome || '').toLowerCase();
+  return n.includes('ferma') || n.includes('fermo') || n.includes('fuori');
+}
+
+function getTipoInfo(tipoId) {
+  const tipi = depoData.tipi || {};
+  // tipi è un array in Firebase: cerca per id
+  const arr = Array.isArray(tipi) ? tipi : Object.values(tipi);
+  const found = arr.find(t => t && (t.id === tipoId || t.code === tipoId));
+  return found || { nome: tipoId || 'N/D', colore: '#555', code: tipoId || '' };
+}
+
+
+// Restituisce il CODICE tipologia di una vettura (da DepoTrack tipi[v.type].code)
+function getTipoCodice(v) {
+  const t = getTipoInfo(v.type);
+  const raw = (t.code || '').toUpperCase().trim();
+  // Mostra max 4 caratteri, scarta solo se vuoto o troppo lungo
+  if (!raw || raw.length > 5) return '';
+  return raw;
+}
+// Restituisce lista codici tipologia univoci da DepoTrack
+function getTipiOptions() {
+  const tipi = depoData.tipi || {};
+  const arr = Array.isArray(tipi) ? tipi : Object.values(tipi);
+  return arr.filter(Boolean)
+    .map(t => ({ code: (t.code||'').toUpperCase(), nome: t.nome||'' }))
+    .filter(t => t.code)
+    .sort((a,b) => a.code.localeCompare(b.code));
+}
+
+// ═══════════════════════════════════════════════
+// DATI GIORNO
+// ═══════════════════════════════════════════════
+function getDayData(date) {
+  return (usciteData.giorni || {})[date] || { uscita1: {}, uscita2: {}, uscita3: {}, rientri: {} };
+}
+function setDayData(date, data) {
+  if (!usciteData.giorni) usciteData.giorni = {};
+  usciteData.giorni[date] = data;
+  saveUscite();
+}
+
+// ── Migra i dati vecchi da usciteData.linee → servizi['LUN-VEN'] ──
+function migraLineeVecchie() {
+  // Se la migrazione è già stata eseguita, non fare nulla
+  if (usciteData._migrazioneV1) return;
+  // Se non ci sono linee vecchie, segna comunque come fatto e basta
+  if (!usciteData.linee || Object.keys(usciteData.linee).length === 0) {
+    usciteData._migrazioneV1 = true;
+    USCITE_REF.child('_migrazioneV1').set(true);
+    return;
+  }
+  // Esegui migrazione una volta sola
+  if (!usciteData.servizi) usciteData.servizi = {};
+  if (!usciteData.servizi['LUN-VEN']) usciteData.servizi['LUN-VEN'] = { nome: 'Lun - Ven', linee: {} };
+  const lineeDestino = usciteData.servizi['LUN-VEN'].linee || {};
+  if (Object.keys(lineeDestino).length === 0) {
+    for (const linea of Object.values(usciteData.linee)) {
+      if (linea && linea.id) lineeDestino[linea.id] = linea;
+    }
+    usciteData.servizi['LUN-VEN'].linee = lineeDestino;
+  }
+  usciteData.linee = {};
+  usciteData._migrazioneV1 = true;
+  USCITE_REF.set(usciteData).catch(e => console.error('Migrazione errore:', e));
+  console.log('✅ Migrazione completata e bloccata');
+}
+
+function dedupLinee() {
+  if (!usciteData.servizi) return;
+  let changed = false;
+  for (const [sId, serv] of Object.entries(usciteData.servizi)) {
+    if (!serv || !serv.linee) continue;
+    const linee = Object.values(serv.linee).filter(Boolean);
+    const seen = new Map(); // chiave: nome+tabelle_cod → id da tenere
+    for (const linea of linee) {
+      const key = (linea.nome||'').toLowerCase().trim() + '|' +
+        (linea.tabelle||[]).map(t => t.cod||'').sort().join(',');
+      if (seen.has(key)) {
+        // duplicato — rimuovi questo
+        delete serv.linee[linea.id];
+        changed = true;
+      } else {
+        seen.set(key, linea.id);
+      }
+    }
+  }
+  if (changed) {
+    usciteData.servizi = { ...usciteData.servizi };
+    USCITE_REF.set(usciteData).catch(e => console.error('Dedup errore:', e));
+    console.log('✅ Deduplicazione completata');
+  }
+}
+
+function getServizi() {
+  if (!usciteData.servizi) usciteData.servizi = {};
+  // Inizializza i 3 servizi se non esistono
+  if (!usciteData.servizi['LUN-VEN']) usciteData.servizi['LUN-VEN'] = { nome: 'Lun - Ven', linee: {} };
+  if (!usciteData.servizi['SAB'])     usciteData.servizi['SAB']     = { nome: 'Sabato',    linee: {} };
+  if (!usciteData.servizi['DOM'])     usciteData.servizi['DOM']     = { nome: 'Domenica',  linee: {} };
+  return usciteData.servizi;
+}
+
+// Quale servizio è attivo per la data corrente?
+function getServizioAttivo(date) {
+  const ds = (usciteData.dateServizio || {})[date];
+  if (ds) return ds;
+  // default automatico in base al giorno della settimana
+  const dow = new Date(date + 'T12:00:00').getDay(); // 0=dom, 6=sab
+  if (dow === 0) return 'DOM';
+  if (dow === 6) return 'SAB';
+  return 'LUN-VEN';
+}
+
+function getLinee() {
+  const servizioId = getServizioAttivo(currentDate);
+  // Usa getLineeServizio che già accorpa i duplicati
+  const escluse = new Set(((getServizi()[servizioId]||{}).escluse||[]));
+  return getLineeServizio(servizioId).filter(l => !escluse.has(l.id));
+}
+
+// getLineeServizio: per editing di un servizio specifico
+// Accorpa automaticamente linee con stesso nome (duplicate da migrazioni)
+function getLineeServizio(servizioId) {
+  const servizi = getServizi();
+  const s = servizi[servizioId];
+  if (!s || !s.linee) return [];
+  const raw = Object.entries(s.linee)
+    .filter(([k,v]) => v && typeof v === 'object')
+    .map(([k,v]) => ({ ...v, id: v.id || k }));
+
+  // Accorpa per nome: se due linee hanno stesso nome, unisce le tabelle
+  const merged = {};
+  for (const linea of raw) {
+    const key = (linea.nome||'').toLowerCase().trim();
+    if (!merged[key]) {
+      merged[key] = { ...linea, tabelle: [...(linea.tabelle||[])] };
+    } else {
+      // Aggiungi tabelle non duplicate (stesso cod)
+      const codEsistenti = new Set((merged[key].tabelle||[]).map(t=>t.cod));
+      for (const tab of (linea.tabelle||[])) {
+        if (!codEsistenti.has(tab.cod)) {
+          merged[key].tabelle.push(tab);
+          codEsistenti.add(tab.cod);
+        }
+      }
+    }
+  }
+  return Object.values(merged);
+}
+
+// Stessa normalizzazione per getLinee
+
+
+function getTabelle(uscitaNum) {
+  const linee = getLinee();
+  const result = [];
+  for (const linea of linee) {
+    for (const tab of (linea.tabelle || [])) {
+      if (getUscitaTab(tab) === String(uscitaNum)) {
+        result.push({ ...tab, lineaId: linea.id, lineaNome: linea.nome, lineaTipo: linea.tipo });
+      }
+    }
+  }
+  return result.sort((a, b) => a.orario.localeCompare(b.orario));
+}
+
+// ═══════════════════════════════════════════════
+// VIEW ROUTING
+// ═══════════════════════════════════════════════
+function switchView(v) {
+  currentView = v;
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === v);
+  });
+  render();
+}
+
+function render() {
+  const c = document.getElementById('mainContent');
+  if (!currentUser) return;
+  try {
+    switch (currentView) {
+      case 'u1': c.innerHTML = renderUscita(1); break;
+      case 'u2': c.innerHTML = renderUscita(2); break;
+      case 'u3': c.innerHTML = renderUscita(3); break;
+      case 'vetture': c.innerHTML = renderVetture(); break;
+      case 'rientri': c.innerHTML = renderRientri(); break;
+      case 'linee': c.innerHTML = renderServizi(); break;
+    case 'servizi': c.innerHTML = renderServizi(); break;
+    }
+  } catch(e) {
+    c.innerHTML = `<div class="empty-state" style="color:var(--red)">
+      <div class="empty-icon">⚠️</div>
+      Errore di visualizzazione: ${e.message}<br>
+      <small style="color:var(--muted)">${e.stack ? e.stack.split('\n')[1] : ''}</small>
+    </div>`;
+    console.error('Render error:', e);
+  }
+  // Aggiorna pannello parco dopo ogni render
+  setTimeout(renderParco, 0);
+}
+
+// ═══════════════════════════════════════════════
+// RENDER USCITA
+// ═══════════════════════════════════════════════
+function renderUscita(num) {
+  const tabelle = getTabelle(num);
+  const dayData = getDayData(currentDate);
+  const uscitaKey = 'uscita' + num;
+  const assignments = dayData[uscitaKey] || {};
+
+  const colors = { 1: 'var(--u1l)', 2: 'var(--u2l)', 3: 'var(--u3l)' };
+  const labels = { 1: 'Prima Uscita', 2: 'Seconda Uscita', 3: 'Terza Uscita' };
+  const times  = { 1: '05:00 – 11:30', 2: '11:30 – 15:00', 3: '15:00 – 02:30' };
+  const icons  = { 1: '🌅', 2: '☀️', 3: '🌆' };
+
+  // Raccoglie tutte le vetture già usate NELL'INTERO GIORNO (tutte e 3 le uscite)
+  const usedToday = new Set();
+  for (const k of ['uscita1','uscita2','uscita3']) {
+    for (const asgn of Object.values(dayData[k] || {})) {
+      if (asgn.vettura) usedToday.add(String(asgn.vettura));
+    }
+  }
+
+  // Vetture a rientro: unione di oggi E domani (segnalate il giorno prima)
+  const rientriOggi   = getDayData(currentDate).rientri || {};
+  const rientriDomani = getDayData(tomorrowStr()).rientri || {};
+  // Merge: domani sovrascrive oggi se stesso id (ma in pratica sono distinti)
+  const todayRientri  = { ...rientriOggi, ...rientriDomani };
+  const tutteVetture  = getVetture().filter(v => !isFermaVettura(v));
+
+  const assegnate = tabelle.filter(t => assignments[t.id]?.vettura).length;
+  const tomorrowData = getDayData(tomorrowStr());
+
+  // tipologie vetture da DepoTrack (tipi[v.type].code)
+
+  // ── Ordinamento tabelle ──
+  function sortTabelle(arr) {
+    return [...arr].sort((a, b) => {
+      let va, vb;
+      switch (sortField) {
+        case 'orario':
+          va = a.orario || ''; vb = b.orario || '';
+          break;
+        case 'orarioRientro':
+          va = a.orarioRientro || ''; vb = b.orarioRientro || '';
+          break;
+        case 'durata': {
+          const dur = t => {
+            if (!t.orario || !t.orarioRientro) return 0;
+            const [hu,mu] = t.orario.split(':').map(Number);
+            let [hr,mr] = t.orarioRientro.split(':').map(Number);
+            let u = hu*60+mu, r = hr*60+mr;
+            if (r <= u) r += 1440;
+            return r - u;
+          };
+          va = dur(a); vb = dur(b);
+          return sortDir === 'asc' ? va - vb : vb - va;
+        }
+        case 'linea':
+          va = a.lineaNome || ''; vb = b.lineaNome || '';
+          break;
+        case 'vettura': {
+          const va2 = assignments[a.id]?.vettura ? (getVetturaById(assignments[a.id].vettura)?.targa || '') : 'ZZZZ';
+          const vb2 = assignments[b.id]?.vettura ? (getVetturaById(assignments[b.id].vettura)?.targa || '') : 'ZZZZ';
+          return sortDir === 'asc' ? va2.localeCompare(vb2) : vb2.localeCompare(va2);
+        }
+        default: va = ''; vb = '';
+      }
+      const cmp = typeof va === 'number' ? va - vb : va.localeCompare(vb);
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }
+  // Applica filtro tipologia se attivo
+  const tabelleFilt = filtroTipologia
+    ? tabelle.filter(t => (t.tipologia||'').toUpperCase() === filtroTipologia.toUpperCase())
+    : tabelle;
+  const tabelleOrd = sortTabelle(tabelleFilt);
+
+  function thSort(field, label) {
+    const isActive = sortField === field;
+    const arrow = isActive ? (sortDir === 'asc' ? '▲' : '▼') : '▲';
+    return `<th class="th-sort ${isActive ? 'active' : ''}" onclick="setSort('${field}')">
+      ${label}<span class="sort-arrow">${arrow}</span>
+    </th>`;
+  }
+
+  let rows = '';
+  if (tabelleOrd.length === 0) {
+    rows = `<tr><td colspan="8">
+      <div class="empty-state">
+        <div class="empty-icon">${icons[num]}</div>
+        Nessuna tabella per questa uscita.<br>
+        Aggiungi linee e tabelle dalla sezione 🗺️ Linee.
+      </div>
+    </td></tr>`;
+  } else {
+    for (const tab of tabelleOrd) {
+      const asgn = assignments[tab.id] || {};
+      const hasVet = !!asgn.vettura;
+      const vet = hasVet ? getVetturaById(asgn.vettura) : null;
+      const stallo = vet ? vet.stallo : '—';
+      const durata = tab.orarioRientro ? calcDurata(tab.orario, tab.orarioRientro) : '—';
+
+      const vetOptions = tutteVetture.map(v => {
+        const isThisTab = asgn.vettura === v.id;
+        const isUsed = usedToday.has(v.id) && !isThisTab;
+        const isVetRientro = !!todayRientri[v.id];
+        const tipV = getTipoCodice(v);
+        const tipMatch = !tab.tipologia || !tipV || tipV === tab.tipologia;
+        const rientroInfo = isVetRientro ? (' 🔧' + (todayRientri[v.id].reparto || '')) : '';
+        const label = `${v.targa || v.id}${rientroInfo}${isUsed ? ' ⚠' : ''}`;
+        const color = isUsed ? '#555' : isVetRientro ? '#eab308' : (!tipMatch ? '#f59e0b' : '');
+        return `<option value="${v.id}" ${isThisTab ? 'selected' : ''} ${isUsed ? 'disabled' : ''}
+          style="color:${color}">${label}</option>`;
+      }).join('');
+
+      const tipCodVet = vet ? getTipoCodice(vet) : '';
+      const tipClass = tipCodVet && tab.tipologia
+        ? (tipCodVet === tab.tipologia ? 'match' : 'nomatch') : '';
+
+      // Nuovo ordine colonne: Vettura, Tipologia, Ora Uscita, Linea, Tabella, Ora Rientro, Durata
+      rows += `<tr id="row_${tab.id}">
+        <td data-label="Vettura" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+          ${buildVetSearch(num, tab.id, asgn.vettura || '')}
+          ${tab.tipologia ? `<span class="tipo-chip ${tipClass}" style="flex-shrink:0">${tab.tipologia}</span>` : ''}
+          ${asgn.ribattuta ? `<span style="background:#3a0000;color:#ff4444;font-size:9px;font-weight:800;padding:2px 6px;border-radius:10px;border:1px solid #ff4444;letter-spacing:1px;flex-shrink:0">RIB.</span>` : ''}
+          ${hasVet && todayRientri[asgn.vettura] ? `<span style="background:#001a2e;color:#3b82f6;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;flex-shrink:0">${todayRientri[asgn.vettura].reparto || ''}</span>` : ''}
+        </td>
+        <td style="display:none"></td>
+        <td data-label="Ora Uscita" class="cell-ora">${tab.orario || '—'}</td>
+        <td data-label="Linea" class="cell-linea" style="color:${colors[num]}">${tab.lineaNome}</td>
+        <td data-label="Tabella" class="cell-tab">${tab.cod || tab.id}</td>
+        <td data-label="Ora Rientro" class="cell-ora" style="color:var(--muted)">${tab.orarioRientro || '—'}</td>
+        <td data-label="Durata"><span class="dur-badge">${durata}</span></td>
+        <td>
+          <button onclick="clearAssignment(${num},'${tab.id}')"
+            style="background:none;border:none;color:#3a1111;cursor:pointer;font-size:13px;padding:2px 4px;transition:color .15s"
+            onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#3a1111'"
+            title="Rimuovi vettura assegnata">✕</button>
+        </td>
+      </tr>`;
+    }
+  }
+
+  return `
+    <div class="uscita-header">
+      <div>
+        <div class="uscita-title" style="color:${colors[num]}">${icons[num]} ${labels[num]}</div>
+        <div class="uscita-time">${times[num]}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+        <span class="stat-chip" style="background:${colors[num]}22;color:${colors[num]}">
+          ${assegnate} / ${tabelle.length} assegnate
+        </span>
+        <select onchange="filtroTipologia=this.value;render()"
+          style="background:var(--bg2);border:1px solid var(--border2);color:var(--bright);
+          padding:3px 8px;border-radius:6px;font-family:'Barlow Condensed',sans-serif;
+          font-size:13px;font-weight:700;cursor:pointer;outline:none">
+          <option value="">Tutte le tipologie</option>
+          ${getTipiOptions().map(t=>`<option value="${t.code}" ${filtroTipologia===t.code?'selected':''}>${t.code}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="uscita-table">
+        <thead>
+          <tr>
+            ${thSort('vettura','Vettura')}
+            <th style='display:none'></th>
+            ${thSort('orario','Ora Uscita')}
+            ${thSort('linea','Linea')}
+            <th>Tabella</th>
+            ${thSort('orarioRientro','Ora Rientro')}
+            ${thSort('durata','Durata')}
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ── Select vettura semplice ──
+function buildVetSearch(uscitaNum, tabId, currentVetId) {
+  const dayData = getDayData(currentDate);
+  // Vetture usate in ALTRE tabelle oggi
+  const used = new Set();
+  for (const k of ['uscita1','uscita2','uscita3']) {
+    for (const [tid, a] of Object.entries(dayData[k]||{})) {
+      if (a.vettura && !(k==='uscita'+uscitaNum && tid===tabId))
+        used.add(String(a.vettura));
+    }
+  }
+  const rientri = {...(getDayData(currentDate).rientri||{}),...(getDayData(tomorrowStr()).rientri||{})};
+  const vetture = getVetture().filter(v => !isFermaVettura(v));
+  const curStr = String(currentVetId||'');
+  const isR = curStr && !!rientri[curStr];
+  const cls = curStr ? (isR ? 'rientro-assigned' : 'assigned') : '';
+
+  vetture.sort((a,b) => String(a.targa||a.id).localeCompare(String(b.targa||b.id), undefined, {numeric:true}));
+  const opts = vetture.map(v => {
+    const vid = String(v.id);
+    const targa = String(v.targa||v.id);
+    const tipV = getTipoCodice(v);
+    const isRv = !!rientri[v.id];
+    const isUsed = used.has(vid);
+    const label = targa + (isRv?' 🔧':'') + (isUsed&&vid!==curStr?' ✓':'');
+    return `<option value="${vid}" ${vid===curStr?'selected':''}>${label}</option>`;
+  }).join('');
+
+  return `<select class="vet-select ${cls}"
+    onchange="assignVettura(${uscitaNum},'${tabId}',this.value)">
+    <option value="">— —</option>
+    ${opts}
+  </select>`;
+}
+
+// ════════════════════════════════════════
+// PANNELLO PARCO VETTURE
+// ════════════════════════════════════════
+let parcoFilter = 'disp';
+
+function setParcoFilter(f, btn) {
+  parcoFilter = f;
+  document.querySelectorAll('.parco-filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderParco();
+}
+
+function renderParco() {
+  // Mostra pannello solo su uscite, non su altri view
+  const panel = document.getElementById('parcoPanel');
+  if (!panel) return;
+  const isUscita = ['u1','u2','u3'].includes(currentView);
+  panel.style.display = isUscita ? 'flex' : 'none';
+  if (!isUscita) return;
+
+  const q = (document.getElementById('parcoSearch')?.value || '').trim().toLowerCase();
+  // Popola select tipologie se vuoto
+  const tipoSel = document.getElementById('parcoTipoFilter');
+  if (tipoSel && tipoSel.options.length <= 1) {
+    getTipiOptions().forEach(t => {
+      const o = document.createElement('option'); o.value=t.code; o.textContent=t.code; tipoSel.appendChild(o);
+    });
+  }
+  const parcoTipo = tipoSel?.value || '';
+  const dayData = getDayData(currentDate);
+
+  // Vetture già usate oggi
+  const usedToday = new Set();
+  for (const k of ['uscita1','uscita2','uscita3']) {
+    for (const asgn of Object.values(dayData[k] || {})) {
+      if (asgn.vettura) usedToday.add(String(asgn.vettura));
+    }
+  }
+
+  const rientriOggi   = getDayData(currentDate).rientri || {};
+  const rientriDomani = getDayData(tomorrowStr()).rientri || {};
+  const todayRientri  = { ...rientriOggi, ...rientriDomani };
+
+  // Calcola rientroPerVet PRIMA dei filtri
+  const uscitePrec = [];
+  if (currentView === 'u2') uscitePrec.push('uscita1');
+  if (currentView === 'u3') uscitePrec.push('uscita1','uscita2');
+  const rientroPerVet = {};
+  for (const k of uscitePrec) {
+    for (const [tabId, asgn] of Object.entries(dayData[k] || {})) {
+      if (!asgn.vettura) continue;
+      for (const linea of getLinee()) {
+        const tab = (linea.tabelle||[]).find(t => t.id === tabId);
+        if (tab && tab.orarioRientro) {
+          rientroPerVet[String(asgn.vettura)] = tab.orarioRientro;
+          break;
+        }
+      }
+    }
+  }
+
+  let vetture = getVetture();
+
+  // Filtra per stato
+  if (parcoFilter === 'disp') {
+    vetture = vetture.filter(v => !isFermaVettura(v) && !usedToday.has(String(v.id)) && !todayRientri[v.id]);
+  } else if (parcoFilter === 'inservizio') {
+    const vidConRientro = new Set(Object.keys(rientroPerVet));
+    vetture = vetture.filter(v => vidConRientro.has(String(v.id)));
+  } else if (parcoFilter === 'rientro') {
+    vetture = vetture.filter(v => !!todayRientri[v.id] && !isFermaVettura(v));
+  } else if (parcoFilter === 'ferme') {
+    vetture = getVetture().filter(v => isFermaVettura(v));
+  }
+
+  // Filtra per ricerca
+  if (q) vetture = vetture.filter(v => (v.targa||v.id||'').toString().toLowerCase().includes(q));
+  // Filtra per tipologia
+  if (parcoTipo) vetture = vetture.filter(v => (getTipoCodice(v)||'').toUpperCase() === parcoTipo.toUpperCase());
+
+  // Ordina: prima disponibili, poi rientro, poi usate
+  vetture.sort((a, b) => {
+    const aU = usedToday.has(a.id), bU = usedToday.has(b.id);
+    const aR = !!todayRientri[a.id], bR = !!todayRientri[b.id];
+    if (aU !== bU) return aU ? 1 : -1;
+    if (aR !== bR) return aR ? -1 : 1;
+    return (a.targa||'').localeCompare(b.targa||'');
+  });
+
+  const list = document.getElementById('parcoList');
+  const count = document.getElementById('parcoCount');
+  if (!list) return;
+
+  const libere  = getVetture().filter(v => !isFermaVettura(v) && !usedToday.has(v.id) && !todayRientri[v.id]).length;
+  const chiamate = getVetture().filter(v => !!todayRientri[v.id]).length;
+  const ferme   = getVetture().filter(v => isFermaVettura(v)).length;
+  if (count) count.innerHTML =
+    `<span style="color:var(--green)">${libere}</span> ` +
+    `<span style="color:var(--yellow)">${chiamate}</span> ` +
+    `<span style="color:var(--red)">${ferme}</span>`;
+
+
+  list.innerHTML = vetture.map(v => {
+    const vid = String(v.id);
+    const isUsata   = usedToday.has(vid) || usedToday.has(v.id);
+    const isFerma   = isFermaVettura(v);
+    const isRientro = !!todayRientri[v.id];
+    const tipV = getTipoCodice(v);
+    const reparto = isRientro ? (todayRientri[v.id].reparto || '') : '';
+    const oraRientro = rientroPerVet[vid] || '';
+
+    // Colore: giallo se in servizio in uscita precedente, verde se libera
+    const isInServizio = !!oraRientro;
+    const cls = isFerma ? 'ferma' : isRientro ? 'chiamata' : isInServizio ? 'rientro-item' : isUsata ? 'usata' : 'disp';
+    const numCls = isFerma ? 'ferma' : isRientro ? 'chiamata' : isInServizio ? 'rientro' : isUsata ? 'usata' : 'disp';
+
+    const dotColor = isFerma ? 'var(--red)' : isRientro ? '#3b82f6' : isInServizio ? 'var(--yellow)' : 'var(--green)';
+    return `<div class="parco-item ${cls}" id="pi_${v.id}" title="${v.model||''}">
+      <div style="display:flex;align-items:center;gap:4px">
+        <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:${dotColor}"></span>
+        <span class="parco-num ${numCls}">${v.targa||v.id}</span>
+        ${tipV ? `<span class="parco-tip">[${tipV}]</span>` : ''}
+      </div>
+      ${oraRientro ? `<div style="font-size:10px;color:var(--yellow);padding-left:11px;line-height:1.4">↩ ${oraRientro}</div>` : ''}
+      ${reparto ? `<div style="font-size:9px;color:var(--yellow);padding-left:11px;line-height:1.4">🔧 ${reparto}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── Drag & Drop ──
+// Drag rimosso - si usa solo il campo cerca
+
+// ── Resize pannello parco ──
+function initParcoResize() {
+  const handle = document.getElementById('parcoResize');
+  const panel  = document.getElementById('parcoPanel');
+  if (!handle || !panel) return;
+  let startX, startW;
+  handle.addEventListener('mousedown', e => {
+    startX = e.clientX;
+    startW = panel.offsetWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    const onMove = ev => {
+      const delta = startX - ev.clientX; // trascinare a sinistra = più largo
+      const newW = Math.max(100, Math.min(400, startW + delta));
+      panel.style.width = newW + 'px';
+      handle.style.background = 'var(--u1l)';
+    };
+    const onUp = () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      handle.style.background = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+  // Touch support
+  handle.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startW = panel.offsetWidth;
+    const onMove = ev => {
+      const delta = startX - ev.touches[0].clientX;
+      const newW = Math.max(100, Math.min(400, startW + delta));
+      panel.style.width = newW + 'px';
+    };
+    const onUp = () => {
+      handle.removeEventListener('touchmove', onMove);
+      handle.removeEventListener('touchend', onUp);
+    };
+    handle.addEventListener('touchmove', onMove);
+    handle.addEventListener('touchend', onUp);
+  });
+}
+
+function setSort(field) {
+  if (sortField === field) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortField = field;
+    sortDir = 'asc';
+  }
+  render();
+}
+
+// Rimuove solo l'assegnazione vettura per questa tabella oggi
+function clearAssignment(uscitaNum, tabId) {
+  const dayData = getDayData(currentDate);
+  const key = 'uscita' + uscitaNum;
+  if (dayData[key] && dayData[key][tabId]) {
+    delete dayData[key][tabId];
+    setDayData(currentDate, dayData);
+    toast('Vettura rimossa');
+    render();
+  }
+}
+
+function assignVettura(uscitaNum, tabId, vetId) {
+  const dayData = getDayData(currentDate);
+  const key = 'uscita' + uscitaNum;
+  if (!dayData[key]) dayData[key] = {};
+
+  if (vetId) {
+    const vetIdStr = String(vetId);
+    // Controlla se già usata in altra tabella
+    let giaUsataIn = null;
+    for (const k of ['uscita1','uscita2','uscita3']) {
+      for (const [tid, asgn] of Object.entries(dayData[k] || {})) {
+        if (String(asgn.vettura) === vetIdStr && !(k === key && tid === tabId)) {
+          giaUsataIn = k;
+          break;
+        }
+      }
+      if (giaUsataIn) break;
+    }
+    if (giaUsataIn) {
+      const nomeUscita = giaUsataIn === 'uscita1' ? 'Prima' : giaUsataIn === 'uscita2' ? 'Seconda' : 'Terza';
+      let orarioRientro = '';
+      for (const [tid, asgn] of Object.entries(dayData[giaUsataIn] || {})) {
+        if (String(asgn.vettura) === vetIdStr) {
+          for (const linea of getLinee()) {
+            const tab = (linea.tabelle||[]).find(t => t.id === tid);
+            if (tab && tab.orarioRientro) { orarioRientro = ' - rientro ' + tab.orarioRientro; break; }
+          }
+          break;
+        }
+      }
+      const vetObj = getVetturaById(vetIdStr);
+      const vetLabel = vetObj ? String(vetObj.targa || vetObj.id) : vetIdStr;
+      const msg = 'Vettura ' + vetLabel + ' e gia in ' + nomeUscita + ' uscita' + orarioRientro + '. Vuoi assegnarla comunque?';
+      if (!confirm(msg)) { _vetDropData = {}; render(); return; }
+      // Segna come ribattuta sulla tabella di destinazione
+      dayData[key][tabId] = { vettura: vetIdStr, ribattuta: true };
+      setDayData(currentDate, dayData);
+      toast('Vettura assegnata (ribattuta)');
+      _vetDropData = {};
+      render();
+      return;
+    }
+    dayData[key][tabId] = { vettura: vetIdStr, ribattuta: false };
+  } else {
+    delete dayData[key][tabId];
+  }
+  setDayData(currentDate, dayData);
+  toast('✓ Assegnata');
+  _vetDropData = {};
+  render();
+}
+
+// ═══════════════════════════════════════════════
+// RENDER VETTURE
+// ═══════════════════════════════════════════════
+function renderVetture() {
+  const vetture = getVetture();
+  const stati = depoData.stati || {};
+  // tipologie da DepoTrack direttamente
+
+  if (vetture.length === 0) {
+    return `<div class="empty-state">
+      <div class="empty-icon">🚌</div>
+      Nessuna vettura trovata in DepoTrack.<br>
+      <span style="font-size:12px;color:var(--muted)">Inserisci le vetture in DepoTrack e si sincronizzeranno automaticamente.</span>
+    </div>`;
+  }
+
+  const cards = vetture.map((v, idx) => {
+    const stato = getStatoInfo(v.stato);
+    const tipo  = getTipoInfo(v.type);
+    const isFerma = isFermaVettura(v);
+    const tomorrowData = getDayData(tomorrowStr());
+    const isRientro = !!(tomorrowData.rientri || {})[v.id];
+    const tipCodice = getTipoCodice(v);
+
+    const selectId = 'stato-sel-' + v.id.replace(/[^a-z0-9]/gi, '');
+    const statiOptions = Object.entries(stati).map(([sid, s]) =>
+      `<option value="${sid}">${s.nome}</option>`
+    ).join('');
+
+    return `<div class="vettura-card ${isFerma ? 'ferma' : ''} ${isRientro ? 'rientro' : ''}">
+      <div class="vc-top">
+        <div class="vc-num" style="color:${tipo.colore || 'var(--bright)'}">${v.targa || v.id}</div>
+        <div class="vc-info">
+          <div class="vc-model">${v.model || '—'}</div>
+          <div class="vc-tipo">${tipo.nome || '—'}</div>
+        </div>
+        ${isRientro ? '<span style="color:var(--orange);font-size:18px" title="A rientro domani">🔧</span>' : ''}
+        ${isFerma ? '<span style="color:var(--red);font-size:18px" title="Ferma">🔴</span>' : ''}
+      </div>
+      <div class="vc-bottom">
+        <span class="vc-stallo">🅿 ${v.stallo}</span>
+        <span class="tipo-chip" style="background:#1a1f35;border:1px solid var(--border2)">${tipCodice || '—'}</span>
+        <select class="stato-select" id="${selectId}" data-stato="${v.stato||''}" onchange="cambiaStato('${v.id}', this.value)">
+          ${statiOptions}
+        </select>
+      </div>
+    </div>`;
+  }).join('');
+
+  const html = `
+    <div class="uscita-header">
+      <div>
+        <div class="uscita-title" style="color:var(--green)">🚌 Vetture</div>
+        <div class="uscita-time">Sincronizzate con DepoTrack · ${vetture.length} mezzi</div>
+      </div>
+    </div>
+    <div class="vetture-grid">${cards}</div>`;
+  // Dopo il render imposta i valori select stato dal data-attribute
+  setTimeout(() => {
+    document.querySelectorAll('.stato-select[data-stato]').forEach(sel => {
+      sel.value = sel.dataset.stato || '';
+    });
+  }, 0);
+  return html;
+}
+
+function cambiaStato(vetId, statoId) {
+  saveDepoVettura(vetId, statoId);
+}
+
+// setTipologiaVettura non piu necessaria: tipologia viene da DepoTrack tipi[v.type].code
+
+// ═══════════════════════════════════════════════
+// RENDER RIENTRI
+// ═══════════════════════════════════════════════
+function renderRientri() {
+  // I rientri di OGGI sono quelli segnalati IERI (escono oggi mattina)
+  // Quelli che segnaliamo OGGI usciranno DOMANI
+  const todayData = getDayData(currentDate);
+  const rientriOggi = todayData.rientri || {};
+
+  let rows = '';
+  const vetIds = Object.keys(rientriOggi);
+  if (vetIds.length === 0) {
+    rows = `<tr><td colspan="5">
+      <div class="empty-state" style="padding:30px">
+        <div class="empty-icon">🔧</div>
+        Nessuna vettura a rientro per oggi.<br>
+        <span style="font-size:12px;color:var(--muted)">Le vetture a rientro vengono segnalate il giorno prima.</span>
+      </div>
+    </td></tr>`;
+  } else {
+    for (const vId of vetIds) {
+      const r = rientriOggi[vId];
+      const vet = getVetturaById(vId);
+      rows += `<tr>
+        <td>
+          <strong style="font-family:'Share Tech Mono',monospace;color:#3b82f6">
+            N° ${vet ? (vet.targa || vId) : vId}
+          </strong>
+          ${vet ? `<span style="color:var(--muted);font-size:12px;margin-left:8px">${vet.model || ''}</span>` : ''}
+        </td>
+        <td><span class="stallo-badge">${vet ? vet.stallo : '—'}</span></td>
+        <td><span style="font-family:'Share Tech Mono',monospace;color:var(--bright)">${r.ora || '09:30'}</span></td>
+        <td><span style="color:var(--muted);font-size:13px">${r.note || '—'}</span></td>
+        <td><button class="btn-remove" onclick="removeRientro('${currentDate}','${vId}')" title="Annulla chiamata">✕</button></td>
+      </tr>`;
+    }
+  }
+
+  // Segnalazione per domani
+  const tomorrowData = getDayData(tomorrowStr());
+  const rientriDomani = tomorrowData.rientri || {};
+  let rowsDomani = '';
+  const vetIdsDomani = Object.keys(rientriDomani);
+  if (vetIdsDomani.length === 0) {
+    rowsDomani = `<tr><td colspan="5">
+      <div style="padding:20px;color:var(--muted);font-size:13px;text-align:center">
+        Nessuna vettura segnalata per domani.
+      </div>
+    </td></tr>`;
+  } else {
+    for (const vId of vetIdsDomani) {
+      const r = rientriDomani[vId];
+      const vet = getVetturaById(vId);
+      rowsDomani += `<tr>
+        <td>
+          <strong style="font-family:'Share Tech Mono',monospace;color:var(--orange)">
+            N° ${vet ? (vet.targa || vId) : vId}
+          </strong>
+          ${vet ? `<span style="color:var(--muted);font-size:12px;margin-left:8px">${vet.model || ''}</span>` : ''}
+        </td>
+        <td><span class="stallo-badge">${vet ? vet.stallo : '—'}</span></td>
+        <td>
+          <select class="stato-select" onchange="updateRientroField('${tomorrowStr()}','${vId}','reparto',this.value)" style="min-width:130px">
+            <option value="">— Reparto —</option>
+            ${['VE','CA','PU','INT','PAG','SOL','RCC','IGP','COL'].map(rp=>`<option value="${rp}" ${r.reparto===rp?'selected':''}>${rp}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <input class="input-time" type="time" value="${r.ora || '09:30'}"
+            onchange="updateRientroField('${tomorrowStr()}','${vId}','ora',this.value)">
+        </td>
+        <td>
+          <input class="input-note" type="text" value="${r.note || ''}" placeholder="Note..."
+            onblur="updateRientroField('${tomorrowStr()}','${vId}','note',this.value)">
+        </td>
+        <td>
+          <button class="btn-remove" onclick="removeRientro('${tomorrowStr()}','${vId}')">✕</button>
+        </td>
+      </tr>`;
+    }
+  }
+
+  return `
+    <div class="uscita-header">
+      <div>
+        <div class="uscita-title" style="color:var(--orange)">🔧 A Rientro</div>
+        <div class="uscita-time">Gestione vetture in manutenzione</div>
+      </div>
+    </div>
+    <div class="rientri-day-notice">
+      ℹ️ Le vetture a rientro escono la mattina e rientrano tra le 09:00 e le 10:00 per manutenzione full service.
+    </div>
+
+    <div style="margin-bottom:8px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;color:var(--u1l);text-transform:uppercase">
+      A rientro oggi · ${formatDateIT(currentDate)}
+    </div>
+    <div class="table-wrap" style="margin-bottom:28px">
+      <table class="rientri-table">
+        <thead><tr>
+          <th>Vettura</th><th>Stallo</th><th>Reparto</th><th>Ora rientro</th><th>Note</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+
+    <div style="margin-bottom:8px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;color:var(--orange);text-transform:uppercase">
+      Segnalazioni per domani · ${formatDateIT(tomorrowStr())}
+    </div>
+    <div class="table-wrap">
+      <table class="rientri-table">
+        <thead><tr>
+          <th>Vettura</th><th>Stallo</th><th>Reparto</th><th>Ora rientro</th><th>Note</th><th></th>
+        </tr></thead>
+        <tbody>${rowsDomani}</tbody>
+      </table>
+    </div>
+    <button class="btn-add-rientro" onclick="openModalRientro()">+ Aggiungi vettura a rientro</button>`;
+}
+
+function openModalRientro() {
+  const vetture = getVetture();
+  const sel = document.getElementById('mVettura');
+  sel.innerHTML = vetture.map(v =>
+    `<option value="${v.id}">N° ${v.targa || v.id} – ${v.model || '—'} (${v.stallo})</option>`
+  ).join('');
+  document.getElementById('mOra').value = '09:30';
+  document.getElementById('mNote').value = '';
+  document.getElementById('modalRientro').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modalRientro').classList.remove('open');
+}
+function saveRientro() {
+  const vId    = document.getElementById('mVettura').value;
+  const ora    = document.getElementById('mOra').value;
+  const note   = document.getElementById('mNote').value;
+  const reparto = document.getElementById('mReparto').value;
+  if (!vId) return;
+  const data = getDayData(tomorrowStr());
+  if (!data.rientri) data.rientri = {};
+  data.rientri[vId] = { ora, note, reparto };
+  setDayData(tomorrowStr(), data);
+  closeModal();
+  toast('Vettura aggiunta a rientro per domani');
+  render();
+}
+function updateRientroField(date, vId, field, val) {
+  const data = getDayData(date);
+  if (!data.rientri) data.rientri = {};
+  if (!data.rientri[vId]) data.rientri[vId] = {};
+  data.rientri[vId][field] = val;
+  setDayData(date, data);
+}
+function removeRientro(date, vId) {
+  const data = getDayData(date);
+  if (data.rientri) { delete data.rientri[vId]; }
+  setDayData(date, data);
+  render();
+  toast('Rimossa');
+}
+
+// ═══════════════════════════════════════════════
+// RENDER LINEE
+// ═══════════════════════════════════════════════
+function renderLinee() {
+  const linee = getLinee();
+  const isCustom = !!(usciteData.linee && Object.keys(usciteData.linee).length > 0);
+  const colors = { '1': 'var(--u1l)', '2': 'var(--u2l)', '3': 'var(--u3l)' };
+  const labels = { '1': 'Prima', '2': 'Seconda', '3': 'Terza' };
+
+  // Prende i codici tipologia da DepoTrack (es. u1, u2, s1...)
+  const tipiDepo = getTipiOptions();
+  const tipOptions = tipiDepo.map(t => `<option value="${t.code}">${t.code}</option>`).join('');
+
+  // Form aggiungi linea (con prima tabella già inclusa)
+  const formLinea = `
+    <div class="linee-form-box">
+      <div class="linee-form-title">+ Nuova Linea
+
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nome linea</label>
+          <input class="form-input" id="fl-nome" placeholder="es. Linea 10" style="width:140px">
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <select class="form-select" id="fl-tipo">
+            <option value="urbana">Urbana</option>
+            <option value="suburbana">Suburbana</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:10px 0 8px;font-weight:700">Prima tabella (opzionale)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tabella</label>
+          <input class="form-input" id="fl-tab" placeholder="es. 10A" style="width:80px">
+        </div>
+        <div class="form-group">
+          <label>Uscita</label>
+          <select class="form-select" id="fl-usc" style="width:110px">
+            <option value="1" ${currentView==='u1'?'selected':''}>🌅 Prima</option>
+            <option value="2" ${currentView==='u2'?'selected':''}>☀️ Seconda</option>
+            <option value="3" ${currentView==='u3'?'selected':''}>🌆 Terza</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Ora uscita</label>
+          <input class="form-input" id="fl-out" type="time" style="width:100px">
+        </div>
+        <div class="form-group">
+          <label>Ora rientro</label>
+          <input class="form-input" id="fl-ret" type="time" style="width:100px">
+        </div>
+        <div class="form-group">
+          <label>Tipologia</label>
+          <select class="form-select" id="fl-tip" style="width:130px">
+            <option value="">— Nessuna —</option>
+            ${tipOptions}
+          </select>
+        </div>
+        <button class="btn-form-add" onclick="addLineaForm()">Crea Linea</button>
+      </div>
+    </div>`;
+
+  // Accordion per ogni linea
+  const cards = linee.map(linea => {
+    const tabRows = (linea.tabelle || []).map((tab, ti) => {
+      const u = getUscitaTab(tab);
+      const uc = colors[u];
+      const dur = tab.orarioRientro ? calcDurata(tab.orario, tab.orarioRientro) : '—';
+      return `<div class="tab-row">
+        <span class="tab-code">${tab.cod || tab.id}</span>
+        <span class="tab-time">${tab.orario}</span>
+        <span class="tab-time" style="color:var(--muted)">${tab.orarioRientro || '—'}</span>
+        <span class="tab-ore">${dur}</span>
+        <span class="tipo-chip">${tab.tipologia || '—'}</span>
+        <span class="tab-uscita-badge" style="background:${uc}22;color:${uc}">${labels[u]}</span>
+        <button class="btn-edit-tab" onclick="openEditTabella('${linea.id}','${tab.id}')" title="Modifica">✏</button>
+        <button class="btn-del-tab" onclick="deleteTabella('${linea.id}','${tab.id}')" title="Elimina">✕</button>
+      </div>`;
+    }).join('');
+
+    // Form aggiungi tabella per questa linea
+    const formTab = `
+      <div style="padding:12px 18px;background:#0a0c14;border-top:1px solid var(--border)">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-weight:700">+ Aggiungi Tabella</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tabella</label>
+            <input class="form-input" id="ft-cod-${linea.id}" placeholder="es. 10A" style="width:80px">
+          </div>
+          <div class="form-group">
+            <label>Uscita</label>
+            <select class="form-select" id="ft-usc-${linea.id}" style="width:110px">
+              <option value="1" ${currentView==='u1'?'selected':''}>🌅 Prima</option>
+              <option value="2" ${currentView==='u2'?'selected':''}>☀️ Seconda</option>
+              <option value="3" ${currentView==='u3'?'selected':''}>🌆 Terza</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Ora uscita</label>
+            <input class="form-input" id="ft-out-${linea.id}" type="time" style="width:100px">
+          </div>
+          <div class="form-group">
+            <label>Ora rientro</label>
+            <input class="form-input" id="ft-ret-${linea.id}" type="time" style="width:100px">
+          </div>
+          <div class="form-group">
+            <label>Tipologia</label>
+            <select class="form-select" id="ft-tip-${linea.id}" style="width:130px">
+              ${tipOptions}
+            </select>
+          </div>
+          <button class="btn-form-add" onclick="addTabellaForm('${linea.id}')">Aggiungi</button>
+        </div>
+      </div>`;
+
+    return `<div class="linea-accordion">
+      <div class="linea-head" onclick="this.nextElementSibling.classList.toggle('open')">
+        <div class="linea-name-big">${linea.nome}</div>
+        <span class="linea-tipo-tag tipo-${linea.tipo}">${linea.tipo}</span>
+        <span class="linea-tab-count">${(linea.tabelle || []).length} tab.</span>
+        <button class="btn-del-linea" onclick="event.stopPropagation();deleteLinea('${linea.id}')">✕ Rimuovi</button>
+        <span style="color:var(--muted);margin-left:8px">▾</span>
+      </div>
+      <div class="linea-body">
+        ${tabRows || '<div style="padding:14px 18px;color:var(--muted);font-size:13px">Nessuna tabella.</div>'}
+        ${formTab}
+      </div>
+    </div>`;
+  }).join('');
+
+  const notice = !isCustom ? `<div style="padding:12px 16px;background:#1a1400;border:1px solid #5c4a00;border-radius:8px;margin-bottom:20px;font-size:13px;color:var(--yellow)">
+    ⚠️ Stai vedendo i dati di esempio. Aggiungi le linee reali qui sotto — verranno salvate su Firebase.
+  </div>` : '';
+
+  const htmlLinee = `
+    <div class="uscita-header">
+      <div>
+        <div class="uscita-title" style="color:var(--yellow)">🗺️ Linee e Tabelle</div>
+        <div class="uscita-time">${linee.length} linee · ${isCustom ? 'Dati reali' : 'Dati di esempio'}</div>
+      </div>
+    </div>
+    ${notice}
+    ${formLinea}
+    ${cards}`;
+
+  return htmlLinee;
+}
+
+// ── Aggiungi linea ──
+function addLineaForm() {
+  const nome = document.getElementById('fl-nome').value.trim();
+  const tipo = document.getElementById('fl-tipo').value;
+  if (!nome) { toast('Inserisci un nome per la linea', true); return; }
+  if (!usciteData.linee) usciteData.linee = {};
+  // Nessun controllo su nome linea: posso avere più linee con stesso numero
+  const id = 'L' + uid6();
+  const tabelle = [];
+  const cod = document.getElementById('fl-tab').value.trim();
+  const uscita = document.getElementById('fl-usc')?.value || '1';
+  const orario = document.getElementById('fl-out').value;
+  const orarioRientro = document.getElementById('fl-ret').value;
+  const tipologia = document.getElementById('fl-tip').value;
+  if (cod) {
+    tabelle.push({ id: 'T' + uid6(), cod, uscita, orario: orario||'', orarioRientro: orarioRientro || '', tipologia: tipologia || '' });
+  }
+  // Salva nel servizio corrente
+  const servizi = getServizi();
+  if (!servizi[currentServizio].linee) servizi[currentServizio].linee = {};
+  servizi[currentServizio].linee[id] = { id, nome, tipo, tabelle };
+  usciteData.servizi = servizi;
+  saveUscite();
+  document.getElementById('fl-nome').value = '';
+  document.getElementById('fl-tab').value = '';
+  toast('Linea creata in ' + currentServizio + (tabelle.length ? ' con tabella' : ''));
+  render();
+}
+
+// ── Aggiungi tabella ──
+function addTabellaForm(lineaId) {
+  const cod = document.getElementById('ft-cod-' + lineaId)?.value.trim();
+  const uscita = document.getElementById('ft-usc-' + lineaId)?.value || '1';
+  const orario = document.getElementById('ft-out-' + lineaId)?.value;
+  const orarioRientro = document.getElementById('ft-ret-' + lineaId)?.value;
+  const tipologia = document.getElementById('ft-tip-' + lineaId)?.value;
+  if (!cod) { toast('Inserisci il codice tabella', true); return; }
+  if (!usciteData.linee) usciteData.linee = {};
+  // Cerca la linea in TUTTI i servizi
+  let linea = null;
+  for (const sId of ['LUN-VEN','SAB','DOM']) {
+    linea = getLineeServizio(sId).find(l => l.id === lineaId);
+    if (linea) break;
+  }
+  if (!linea) linea = getLineeServizio(currentServizio).find(l => l.id === lineaId);
+  if (!linea) { toast('Linea non trovata', true); return; }
+  const servizi = getServizi();
+  if (!servizi[currentServizio].linee) servizi[currentServizio].linee = {};
+  if (!servizi[currentServizio].linee[lineaId]) {
+    servizi[currentServizio].linee[lineaId] = JSON.parse(JSON.stringify(linea));
+  }
+  if (!servizi[currentServizio].linee[lineaId].tabelle) servizi[currentServizio].linee[lineaId].tabelle = [];
+
+  const newTab = { id: 'T' + uid6(), cod, uscita, orario: orario||'', orarioRientro: orarioRientro || '', tipologia: tipologia || '' };
+  servizi[currentServizio].linee[lineaId].tabelle.push(newTab);
+  usciteData.servizi = servizi;
+  saveUscite();
+  toast('Tabella aggiunta a ' + currentServizio);
+  render();
+}
+
+// ── Raccoglie tutti i tabId attivi dalle linee correnti ──
+function getTabIdAttivi() {
+  const ids = new Set();
+  for (const linea of getLinee()) {
+    for (const tab of (linea.tabelle || [])) ids.add(tab.id);
+  }
+  return ids;
+}
+
+// ── Cleanup automatico: rimuove dai giorni qualsiasi assegnazione
+//    il cui tabId non esiste più nelle linee attive. ──
+let _cleanupRunning = false;
+function cleanupAssegnazioniOrfane(save = true) {
+  if (_cleanupRunning) return false;
+  const attivi = getTabIdAttivi();
+  const giorni = usciteData.giorni || {};
+  let changed = false;
+  for (const dayData of Object.values(giorni)) {
+    if (!dayData) continue;
+    for (const key of ['uscita1','uscita2','uscita3']) {
+      if (!dayData[key]) continue;
+      for (const tabId of Object.keys(dayData[key])) {
+        if (!attivi.has(tabId)) {
+          delete dayData[key][tabId];
+          changed = true;
+        }
+      }
+    }
+  }
+  if (changed && save) {
+    _cleanupRunning = true;
+    USCITE_REF.set(usciteData).finally(() => { _cleanupRunning = false; syncDot('ok'); });
+  }
+  return changed;
+}
+
+// ── Sblocca TUTTE le vetture per il giorno corrente (reset manuale) ──
+function sbloccaTuttoOggi() {
+  const giorni = usciteData.giorni || {};
+  if (giorni[currentDate]) {
+    giorni[currentDate] = { rientri: giorni[currentDate].rientri || {} };
+  }
+  // Cleanup manuale orfani su tutto
+  cleanupAssegnazioniOrfane(false);
+  saveUscite();
+  toast('Vetture sbloccate per ' + formatDateIT(currentDate));
+  render();
+}
+
+// Manteniamo le funzioni vecchie per retrocompatibilità
+// ma ora chiamano semplicemente il cleanup
+function liberaVettureTabella(tabId) { /* gestito da cleanupAssegnazioniOrfane */ }
+function liberaVettureLinea(lineaId) { /* gestito da cleanupAssegnazioniOrfane */ }
+
+// ── Elimina tabella ──
+function deleteTabella(lineaId, tabId) {
+  const servizi = getServizi();
+  // Cerca la tabella in TUTTI i servizi, non solo currentServizio
+  let trovato = false;
+  for (const sId of Object.keys(servizi)) {
+    if (servizi[sId]?.linee?.[lineaId]) {
+      const tabs = (servizi[sId].linee[lineaId].tabelle || []);
+      if (tabs.find(t => t.id === tabId)) {
+        servizi[sId].linee[lineaId].tabelle = tabs.filter(t => t.id !== tabId);
+        trovato = true;
+        break;
+      }
+    }
+  }
+  if (!trovato) { toast('Tabella non trovata', true); return; }
+  usciteData.servizi = servizi;
+  cleanupAssegnazioniOrfane(false);
+  saveUscite();
+  toast('Tabella rimossa');
+  render();
+}
+
+// ── Elimina linea ──
+function deleteLinea(lineaId) {
+  const servizi = getServizi();
+  // Cerca in tutti i servizi
+  for (const sId of Object.keys(servizi)) {
+    if (servizi[sId]?.linee?.[lineaId]) {
+      delete servizi[sId].linee[lineaId];
+    }
+  }
+  usciteData.servizi = servizi;
+  cleanupAssegnazioniOrfane(false);
+  saveUscite();
+  toast('Linea rimossa da ' + currentServizio);
+  render();
+}
+
+// ═══════════════════════════════════════════════
+// SERVIZI
+// ═══════════════════════════════════════════════
+function renderServizi() {
+  const servizi = getServizi();
+  const servizioAttivo = getServizioAttivo(currentDate);
+  const s = servizi[currentServizio];
+  const linee = getLineeServizio(currentServizio);
+  const tipiDepo = getTipiOptions();
+  const tipOptions = tipiDepo.map(t => `<option value="${t.code}">${t.code}</option>`).join('');
+  const colors = { '1': 'var(--u1l)', '2': 'var(--u2l)', '3': 'var(--u3l)' };
+  const labels = { '1': 'Prima', '2': 'Seconda', '3': 'Terza' };
+
+  // Tab servizi
+  const tabs = ['LUN-VEN','SAB','DOM'].map(id => `
+    <button class="serv-tab-btn ${currentServizio===id?'active':''}"
+      onclick="switchServizio('${id}')">${id}</button>`).join('');
+
+  // Badge servizio attivo oggi
+  const badgeOggi = `<span style="background:#001a1a;color:#22d3ee;font-size:11px;font-weight:700;
+    padding:3px 10px;border-radius:20px;border:1px solid #22d3ee">
+    Oggi: ${servizioAttivo}</span>`;
+
+  // Accordion linee
+  const cards = linee.map(linea => {
+    const tabRows = (linea.tabelle || []).map(tab => {
+      const u = getUscitaTab(tab);
+      const uc = colors[u];
+      const dur = tab.orarioRientro ? calcDurata(tab.orario, tab.orarioRientro) : '—';
+      return `<div class="tab-row">
+        <span class="tab-code">${tab.cod || tab.id}</span>
+        <span class="tab-time">${tab.orario||'—'}</span>
+        <span class="tab-time" style="color:var(--muted)">${tab.orarioRientro||'—'}</span>
+        <span class="tab-ore">${dur}</span>
+        <span class="tipo-chip">${tab.tipologia||'—'}</span>
+        <span class="tab-uscita-badge" style="background:${uc}22;color:${uc}">${labels[u]}</span>
+        <button class="btn-edit-tab" onclick="openEditTabella('${linea.id}','${tab.id}')">✏</button>
+        <button class="btn-del-tab" onclick="deleteTabella('${linea.id}','${tab.id}')">✕</button>
+      </div>`;
+    }).join('');
+
+    const formTab = `
+      <div style="padding:12px 18px;background:#0a0c14;border-top:1px solid var(--border)">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-weight:700">+ Aggiungi Tabella</div>
+        <div class="form-row">
+          <div class="form-group"><label>Tabella</label>
+            <input class="form-input" id="ft-cod-${linea.id}" placeholder="es. 10A" style="width:80px">
+          </div>
+          <div class="form-group"><label>Uscita</label>
+            <select class="form-select" id="ft-usc-${linea.id}" style="width:110px">
+              <option value="1">🌅 Prima</option>
+              <option value="2">☀️ Seconda</option>
+              <option value="3">🌆 Terza</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Ora uscita</label>
+            <input class="form-input" id="ft-out-${linea.id}" type="time" style="width:100px">
+          </div>
+          <div class="form-group"><label>Ora rientro</label>
+            <input class="form-input" id="ft-ret-${linea.id}" type="time" style="width:100px">
+          </div>
+          <div class="form-group"><label>Tipologia</label>
+            <select class="form-select" id="ft-tip-${linea.id}" style="width:100px">${tipOptions}</select>
+          </div>
+          <button class="btn-form-add" onclick="addTabellaForm('${linea.id}')">Aggiungi</button>
+        </div>
+      </div>`;
+
+    return `<div class="linea-accordion">
+      <div class="linea-head" onclick="this.nextElementSibling.classList.toggle('open')">
+        <div class="linea-name-big">${linea.nome}</div>
+        <span class="linea-tipo-tag tipo-${linea.tipo}">${linea.tipo}</span>
+        <span class="linea-tab-count">${(linea.tabelle||[]).length} tab.</span>
+        <button class="btn-del-linea" onclick="event.stopPropagation();deleteLinea('${linea.id}')">✕ Rimuovi</button>
+        <span style="color:var(--muted);margin-left:8px">▾</span>
+      </div>
+      <div class="linea-body">
+        ${tabRows||'<div style="padding:14px 18px;color:var(--muted);font-size:13px">Nessuna tabella.</div>'}
+        ${formTab}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Form nuova linea
+  const formLinea = `
+    <div class="linee-form-box">
+      <div class="linee-form-title">+ Nuova Linea</div>
+      <div class="form-row">
+        <div class="form-group"><label>Nome linea</label>
+          <input class="form-input" id="fl-nome" placeholder="es. Linea 34" style="width:140px">
+        </div>
+        <div class="form-group"><label>Tipo</label>
+          <select class="form-select" id="fl-tipo">
+            <option value="urbana">Urbana</option>
+            <option value="suburbana">Suburbana</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:8px 0;font-weight:700">Prima tabella (opzionale)</div>
+      <div class="form-row">
+        <div class="form-group"><label>Tabella</label>
+          <input class="form-input" id="fl-tab" placeholder="es. 1" style="width:70px">
+        </div>
+        <div class="form-group"><label>Uscita</label>
+          <select class="form-select" id="fl-usc" style="width:110px">
+            <option value="1" ${currentView==='u1'?'selected':''}>🌅 Prima</option>
+            <option value="2" ${currentView==='u2'?'selected':''}>☀️ Seconda</option>
+            <option value="3" ${currentView==='u3'?'selected':''}>🌆 Terza</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Ora uscita</label>
+          <input class="form-input" id="fl-out" type="time" style="width:100px">
+        </div>
+        <div class="form-group"><label>Ora rientro</label>
+          <input class="form-input" id="fl-ret" type="time" style="width:100px">
+        </div>
+        <div class="form-group"><label>Tipologia</label>
+          <select class="form-select" id="fl-tip" style="width:100px">
+            <option value="">—</option>${tipOptions}
+          </select>
+        </div>
+        <button class="btn-form-add" onclick="addLineaForm()">Crea Linea</button>
+      </div>
+    </div>`;
+
+  return `
+    <div class="uscita-header">
+      <div>
+        <div class="uscita-title" style="color:#22d3ee">📋 Servizi</div>
+        <div class="uscita-time">${s.nome} · ${linee.length} linee</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+        ${badgeOggi}
+        <button onclick="applyServizioData()" style="background:#001a1a;border:1px solid #22d3ee;
+          color:#22d3ee;padding:7px 14px;border-radius:7px;cursor:pointer;
+          font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px">
+          ▶ Applica ${currentServizio} a ${formatDateIT(currentDate)}
+        </button>
+        <button onclick="dedupManuale()" style="background:#1a0000;border:1px solid #ef4444;
+          color:#ef4444;padding:7px 14px;border-radius:7px;cursor:pointer;
+          font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px"
+          title="Rimuovi linee duplicate da tutti i servizi">
+          🧹 Pulisci duplicati
+        </button>
+      </div>
+    </div>
+    <div class="serv-tab">${tabs}</div>
+    <div style="margin-bottom:16px"></div>
+    ${formLinea}
+    ${cards}`;
+}
+
+function switchServizio(id) {
+  currentServizio = id;
+  render();
+}
+
+// Applica il servizio corrente alla data selezionata
+// Carica le tabelle del servizio per quel giorno (senza vetture)
+function dedupManuale() {
+  if (!confirm('Vuoi rimuovere tutte le linee duplicate da tutti i servizi?\nQuesta operazione non può essere annullata.')) return;
+  dedupLinee();
+  toast('✅ Duplicati rimossi');
+  render();
+}
+
+function applyServizioData() {
+  const servizi = getServizi();
+  const linee = getLineeServizio(currentServizio);
+  if (linee.length === 0) {
+    toast('Nessuna linea in ' + currentServizio, true);
+    return;
+  }
+  // Imposta il servizio attivo per questa data
+  if (!usciteData.dateServizio) usciteData.dateServizio = {};
+  usciteData.dateServizio[currentDate] = currentServizio;
+  // Mantieni i rientri esistenti, azzera solo le uscite
+  const dayData = getDayData(currentDate);
+  dayData.uscita1 = {};
+  dayData.uscita2 = {};
+  dayData.uscita3 = {};
+  // NON tocca dayData.rientri
+  if (!usciteData.giorni) usciteData.giorni = {};
+  usciteData.giorni[currentDate] = dayData;
+  saveUscite();
+  toast('✅ ' + currentServizio + ' applicato a ' + formatDateIT(currentDate) + ' · assegna le vetture!');
+  switchView('u1');
+}
+
+// ═══════════════════════════════════════════════
+// MODIFICA TABELLA
+// ═══════════════════════════════════════════════
+let _editTabLineaId = null, _editTabId = null;
+
+function openEditTabella(lineaId, tabId) {
+  // Cerca la linea in TUTTI i servizi
+  let linea = null;
+  for (const sId of ['LUN-VEN','SAB','DOM']) {
+    linea = getLineeServizio(sId).find(l => l.id === lineaId);
+    if (linea) break;
+  }
+  if (!linea) linea = getLineeServizio(currentServizio).find(l => l.id === lineaId);
+  if (!linea) return;
+  const tab = (linea.tabelle || []).find(t => t.id === tabId);
+  if (!tab) return;
+  _editTabLineaId = lineaId;
+  _editTabId = tabId;
+  document.getElementById('et-cod').value = tab.cod || '';
+  document.getElementById('et-usc').value = tab.uscita || getUscita(tab.orario || '06:00');
+  document.getElementById('et-out').value = tab.orario || '';
+  document.getElementById('et-ret').value = tab.orarioRientro || '';
+  // Popola tipologie da DepoTrack
+  const tipiDepo = getTipiOptions();
+  const sel = document.getElementById('et-tip');
+  sel.innerHTML = '<option value="">— Nessuna —</option>' +
+    tipiDepo.map(t => `<option value="${t.code}" ${tab.tipologia === t.code ? 'selected' : ''}>${t.code}</option>`).join('');
+  document.getElementById('modalEditTab').classList.add('open');
+}
+
+function closeEditTab() {
+  document.getElementById('modalEditTab').classList.remove('open');
+  _editTabLineaId = null; _editTabId = null;
+}
+
+function saveEditTabella() {
+  if (!_editTabLineaId || !_editTabId) return;
+  const cod = document.getElementById('et-cod').value.trim();
+  const uscita = document.getElementById('et-usc').value || '1';
+  const orario = document.getElementById('et-out').value;
+  const orarioRientro = document.getElementById('et-ret').value;
+  const tipologia = document.getElementById('et-tip').value;
+  if (!cod) { toast('Codice tabella obbligatorio', true); return; }
+
+  if (!usciteData.linee) usciteData.linee = {};
+  const servizi = getServizi();
+  const lineaOrig = getLineeServizio(currentServizio).find(l => l.id === _editTabLineaId);
+  if (!lineaOrig) { toast('Linea non trovata', true); return; }
+  if (!servizi[currentServizio].linee) servizi[currentServizio].linee = {};
+  if (!servizi[currentServizio].linee[_editTabLineaId]) {
+    servizi[currentServizio].linee[_editTabLineaId] = JSON.parse(JSON.stringify(lineaOrig));
+  }
+  const tabs = servizi[currentServizio].linee[_editTabLineaId].tabelle || [];
+  const idx = tabs.findIndex(t => t.id === _editTabId);
+  if (idx !== -1) {
+    tabs[idx] = { ...tabs[idx], cod, uscita, orario: orario||'', orarioRientro, tipologia };
+  }
+  servizi[currentServizio].linee[_editTabLineaId].tabelle = tabs;
+  usciteData.servizi = servizi;
+  saveUscite();
+  closeEditTab();
+  toast('Tabella aggiornata');
+  render();
+}
+
+// ═══════════════════════════════════════════════
+// BADGES
+// ═══════════════════════════════════════════════
+function updateBadges() {
+  const vetture = getVetture();
+  document.getElementById('badge-vet').textContent = vetture.length;
+
+  for (const n of [1, 2, 3]) {
+    document.getElementById('badge-u' + n).textContent = getTabelle(n).length;
+  }
+
+  const tomorrowData = getDayData(tomorrowStr());
+  const rientriCount = Object.keys(tomorrowData.rientri || {}).length;
+  const todayData = getDayData(currentDate);
+  const rientriOggiCount = Object.keys(todayData.rientri || {}).length;
+  document.getElementById('badge-rie').textContent = rientriCount + rientriOggiCount;
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+function toast(msg, isErr = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = isErr ? 'var(--red)' : 'var(--green)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Init
+switchView('u1');
+setTimeout(initParcoResize, 500);
+</script>
+</body>
+</html>
