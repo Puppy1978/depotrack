@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Officina · DepoTrack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;600;700&family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap">
+<style>
+/* ===== Officina · DepoTrack — "Notte d'officina"
+   Notte #07111D · Ardesia #39444D · Grafite #5D5D5D · Osso #E5E5DF · Ambra #DB9941 · Ruggine #AE2C11 · Petrolio #3A8FA6 */
+:root{
+  --notte:#07111D;--ardesia:#39444D;--grafite:#5D5D5D;--osso:#E5E5DF;--ambra:#DB9941;--ruggine:#AE2C11;--petrolio:#3A8FA6;
+  --bg:var(--notte);--bg2:#0c1826;--surf:rgba(57,68,77,.42);--surf2:rgba(57,68,77,.62);--solid:#16222f;
+  --line:rgba(229,229,223,.09);--line2:rgba(229,229,223,.17);
+  --txt:var(--osso);--mut:#94a0a8;--acc:var(--ambra);--acc2:#f0b766;
+  --ok:#3ddc97;--bad:#e2543a;--warn:#f0b54a;--tmp:#b57bff;
+  --glass:linear-gradient(160deg,rgba(229,229,223,.07),rgba(229,229,223,.015) 40%),rgba(28,40,52,.62);
+  --sh-out:0 12px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(229,229,223,.08);
+  --sh-in:inset 0 2px 8px rgba(0,0,0,.55),inset 0 -1px 0 rgba(229,229,223,.04);
+  --f:"Barlow Semi Condensed","Barlow","Arial Narrow",system-ui,sans-serif;
+  --fd:"Oxanium","Barlow Semi Condensed",system-ui,sans-serif;
+  --fm:var(--fd);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--notte);color:var(--txt);font:15px/1.4 var(--f);-webkit-font-smoothing:antialiased;position:relative;overflow-x:hidden}
+/* trama esagonale + braci, ferma (niente movimento) */
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+   radial-gradient(900px 520px at 85% 110%,rgba(58,143,166,.22),transparent 70%),
+   radial-gradient(700px 420px at -5% -10%,rgba(219,153,65,.10),transparent 70%),
+   var(--notte)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.55;
+  background-image:
+   radial-gradient(circle at 78% 72%,rgba(219,153,65,.9) 0 1.2px,transparent 2px),
+   radial-gradient(circle at 91% 58%,rgba(219,153,65,.8) 0 1px,transparent 1.8px),
+   radial-gradient(circle at 66% 88%,rgba(219,153,65,.7) 0 1px,transparent 1.8px),
+   radial-gradient(circle at 95% 85%,rgba(219,153,65,.8) 0 1.4px,transparent 2.2px),
+   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='98' viewBox='0 0 28 49'%3E%3Cpath fill='%237f9bb5' fill-opacity='.16' d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/svg%3E");
+  -webkit-mask-image:radial-gradient(120% 90% at 100% 100%,#000 10%,transparent 65%);mask-image:radial-gradient(120% 90% at 100% 100%,#000 10%,transparent 65%)}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+:focus-visible{outline:2px solid var(--ambra);outline-offset:2px}
+#app{min-height:100%;display:flex;flex-direction:column;gap:14px;padding:14px 18px 14px}
+/* ---- barra ---- */
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand .mk{width:40px;height:40px;flex:none;display:grid;place-items:center;font-size:19px;color:var(--notte);
+  background:var(--ambra);clip-path:polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0 50%);filter:drop-shadow(0 0 10px rgba(219,153,65,.45))}
+.brand h1{margin:0;font:700 22px/1 var(--fd);letter-spacing:.02em}
+.brand small{display:block;margin-top:3px;font-size:12.5px;color:var(--mut)}
+.live{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(61,220,151,.6);animation:lv 2.4s infinite;margin-right:6px;vertical-align:1px}
+.live.off{background:var(--bad);animation:none}.live.wait{background:var(--warn)}
+@keyframes lv{70%{box-shadow:0 0 0 7px rgba(61,220,151,0)}}
+.sp{flex:1}
+.clk{font:600 22px/1 var(--fd);letter-spacing:.04em;padding:9px 16px;border-radius:999px;background:var(--bg2);box-shadow:var(--sh-in);font-variant-numeric:tabular-nums;color:var(--osso)}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:999px;background:var(--glass);box-shadow:var(--sh-out);font-weight:600;font-size:14px;border:1px solid var(--line);transition:border-color .2s,box-shadow .2s,transform .12s}
+.btn:hover{border-color:rgba(219,153,65,.55);box-shadow:var(--sh-out),0 0 0 3px rgba(219,153,65,.12)}
+.btn:active{transform:translateY(1px);box-shadow:var(--sh-in)}
+.btn.pri{background:var(--ambra);color:var(--notte);border-color:transparent;font-weight:700;box-shadow:0 8px 22px rgba(219,153,65,.32)}
+.btn.pri:hover{box-shadow:0 8px 22px rgba(219,153,65,.32),0 0 0 3px rgba(219,153,65,.25)}
+.btn.danger{background:rgba(174,44,17,.25);color:#ffb3a3;border-color:rgba(226,84,58,.45)}
+.btn.on{border-color:var(--ambra);color:var(--acc2);box-shadow:var(--sh-out),0 0 14px rgba(219,153,65,.25)}
+.user{font-size:13px;font-weight:600}.user small{color:var(--acc2);margin-left:5px;font:600 11px var(--fd)}
+.wx{display:flex;align-items:center;gap:10px;padding:6px 16px 6px 12px;border-radius:999px;background:var(--bg2);box-shadow:var(--sh-in);min-width:0}
+.wx .wi{font-size:22px;line-height:1}
+.wx b{display:block;font:600 18px/1 var(--fd);font-variant-numeric:tabular-nums}
+.wx small{display:block;font-size:12px;color:var(--mut);white-space:nowrap;max-width:300px;overflow:hidden;text-overflow:ellipsis}
+/* ---- riquadri ---- */
+.kpi{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:14px}
+.k{--c:var(--ambra);position:relative;display:flex;align-items:center;gap:16px;min-width:0;padding:14px 18px;border-radius:22px;background:var(--glass);box-shadow:var(--sh-out);border:1px solid var(--line);text-align:left;overflow:hidden;
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);transition:border-color .2s}
+.k:hover{border-color:color-mix(in srgb,var(--c) 55%,transparent)}
+.k .kb{min-width:0;flex:1}
+.k .kl{font-size:14px;color:var(--mut);font-weight:600}
+.k .kv{font:600 clamp(28px,3.3vw,40px)/1.05 var(--fd);font-variant-numeric:tabular-nums;color:var(--osso)}
+.k .kv small{font-size:.48em;color:var(--mut);font-weight:500}
+.k .kn{font-size:13.5px;color:var(--mut);line-height:1.4}.k .kn b{color:var(--osso);font-weight:700}
+.k.r-ok{--c:var(--ok)}.k.r-warn{--c:var(--warn)}.k.r-bad{--c:var(--bad);animation:kp 1.8s ease-in-out infinite}
+@keyframes kp{50%{box-shadow:var(--sh-out),0 0 0 4px rgba(226,84,58,.28)}}
+/* strumento fermi */
+.gauge{flex:none;width:118px;height:118px}
+.gauge .tk{stroke:rgba(229,229,223,.22);stroke-width:1}
+.gauge .tk.m{stroke:rgba(229,229,223,.5);stroke-width:1.4}
+.gauge .pc{font:700 25px var(--fd);fill:var(--osso)}
+.gauge .pl{font:500 10px var(--f);fill:var(--mut)}
+.leg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:13px;color:var(--mut)}
+.leg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:0;background:var(--c)}
+.leg b{color:var(--osso)}
+/* mappa posti in miniatura */
+.mini{flex:none;display:flex;gap:6px;align-items:flex-end;padding:8px;border-radius:14px;background:var(--bg2);box-shadow:var(--sh-in)}
+.mini .mg{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,9px);gap:2px}
+.mini .mg i{width:9px;height:9px;border-radius:2px;background:rgba(229,229,223,.10)}
+.mini .mg i.o{background:var(--c);box-shadow:0 0 6px var(--c)}
+/* conto alla rovescia RENTRI */
+.cd{flex:none;display:grid;grid-template-columns:repeat(7,9px);gap:3px;padding:10px 9px;border-radius:14px;background:var(--bg2);box-shadow:var(--sh-in)}
+.cd i{height:30px;border-radius:3px;background:rgba(229,229,223,.10)}
+.cd i.o{background:var(--c);box-shadow:0 0 6px var(--c)}
+/* ---- blocchi e posti ---- */
+.bay{flex:1;display:grid;grid-template-columns:3fr 7fr 2fr;gap:12px;align-items:stretch;min-height:0}
+.blk{--band:var(--osso);min-width:0;display:flex;flex-direction:column;border-radius:22px;background:rgba(7,17,29,.55);box-shadow:var(--sh-in);border:1px solid var(--line);overflow:hidden}
+.blk.bL{--band:var(--osso)}.blk.bC{--band:var(--ambra)}.blk.bR{--band:var(--petrolio)}
+.blk h2{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0;padding:9px 14px;font:700 15px/1.1 var(--fd);color:var(--notte);background:var(--band);
+  box-shadow:inset 0 -3px 0 rgba(7,17,29,.18),0 6px 16px color-mix(in srgb,var(--band) 25%,transparent)}
+.blk h2 span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.blk h2 em{font-style:normal;font:700 14px var(--fd);padding:2px 9px;border-radius:999px;background:rgba(7,17,29,.82);color:var(--band)}
+.slots{flex:1;display:grid;gap:7px;padding:9px;grid-template-columns:repeat(var(--n),minmax(0,1fr))}
+.bc{min-width:0;display:flex;flex-direction:column;gap:5px;padding:7px 5px 5px;border-radius:16px;background:rgba(57,68,77,.28);border:1px solid var(--line)}
+.bh{display:flex;flex-direction:column;gap:1px;padding:0 4px}
+.bh .pid{font:700 14px var(--fd);color:var(--osso);letter-spacing:.02em}
+.lw{position:relative;display:flex;align-items:center;gap:3px;min-width:0;margin:0 -4px;padding:2px 5px;border-radius:8px;font-weight:700;line-height:1.2;color:var(--acc2)}
+.fit{display:block;min-width:0;white-space:nowrap;overflow:hidden}
+.lw .lt{flex:1 1 auto}
+.lw.empty{color:var(--mut);font-weight:500}
+.lw.ed{cursor:pointer}.lw.ed:hover{background:rgba(229,229,223,.07)}.lw.ed::after{content:"▾";flex:none;font-size:9px;color:var(--mut)}
+.lw.ed:focus-within{outline:2px solid var(--ambra)}
+.lw select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
+.p{--c:var(--grafite);container-type:inline-size;position:relative;flex:1;min-width:0;min-height:104px;display:flex;flex-direction:column;gap:2px;padding:8px 7px 7px;border-radius:12px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--c) 16%,transparent),transparent 55%),var(--glass);border:1px solid color-mix(in srgb,var(--c) 40%,transparent);
+  box-shadow:var(--sh-out),inset 0 3px 0 var(--c);cursor:pointer;transition:transform .15s,border-color .2s}
+.p:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--c) 70%,transparent)}
+.p .pn{position:absolute;top:5px;right:7px;font:600 10px var(--fd);color:var(--mut)}
+.p.free{background:transparent;box-shadow:var(--sh-in);border:1px dashed rgba(229,229,223,.16)}
+.p.free:hover{border-color:rgba(219,153,65,.5)}
+.p.x2{box-shadow:var(--sh-out);background:linear-gradient(90deg,var(--c) 50%,var(--c2) 50%) top/100% 3px no-repeat,linear-gradient(180deg,color-mix(in srgb,var(--c) 14%,transparent),transparent 55%),var(--glass)}
+.p.fer{animation:pp 2s ease-in-out infinite}
+@keyframes pp{50%{box-shadow:var(--sh-out),inset 0 3px 0 var(--c),0 0 0 3px color-mix(in srgb,var(--c) 40%,transparent)}}
+.p .on{font-family:var(--fd);font-weight:700;line-height:1.05;margin-top:9px;font-variant-numeric:tabular-nums;color:var(--osso);text-shadow:0 0 18px color-mix(in srgb,var(--c) 45%,transparent)}
+.p .om{color:var(--mut)}
+.p .pst{min-width:0;font-weight:700;line-height:1.25;color:var(--c);filter:brightness(1.15)}
+.p.x2 .pst span+span{color:var(--c2)}
+.p .of{margin-top:auto;display:flex;flex-direction:column;min-width:0;font-family:var(--fd);color:var(--mut)}
+.p .oe{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--mut);font-size:12.5px;text-align:center}
+.p .oe b{width:26px;height:26px;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(229,229,223,.22);font-size:18px;font-weight:400;line-height:1}
+.p.free:hover .oe b{border-color:var(--ambra);color:var(--ambra)}
+.p.miss{opacity:.7}
+.p.tw{box-shadow:var(--sh-out),inset 0 0 0 2px var(--warn)}.p.tb{box-shadow:var(--sh-out),inset 0 0 0 2px var(--bad);animation:pt 1.8s ease-in-out infinite}
+@keyframes pt{50%{box-shadow:var(--sh-out),inset 0 0 0 2px var(--bad),0 0 16px rgba(226,84,58,.55)}}
+.p.tw .tm{color:var(--warn);font-weight:700}.p.tb .tm{color:var(--bad);font-weight:700}
+/* ---- oggi ---- */
+.today{display:flex;align-items:center;gap:12px;min-width:0;padding:8px 10px 8px 16px;border-radius:999px;background:rgba(7,17,29,.6);box-shadow:var(--sh-in);border:1px solid var(--line)}
+.today .th{flex:none;font-size:14px;font-weight:600;color:var(--mut);white-space:nowrap;cursor:pointer}
+.today .th:hover{color:var(--acc2)}
+.today .th b{color:var(--osso);font:700 15px var(--fd)}
+.tl{flex:1;min-width:0;display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;padding:2px 0}
+.tl .ev{flex:none;display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;background:var(--glass);border:1px solid var(--line);font-size:13px;white-space:nowrap}
+.tl .ev time{font:600 12px var(--fd);color:var(--mut)}
+.tl .ev i{font-style:normal;font-weight:900}.tl .ev.in i{color:var(--ok)}.tl .ev.out i{color:var(--acc2)}.tl .ev.mv i{color:var(--petrolio)}
+.tl .ev small{color:var(--mut)}
+.tl .none{color:var(--mut);font-size:13px}
+.foot{font-size:12px;color:var(--mut);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;opacity:.8}
+/* ---- storico ---- */
+.sto{max-height:52vh;overflow:auto;border-radius:14px;background:var(--bg2);box-shadow:var(--sh-in)}
+.sto table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.sto th{position:sticky;top:0;background:#1a2836;text-align:left;font-size:13px;font-weight:600;color:var(--mut);padding:9px 10px;white-space:nowrap}
+.sto td{padding:7px 10px;border-top:1px solid var(--line);white-space:nowrap}
+.sto td small{display:block;color:var(--mut);font-size:12px}
+.sto .dentro{color:var(--acc2);font-weight:700}
+/* ---- finestre ---- */
+.scrim{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:rgba(4,9,16,.66);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.md{width:min(560px,100%);max-height:88vh;display:flex;flex-direction:column;border-radius:24px;background:linear-gradient(160deg,rgba(229,229,223,.06),transparent 40%),#122030;border:1px solid var(--line2);box-shadow:0 30px 80px rgba(0,0,0,.65)}
+.md.wide{width:min(780px,100%)}
+.mh{display:flex;align-items:center;gap:10px;padding:16px 18px 10px}.mh h3{margin:0;flex:1;font:700 19px var(--fd)}
+.mh .x{width:34px;height:34px;border-radius:50%;background:var(--bg2);box-shadow:var(--sh-in);font-size:18px}
+.mb{padding:4px 18px 14px;overflow:auto}
+.mf{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:12px 18px 16px;border-top:1px solid var(--line)}
+.field{width:100%;padding:10px 14px;border-radius:14px;background:var(--bg2);box-shadow:var(--sh-in);border:1.5px solid transparent;outline:none}
+.field:focus{border-color:var(--ambra);box-shadow:var(--sh-in),0 0 0 3px rgba(219,153,65,.18)}
+.frm{display:grid;gap:10px}.frm2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sub{color:var(--mut);font-size:14px}
+.lab{font-size:13px;color:var(--mut);margin-bottom:4px}
+.err{color:#ffb3a3;font-size:14px;min-height:1em}
+.list{display:grid;gap:4px;max-height:52vh;overflow:auto;margin-top:10px}
+.r{--c:var(--mut);display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:12px;text-align:left;border-left:4px solid var(--c);background:rgba(229,229,223,.03)}
+.r:hover{background:rgba(229,229,223,.08)}
+.r b{min-width:54px;font:700 17px var(--fd)}.r em{flex:1;min-width:0;font-style:normal;color:var(--mut);font-size:14px}.r span{font:600 12px var(--fd);color:var(--mut)}
+.det{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}.det dt{color:var(--mut)}.det dd{margin:0;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chips button{padding:9px 14px;border-radius:999px;background:var(--bg2);border:1px solid var(--line2);font:600 14px var(--fd)}
+.chips button:hover{border-color:var(--ambra)}
+.rbig{--c:var(--warn);padding:12px 14px;border-radius:14px;margin-bottom:12px;font-weight:700;font-size:17px;background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
+.hist{display:grid;gap:4px;margin-top:6px;font-size:14px}.hist div{display:flex;justify-content:space-between;padding:6px 10px;border-radius:10px;background:rgba(229,229,223,.04)}
+.fbar{display:grid;grid-template-columns:minmax(0,180px) 1fr 34px;gap:10px;align-items:center;font-size:14px;margin:5px 0}.fbar i{display:block;height:10px;border-radius:6px;background:var(--c)}.fbar b{text-align:right;font-family:var(--fd)}
+#toast{position:fixed;left:50%;bottom:18px;z-index:80;transform:translate(-50%,30px);opacity:0;pointer-events:none;padding:11px 20px;border-radius:999px;background:#1a2836;border:1px solid rgba(219,153,65,.4);box-shadow:0 14px 40px rgba(0,0,0,.5);font-weight:600;transition:all .25s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.ph{flex:1;display:grid;place-items:center;text-align:center;color:var(--mut);gap:12px;padding:40px}
+.bc2 .p.arti{flex:1;min-height:214px}
+.p.arti .on{margin-top:22px}
+.p .pn.art{padding:1px 7px;border-radius:999px;background:var(--c);color:var(--notte);font-weight:700;opacity:1;top:6px}
+.p .snodo{position:absolute;left:8px;right:8px;top:50%;height:0;border-top:1px dashed color-mix(in srgb,var(--c) 55%,transparent);pointer-events:none}
+.p .snodo::after{content:"";position:absolute;left:50%;top:-5px;width:9px;height:9px;margin-left:-5px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--c) 70%,transparent);background:var(--notte)}
+.r .t18{font-style:normal;font-weight:700;color:var(--notte);background:var(--ambra);padding:0 6px;border-radius:999px;font-size:12px}
+.r.no{opacity:.55}
+/* ---- tema alternativo "Infografica": petrolio, crema, arancio, nero, azzurro ---- */
+html.t-info{--notte:#0b2f44;--ardesia:#1d5f7f;--osso:#f3ead6;--ambra:#ec6a1e;--petrolio:#4fb3c8;--ruggine:#c8401a;
+ --bg2:#08283a;--solid:#0e3a52;--txt:#f3ead6;--mut:#9fc0cc;--acc2:#ff9a52;--line:rgba(243,234,214,.10);--line2:rgba(243,234,214,.2);
+ --glass:linear-gradient(160deg,rgba(243,234,214,.08),rgba(243,234,214,.015) 40%),rgba(16,58,82,.72)}
+html.t-info body::before{background:linear-gradient(180deg,#1d6a8c 0%,#124a66 45%,#0a2c40 100%)}
+html.t-info body::after{opacity:.35}
+html.t-info .blk{background:rgba(6,30,44,.55)}
+html.t-info .blk.bL{--band:#f3ead6}html.t-info .blk.bC{--band:#ec6a1e}html.t-info .blk.bR{--band:#4fb3c8}
+html.t-info .blk h2{color:#1b1f27}html.t-info .blk h2 em{background:#1b1f27}
+html.t-info .today{background:rgba(6,30,44,.6)}
+html.t-info .md{background:linear-gradient(160deg,rgba(243,234,214,.06),transparent 40%),#0e3a52}
+html.t-info .sto th{background:#0e3a52}
+html.t-info #toast{background:#0e3a52}
+html.t-info .p.free{border-color:rgba(243,234,214,.2)}
+/* ---- finestre strette / primo piano piccolo ---- */
+@media (max-width:1100px){.bay{grid-template-columns:1fr 1fr}.blk.bC{grid-column:1/-1;order:-1}.blk.bC .slots{grid-template-columns:repeat(7,minmax(0,1fr))}.kpi{grid-template-columns:1fr 1fr}.kpi .k:first-child{grid-column:1/-1}}
+@media (max-width:820px){.kpi{grid-template-columns:1fr}.blk.bC .slots{grid-template-columns:repeat(4,minmax(0,1fr))}.clk{font-size:17px}.wx small{display:none}}
+@media (max-width:520px){.mini .mg{grid-template-rows:repeat(2,7px)}.mini .mg i{width:7px;height:7px}.cd{grid-template-columns:repeat(7,7px)}.cd i{height:24px}}
+@media (max-width:520px){#app{padding:10px}.bay{grid-template-columns:1fr}.blk.bC{order:0}.slots,.blk.bC .slots{grid-template-columns:repeat(2,minmax(0,1fr))}.blk.bL .slots{grid-template-columns:repeat(3,minmax(0,1fr))}.brand small{display:none}.btn .t{display:none}.gauge{width:92px;height:92px}}
+@media (max-height:640px) and (min-width:821px){.k{padding-block:9px}.gauge{width:88px;height:88px}.p{min-height:84px}.p .om{display:none}.cd i{height:22px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand"><span class="mk">🔧</span><div><h1>Officina</h1><small><span class="live wait" id="dot"></span><span id="st">collegamento…</span></small></div></div>
+    <span class="sp"></span>
+    <div class="wx" id="wx" title="Meteo San Donato Milanese"><span class="wi" id="wxI">⛅</span><div><b id="wxT">--°</b><small id="wxD">meteo…</small></div></div>
+    <span class="clk" id="clk">--:--</span>
+    <button class="btn" id="bPin" title="Tiene la dashboard sopra tutte le altre finestre">📌<span class="t">Primo piano</span></button>
+    <button class="btn" id="bTema" title="Cambia colori della dashboard">🎨<span class="t" id="bTemaL">Notte</span></button>
+    <button class="btn" id="bSto" title="Storico entrate e uscite officina">📋<span class="t">Storico</span></button>
+    <button class="btn" id="bCfg" hidden>⚙<span class="t">Blocchi ed etichette</span></button>
+    <span id="user"></span>
+  </header>
+  <section class="kpi" id="kpi"></section>
+  <section class="bay" id="bay"></section>
+  <section class="today" id="today"><span class="th">Oggi</span><div class="tl" id="tl"><span class="none">Nessun movimento in officina oggi.</span></div></section>
+  <div class="foot"><span id="ft">DepoTrack · dashboard officina</span><span>Lo stato del mezzo lo decide sempre la sua scheda</span></div>
+</div>
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script>
+(function(){
+'use strict';
+/* ---------- documento attivo: la dashboard può stare nella finestra normale o in quella "primo piano" ---------- */
+var DOCX=document;
+function $(s,r){return (r||DOCX).querySelector(s)}
+function $$(s,r){return [].slice.call((r||DOCX).querySelectorAll(s))}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function arr(x){if(!x)return [];if(Array.isArray(x))return x.filter(Boolean);return Object.keys(x).map(function(k){return x[k]}).filter(Boolean)}
+function nk(p){return p+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,6)}
+
+var CFG={apiKey:"AIzaSyB6iU__138sUB4Tw_9DKWeat4WkN2RkVng",authDomain:"depotrack-d1d28.firebaseapp.com",databaseURL:"https://depotrack-d1d28-default-rtdb.europe-west1.firebasedatabase.app",projectId:"depotrack-d1d28",appId:"1:967480447300:web:7e79395a45964cdf348711"};
+var DB=null,AUTH=null,LIVE=false,ME={uid:null,name:'',role:null};
+var TIPI={},ST={},ORDER=[],V=[],BYID={};
+var OFF={post:{},label:{},etichette:[],blocchi:{},soglie:{}},OFFBY={},RENTRI={},TODAY=[];
+var OBLK=[{k:'L',n:3,def:'Blocco sinistro'},{k:'C',n:7,def:'Blocco centrale'},{k:'R',n:2,def:'Blocco destro'}];
+var ETI_DEF=['Carrozzeria','Meccanica','Elettrico','Gommista','Revisione','Tagliando','Diagnosi','Ente esterno'];
+
+/* ---------- utilità ---------- */
+var tt;function toast(m){var t=$('#toast');if(!t)return;t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},2600)}
+function werr(e){toast('⚠ Scrittura rifiutata: '+((e&&(e.code||e.message))||'errore'))}
+function lname(id){return String((ST[id]||[''])[0]).trim().toLowerCase()}
+function isPura(id){return !!ST[id]&&lname(id)==='ferma'}
+function isTemp(id){if(!ST[id])return false;if(String(id).toLowerCase()==='fermat')return true;var n=lname(id);return n.indexOf('ferm')>-1&&n.indexOf('tempor')>-1}
+function isFerma(id){return isPura(id)||isTemp(id)}
+function stOf(s){return ST[s]||[s||'?','#7d8590']}
+function shortSt(s){var n=lname(s);if(isTemp(s))return 'Temp.';if(n.indexOf('prestito')>-1)return 'Prestito';if(n.indexOf('manut')>-1)return 'Manut.';if(n.indexOf('chiamat')>-1)return 'Chiamata';return stOf(s)[0].split(' ')[0]}
+function cap(t){t=String(t||'');return t.charAt(0).toUpperCase()+t.slice(1).toLowerCase()}
+function modelOf(v){return v.model||((TIPI[v.tipo]||{}).nome)||v.tipo||''}
+var SID_MAP={AREAME:'MET',RIFORN:'RIF',LAVAGG:'LAV',TUNNEL:'TRIF',TORRE:'TOR',UFFICI:'UFF'};
+function shortSid(s){
+  s=String(s==null?'':s);
+  var m=s.match(/^FILA([A-Za-z])-?(\d+)$/i);if(m)return m[1].toUpperCase()+'-'+m[2];
+  m=s.match(/^([A-Za-z]+)(?=-|\d|$)(-?)(.*)$/);
+  if(m&&SID_MAP[m[1].toUpperCase()]){var rest=m[3];return SID_MAP[m[1].toUpperCase()]+(rest?'-'+rest:'')}
+  return s;
+}
+function sortedV(){return V.slice().sort(function(a,b){return a.n.localeCompare(b.n,undefined,{numeric:true})})}
+function offOf(vid){return OFFBY[vid]||null}
+/* ogni postazione ha 2 posti in fila: L1a = posto 1, L1b = posto 2 */
+var RK={};
+function pname(h){var m=/^([LCR]\d+)([ab])$/.exec(h||'');return m?m[1]+'/'+(m[2]==='a'?1:2):(h||'')}
+/* autosnodati 18 m = SOLO vetture con numero 19xx: occupano i due posti della postazione */
+function isArti(v){return !!v&&/^19\d\d$/.test(String(v.n).trim())}
+function keysOf(vid){return Object.keys(OFF.post).filter(function(k){var x=OFF.post[k];return x&&x.vid===vid}).sort()}
+function posLbl(vid,h){var ks=keysOf(vid);if(ks.length===2&&bayOf(ks[0])===bayOf(ks[1]))return bayOf(ks[0])+'/1+2';return pname(h||ks[0])}
+function bayOf(h){return String(h).replace(/[ab]$/,'')}
+function blkName(k){var b=OFF.blocchi[k],d=OBLK.filter(function(x){return x.k===k})[0];return (b&&b.nome)||d.def}
+function sogl(){var g=OFF.soglie||{},w=+g.warn,b=+g.bad;if(!(w>0))w=8;if(!(b>0))b=24;if(b<=w)b=w+1;return {w:w,b:b}}
+function ageCls(ts){if(!ts)return '';var h=(Date.now()-ts)/36e5,g=sogl();return h>=g.b?' tb':h>=g.w?' tw':''}
+function etiList(){return OFF.etichette.length?OFF.etichette:ETI_DEF}
+function durTxt(ts){if(!ts)return '—';var m=Math.max(0,Math.round((Date.now()-ts)/60000));if(m<60)return m+' min';var h=Math.floor(m/60);if(h<24)return h+' h '+(m%60)+' min';var d=Math.floor(h/24);return d+(d===1?' giorno ':' giorni ')+(h%24)+' h'}
+function day0(t){var d=new Date(t);d.setHours(0,0,0,0);return d.getTime()}
+function fmtD(t){return t?new Date(t).toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}):'—'}
+function isoD(t){var d=new Date(t);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+function parseD(s){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?new Date(+m[1],+m[2]-1,+m[3]).getTime():null}
+function su(){return LIVE&&ME.role==='superuser'}
+function canEdit(){
+  if(!LIVE){toast('Database non collegato: niente da salvare');return false}
+  if(!ME.uid){openLogin();return false}
+  if(ME.role!=='superuser'){toast('Solo il superuser modifica le postazioni');return false}
+  return true;
+}
+function addLog(type,txt,vid){
+  if(!DB)return;var e={ts:Date.now(),type:type,txt:txt};if(vid)e.vid=vid;if(ME.name)e.utente=ME.name;
+  DB.ref('depotrack_log/'+nk('log')).set(e).catch(function(){});
+}
+
+/* ---------- finestre ---------- */
+function modal(o){
+  var sc=DOCX.createElement('div');sc.className='scrim';
+  sc.innerHTML='<div class="md'+(o.wide?' wide':'')+'" role="dialog" aria-label="'+esc(o.title||'')+'"><div class="mh"><h3>'+esc(o.title||'')+'</h3><button class="x" aria-label="Chiudi">×</button></div><div class="mb">'+(o.html||'')+'</div>'+(o.foot&&o.foot.length?'<div class="mf"></div>':'')+'</div>';
+  DOCX.body.appendChild(sc);
+  var M={el:sc,close:function(){if(sc.parentNode)sc.parentNode.removeChild(sc)}};
+  $('.x',sc).onclick=M.close;
+  sc.addEventListener('pointerdown',function(e){if(e.target===sc)M.close()});
+  sc.addEventListener('keydown',function(e){if(e.key==='Escape')M.close()});
+  if(o.foot)o.foot.forEach(function(b){var x=DOCX.createElement('button');x.className='btn'+(b.cls?' '+b.cls:'');x.textContent=b.label;x.onclick=function(){if(b.fn)b.fn();if(!b.keep)M.close()};$('.mf',sc).appendChild(x)});
+  return M;
+}
+function confirmBox(t,sub,ok,label){modal({title:t,html:'<div class="sub">'+esc(sub)+'</div>',foot:[{label:'Annulla'},{label:label||'Conferma',cls:'danger',fn:ok}]})}
+
+/* ---------- dati ---------- */
+function ingest(d){
+  TIPI={};arr(d.tipi).forEach(function(t){TIPI[t.id]={nome:t.nome||t.id,code:t.code||t.id}});
+  ST={};ORDER=[];arr(d.stati).forEach(function(s){ST[s.id]=[s.nome||s.id,s.colore||'#7d8590'];ORDER.push(s.id)});
+  var stallOf={},asg=d.assign||{};Object.keys(asg).forEach(function(sid){stallOf[asg[sid]]=sid});
+  var fl=d.fleet||{};V=[];BYID={};
+  Object.keys(fl).forEach(function(k){
+    var f=fl[k];if(!f)return;if(!ST[f.stato]){ST[f.stato]=[f.stato||'?','#7d8590'];ORDER.push(f.stato)}
+    var v={id:String(f.id),n:String(f.targa!=null?f.targa:f.id),model:f.model||'',tipo:f.type,s:f.stato,x:(f.extra&&ST[f.extra])?f.extra:null,note:f.note||'',stall:stallOf[f.id]||null};
+    V.push(v);BYID[v.id]=v;
+  });
+}
+function offIngest(o){
+  o=o||{};var raw=o.post||{},post={};RK={};
+  Object.keys(raw).forEach(function(k){if(/^[LCR]\d+[ab]$/.test(k)){post[k]=raw[k];RK[k]=k}});
+  Object.keys(raw).forEach(function(k){if(/^[LCR]\d+$/.test(k)){var h=post[k+'a']?k+'b':k+'a';if(!post[h]){post[h]=raw[k];RK[h]=k}}});/* vecchie postazioni singole -> posto 1 */
+  OFF={post:post,label:o.label||{},etichette:arr(o.etichette).map(String),blocchi:o.blocchi||{},soglie:o.soglie||{}};
+  OFFBY={};Object.keys(OFF.post).sort().forEach(function(p){var x=OFF.post[p];if(x&&x.vid&&!OFFBY[x.vid])OFFBY[x.vid]=p});
+}
+function rentriSt(){
+  var r=RENTRI||{};if(!r.next)return {cls:'r-warn',t:'Nessuna scadenza impostata'};
+  var d=Math.round((day0(r.next)-day0(Date.now()))/864e5);
+  if(d<0)return {cls:'r-bad',t:'Scaduto da '+(-d)+(d===-1?' giorno':' giorni')};
+  if(d===0)return {cls:'r-bad',t:'Scade OGGI'};
+  if(d<=2)return {cls:'r-warn',t:'Scade tra '+d+(d===1?' giorno':' giorni')};
+  return {cls:'r-ok',t:'Tra '+d+' giorni'};
+}
+
+/* ---------- disegno ---------- */
+function bay(pid){
+  var lab=OFF.label[pid]||'',ed=su();
+  var opts=etiList().slice();if(lab&&opts.indexOf(lab)<0)opts.unshift(lab);
+  var lw='<label class="lw'+(lab?'':' empty')+(ed?' ed':'')+'"><span class="lt fit" data-max="13" data-min="7">'+(lab?esc(lab):(ed?'🏷 ＋':'&nbsp;'))+'</span>'
+    +(ed?'<select data-p="'+pid+'" aria-label="Etichetta postazione '+pid+'"><option value="">— nessuna —</option>'+opts.map(function(o){return '<option'+(o===lab?' selected':'')+'>'+esc(o)+'</option>'}).join('')+'</select>':'')+'</label>';
+  var xa=OFF.post[pid+'a'],xb=OFF.post[pid+'b'],dbl=xa&&xb&&xa.vid&&xa.vid===xb.vid;
+  return '<div class="bc'+(dbl?' bc2':'')+'"><div class="bh"><span class="pid">'+pid+'</span>'+lw+'</div>'+(dbl?pane(pid+'a',true):pane(pid+'a')+pane(pid+'b'))+'</div>';
+}
+function pane(h,dbl){
+  var x=OFF.post[h],v=x&&x.vid?BYID[x.vid]:null,ed=su(),pn=dbl?'<span class="pn art">18 m</span><span class="snodo" aria-hidden="true"></span>':'<span class="pn">'+(h.slice(-1)==='a'?'1':'2')+'</span>';
+  if(!x)return '<div class="p free" data-p="'+h+'" role="button" tabindex="0" aria-label="Posto '+pname(h)+' libero">'+pn+'<div class="oe">'+(ed?'<b>+</b>Inserisci':'libero')+'</div></div>';
+  if(!v)return '<div class="p miss" data-p="'+h+'" role="button" tabindex="0">'+pn+'<div class="on">'+esc(x.n||'?')+'</div><div class="pst">non più in flotta</div></div>';
+  var full=stOf(v.s)[0]+(v.x?' + '+stOf(v.x)[0]:'');
+  return '<div class="p'+(dbl?' arti':'')+(isFerma(v.s)?' fer':'')+(v.x?' x2':'')+ageCls(x.ts)+'" data-p="'+h+'" role="button" tabindex="0" style="--c:'+stOf(v.s)[1]+(v.x?';--c2:'+stOf(v.x)[1]:'')+'" aria-label="'+(dbl?'Posti '+bayOf(h)+' 1 e 2, autosnodato':'Posto '+pname(h))+', mezzo '+esc(v.n)+', '+esc(full)+'">'+pn
+    +'<div class="on fit" data-max="34" data-min="14">'+esc(v.n)+'</div><div class="om fit" data-max="11.5" data-min="7">'+esc(modelOf(v))+'</div>'
+    +'<div class="pst fit" data-max="13" data-min="7" title="'+esc(full)+'"><span>'+esc(cap(shortSt(v.s)))+'</span>'+(v.x?' + <span>'+esc(cap(shortSt(v.x)))+'</span>':'')+'</div>'
+    +'<div class="of"><span class="fit tm" data-max="10.5" data-min="7">⏱ '+durTxt(x.ts)+'</span><span class="fit" data-max="10.5" data-min="7" title="Stallo di provenienza: resta suo">'+(v.stall?'↩ '+esc(shortSid(v.stall)):'senza stallo')+'</span></div></div>';
+}
+function render(){
+  if(!$('#bay'))return;
+  var ae=DOCX.activeElement;if(ae&&ae.tagName==='SELECT'&&ae.closest('.p'))return;
+  var tot=V.length,pura=0,temp=0,inF=0;
+  V.forEach(function(v){if(isPura(v.s))pura++;else if(isTemp(v.s))temp++;if(isFerma(v.s)&&offOf(v.id))inF++});
+  var cP='var(--bad)',cT='var(--tmp)';ORDER.forEach(function(k){if(isPura(k)&&cP==='var(--bad)')cP=stOf(k)[1];if(isTemp(k)&&cT==='var(--tmp)')cT=stOf(k)[1]});
+  var fer=pura+temp,C=251.33,a=tot?pura/tot*C:0,b=tot?temp/tot*C:0,pct=tot?Math.round(fer/tot*100):0;
+  var occ=0,tP=0,perB=OBLK.map(function(bk){var n=0;for(var i=1;i<=bk.n;i++)['a','b'].forEach(function(s2){tP++;if(OFF.post[bk.k+i+s2]){n++;occ++}});return esc(blkName(bk.k))+' <b>'+n+'/'+(bk.n*2)+'</b>'});
+  var rs=rentriSt();
+  /* strumento fermi: anello esterno = fermi sul totale, anello interno = posti officina occupati */
+  var G='',R1=46,R2=35,C1=2*Math.PI*R1,C2=2*Math.PI*R2,fa=tot?pura/tot*C1:0,fb=tot?temp/tot*C1:0,po=tP?occ/tP*C2:0;
+  for(var ti=0;ti<60;ti++){var an=ti*6*Math.PI/180,m=ti%5===0,r0=m?52:54.5,r1=58;G+='<line class="tk'+(m?' m':'')+'" x1="'+(60+r0*Math.sin(an)).toFixed(2)+'" y1="'+(60-r0*Math.cos(an)).toFixed(2)+'" x2="'+(60+r1*Math.sin(an)).toFixed(2)+'" y2="'+(60-r1*Math.cos(an)).toFixed(2)+'"/>'}
+  var gauge='<svg class="gauge" viewBox="0 0 120 120" role="img" aria-label="'+pct+'% dei mezzi fermi">'+G
+    +'<circle cx="60" cy="60" r="'+R1+'" fill="none" stroke="rgba(229,229,223,.08)" stroke-width="7"/>'
+    +'<circle cx="60" cy="60" r="'+R1+'" fill="none" stroke="'+cP+'" stroke-width="7" stroke-linecap="butt" stroke-dasharray="'+fa.toFixed(1)+' '+C1.toFixed(1)+'" transform="rotate(-90 60 60)" style="filter:drop-shadow(0 0 4px '+cP+')"/>'
+    +'<circle cx="60" cy="60" r="'+R1+'" fill="none" stroke="'+cT+'" stroke-width="7" stroke-dasharray="'+fb.toFixed(1)+' '+C1.toFixed(1)+'" stroke-dashoffset="'+(-fa).toFixed(1)+'" transform="rotate(-90 60 60)"/>'
+    +'<circle cx="60" cy="60" r="'+R2+'" fill="none" stroke="rgba(229,229,223,.08)" stroke-width="3"/>'
+    +'<circle cx="60" cy="60" r="'+R2+'" fill="none" stroke="var(--petrolio)" stroke-width="3" stroke-linecap="round" stroke-dasharray="'+po.toFixed(1)+' '+C2.toFixed(1)+'" transform="rotate(-90 60 60)"/>'
+    +'<text class="pc" x="60" y="63" text-anchor="middle">'+pct+'%</text><text class="pl" x="60" y="77" text-anchor="middle">fermi</text></svg>';
+  /* mappa posti: 12 postazioni x 2 posti, colore = stato del mezzo */
+  var mini='<span class="mini" aria-hidden="true">'+OBLK.map(function(bk){var h='';for(var i2=1;i2<=bk.n;i2++)['a','b'].forEach(function(s2){var x=OFF.post[bk.k+i2+s2],v=x&&BYID[x.vid];h+='<i'+(x?' class="o" style="--c:'+(v?stOf(v.s)[1]:'var(--grafite)')+'"':'')+'></i>'});return '<span class="mg">'+h+'</span>'}).join('')+'</span>';
+  /* RENTRI: 7 tacche = giorni che mancano alla scadenza */
+  var dl=RENTRI.next?Math.round((day0(RENTRI.next)-day0(Date.now()))/864e5):0,rc={'r-ok':'var(--ok)','r-warn':'var(--warn)','r-bad':'var(--bad)'}[rs.cls],cd='<span class="cd" aria-hidden="true">';
+  for(var di=0;di<7;di++)cd+='<i'+(di<Math.max(0,Math.min(7,dl))?' class="o" style="--c:'+rc+'"':'')+'></i>';cd+='</span>';
+  $('#kpi').innerHTML=
+    '<button class="k" id="kF" style="--c:var(--bad)">'+gauge
+      +'<div class="kb"><div class="kl">Fermi sul totale</div><div class="kv">'+fer+'<small> su '+tot+' mezzi</small></div>'
+      +'<div class="leg"><span style="--c:'+cP+'"><i></i><b>'+pura+'</b> ferme</span><span style="--c:'+cT+'"><i></i><b>'+temp+'</b> temporanee</span><span style="--c:var(--petrolio)"><i></i>posti occupati</span></div>'
+      +'<div class="kn"><b>'+inF+'</b> in officina, <b>'+(fer-inF)+'</b> ancora fuori</div></div></button>'
+    +'<button class="k" id="kP" style="--c:var(--petrolio)"><div class="kb"><div class="kl">Posti occupati</div><div class="kv">'+occ+'<small> su '+tP+'</small></div><div class="kn">'+perB.join('<br>')+'</div></div>'+mini+'</button>'
+    +'<button class="k '+rs.cls+'" id="kR"><div class="kb"><div class="kl">Prossimo controllo RENTRI</div><div class="kv" style="font-size:clamp(22px,2.4vw,30px)">'+(RENTRI.next?fmtD(RENTRI.next):'Da impostare')+'</div><div class="kn"><b>'+rs.t+'</b><br>Ultimo: '+(RENTRI.last?fmtD(RENTRI.last)+(RENTRI.by?', '+esc(RENTRI.by):''):'mai registrato')+'</div></div>'+cd+'</button>';
+  $('#kF').onclick=openFermi;$('#kP').onclick=openCfg;$('#kR').onclick=openRentri;
+  $('#bay').innerHTML=OBLK.map(function(bk){
+    var c='',n=0;for(var i=1;i<=bk.n;i++){c+=bay(bk.k+i);if(OFF.post[bk.k+i+'a'])n++;if(OFF.post[bk.k+i+'b'])n++}
+    return '<div class="blk b'+bk.k+'"><h2><span>'+esc(blkName(bk.k))+'</span><em>'+n+'/'+(bk.n*2)+'</em></h2><div class="slots" style="--n:'+bk.n+'">'+c+'</div></div>';
+  }).join('');
+  $$('.p').forEach(function(el){
+    el.onclick=function(e){if(e.target.closest('select'))return;onPost(el.dataset.p)};
+    el.onkeydown=function(e){if((e.key==='Enter'||e.key===' ')&&!e.target.closest('select')){e.preventDefault();onPost(el.dataset.p)}};
+  });
+  $$('.bc select').forEach(function(s){s.onchange=function(){setLabel(s.dataset.p,s.value);s.blur()}});
+  $('#bCfg').hidden=!su();
+  renderToday();
+  fitAll();
+}
+/* ---------- meteo: Open-Meteo, deposito di San Donato Milanese (niente richiesta di posizione) ---------- */
+var WX_LAT=45.4105,WX_LON=9.2685,WX_CITY='San Donato M.se';
+var WMO={0:'Sereno',1:'Quasi sereno',2:'Parz. nuvoloso',3:'Nuvoloso',45:'Nebbia',48:'Nebbia con brina',51:'Pioviggine',53:'Pioviggine',55:'Pioviggine intensa',56:'Pioviggine gelata',57:'Pioviggine gelata',61:'Pioggia leggera',63:'Pioggia',65:'Pioggia forte',66:'Pioggia gelata',67:'Pioggia gelata',71:'Neve leggera',73:'Neve',75:'Neve forte',77:'Nevischio',80:'Rovesci',81:'Rovesci',82:'Rovesci violenti',85:'Rovesci di neve',86:'Rovesci di neve',95:'Temporale',96:'Temporale con grandine',99:'Temporale con grandine'};
+function wxIcon(c){if(c===0)return '☀️';if(c===1||c===2)return '🌤';if(c===3)return '☁️';if(c===45||c===48)return '🌫';if(c>=51&&c<=67)return '🌧';if((c>=71&&c<=77)||c===85||c===86)return '❄️';if(c>=80&&c<=82)return '🌦';if(c>=95)return '⛈';return '🌡'}
+var WXD=null;
+function paintWx(){
+  var i=$('#wxI'),t=$('#wxT'),d=$('#wxD');if(!i)return;
+  if(!WXD){d.textContent='meteo non disponibile';return}
+  var c=WXD.current,dy=WXD.daily||{};
+  i.textContent=wxIcon(c.weather_code);t.textContent=Math.round(c.temperature_2m)+'°';
+  var mx=dy.temperature_2m_max?Math.round(dy.temperature_2m_max[0]):null,mn=dy.temperature_2m_min?Math.round(dy.temperature_2m_min[0]):null,pp=dy.precipitation_probability_max?dy.precipitation_probability_max[0]:null;
+  d.textContent=(WMO[c.weather_code]||'')+(mn!=null?' · '+mn+'°/'+mx+'°':'')+(pp!=null?' · 💧'+pp+'%':'')+' · 💨'+Math.round(c.wind_speed_10m)+' km/h';
+  $('#wx').title='Meteo '+WX_CITY+' · percepita '+Math.round(c.apparent_temperature)+'° · umidità '+Math.round(c.relative_humidity_2m)+'%'+(pp!=null?' · probabilità pioggia oggi '+pp+'%':'');
+}
+function wxLoad(){
+  fetch('https://api.open-meteo.com/v1/forecast?latitude='+WX_LAT+'&longitude='+WX_LON+'&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=1&timezone=Europe%2FRome')
+    .then(function(r){return r.json()}).then(function(d){if(!d.current)throw 0;WXD=d;paintWx()})
+    .catch(function(){paintWx()});
+}
+/* testo adattativo: rimpicciolisce finché sta su una riga */
+function fitAll(){
+  $$('.fit').forEach(function(el){
+    var mx=+el.dataset.max||14,mn=+el.dataset.min||7,f=mx;el.style.fontSize=mx+'px';
+    var w=el.clientWidth;if(!w)return;
+    while(el.scrollWidth>w+0.5&&f>mn){f-=0.5;el.style.fontSize=f+'px'}
+  });
+}
+var fitT=null;function fitSoon(){clearTimeout(fitT);fitT=setTimeout(fitAll,60)}
+function renderToday(){
+  var tl=$('#tl'),th=$('#today .th');if(!tl)return;th.onclick=openStorico;th.title='Apri lo storico';
+  var t0=day0(Date.now()),nin=0,nout=0;
+  var h=TODAY.filter(function(e){return e.ts>=t0}).map(function(e){
+    var t=e.txt||'',cls=t.indexOf(' esce ')>-1?'out':(t.indexOf('(da ')>-1?'mv':'in');if(cls==='in')nin++;else if(cls==='out')nout++;
+    var d=new Date(e.ts),hm=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+    return '<span class="ev '+cls+'"><time>'+hm+'</time><i>'+(cls==='in'?'▶':cls==='out'?'◀':'⇄')+'</i>'+esc(t.replace(/^Vet\. /,''))+(e.utente?' <small>· '+esc(e.utente)+'</small>':'')+'</span>';
+  }).join('');
+  tl.innerHTML=h||'<span class="none">Nessun movimento in officina oggi.</span>';
+  th.innerHTML='Oggi <b>'+nin+'</b> '+(nin===1?'entrata':'entrate')+' · <b>'+nout+'</b> '+(nout===1?'uscita':'uscite');
+}
+function paintUser(){
+  var el=$('#user');if(!el)return;
+  el.innerHTML=ME.uid?'<button class="btn" id="bUser" title="Esci"><span class="user">'+esc(ME.name)+'<small>'+esc(String(ME.role).toUpperCase())+'</small></span> 🚪</button>':'<button class="btn" id="bUser">🔑<span class="t">Accedi</span></button>';
+  $('#bUser').onclick=function(){if(ME.uid)confirmBox('Uscire?','Senza accesso la dashboard resta visibile ma non modificabile.',function(){AUTH.signOut()},'Esci');else openLogin()};
+}
+function setStatus(m){
+  var t={conn:'collegamento…',live:'dati reali · in diretta',off:'connessione persa · ultimi dati',err:'database non raggiungibile'}[m];
+  var st=$('#st'),dot=$('#dot');if(st)st.textContent=t;if(dot)dot.className='live'+(m==='live'?'':m==='conn'?' wait':' off');
+}
+function tick(){var c=$('#clk');if(!c)return;var d=new Date();c.textContent=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2)}
+
+/* ---------- azioni ---------- */
+function onPost(pid){
+  var x=OFF.post[pid],v=x&&BYID[x.vid];
+  if(!x){if(canEdit())pickVeh(pid);return}
+  var lab=OFF.label[bayOf(pid)]||'';
+  var html='<dl class="det"><dt>Vettura</dt><dd>'+esc(v?v.n:(x.n||'?'))+(v?' · '+esc(modelOf(v)):' · non più in flotta')+'</dd>'
+    +(v?'<dt>Stato</dt><dd style="color:'+stOf(v.s)[1]+'">● '+esc(stOf(v.s)[0])+(v.x?' + '+esc(stOf(v.x)[0]):'')+'</dd>':'')
+    +'<dt>Etichetta</dt><dd>'+(lab?esc(lab):'—')+'</dd>'
+    +'<dt>Stallo</dt><dd>'+(v&&v.stall?esc(shortSid(v.stall))+' (resta suo)':'senza stallo')+'</dd>'
+    +'<dt>In officina da</dt><dd>'+durTxt(x.ts)+(x.by?' · inserita da '+esc(x.by):'')+'</dd>'
+    +(v&&v.note?'<dt>Note</dt><dd>'+esc(v.note)+'</dd>':'')+'</dl>';
+  modal({title:'🔧 '+(keysOf(x.vid).length===2?'Posti '+posLbl(x.vid):'Posto '+pname(pid))+(lab?' · '+lab:''),html:html,foot:su()?[{label:'Sposta',fn:function(){pickPost(pid)}},{label:'Togli',cls:'danger',fn:function(){remove(pid)}}]:[]});
+}
+function pickVeh(pid){
+  var M=modal({title:'Inserisci nel posto '+pname(pid),html:'<input class="field" id="q" placeholder="Numero vettura o modello…" autocomplete="off" inputmode="search"><div class="sub" style="margin-top:8px">Prima i mezzi fermi. Lo stato non cambia e lo stallo resta suo.</div><div class="list" id="ql"></div>'});
+  var q=$('#q',M.el),l=$('#ql',M.el);
+  function draw(){
+    var s=q.value.trim().toLowerCase();
+    var list=sortedV().filter(function(v){return !s||(v.n+' '+modelOf(v)+' '+stOf(v.s)[0]).toLowerCase().indexOf(s)>-1});
+    list=list.filter(function(v){return isFerma(v.s)}).concat(list.filter(function(v){return !isFerma(v.s)})).slice(0,40);
+    var mt=bayOf(pid)+(pid.slice(-1)==='a'?'b':'a'),mx=OFF.post[mt];
+    l.innerHTML=list.map(function(v){var p=offOf(v.id),ar=isArti(v),blk=ar&&mx&&mx.vid!==v.id;return '<button class="r'+(blk?' no':'')+'" data-id="'+esc(v.id)+'" style="--c:'+stOf(v.s)[1]+'"><b>'+esc(v.n)+'</b><em>'+esc(modelOf(v))+' · '+esc(stOf(v.s)[0])+(ar?' <i class="t18">18 m</i>':'')+(blk?' · serve anche '+pname(mt):'')+'</em><span>'+(p?'già in '+posLbl(v.id,p):(v.stall?esc(shortSid(v.stall)):'senza stallo'))+'</span></button>'}).join('')||'<p class="sub" style="padding:10px">Nessun mezzo trovato.</p>';
+    $$('.r',l).forEach(function(b){b.onclick=function(){M.close();put(pid,b.dataset.id)}});
+  }
+  q.oninput=draw;q.onkeydown=function(e){if(e.key==='Enter'){var f=$('.r',l);if(f)f.click()}};
+  draw();setTimeout(function(){q.focus()},40);
+}
+function pickPost(from){
+  var fx=OFF.post[from],fv=fx&&BYID[fx.vid],ar=isArti(fv),free=[],me=function(k){var x=OFF.post[k];return !x||(fx&&x.vid===fx.vid)};
+  OBLK.forEach(function(bk){for(var i=1;i<=bk.n;i++){var b=bk.k+i;if(ar){if(me(b+'a')&&me(b+'b')&&bayOf(from)!==b)free.push(b+'a')}else['a','b'].forEach(function(s2){if(!OFF.post[b+s2])free.push(b+s2)})}});
+  if(!free.length){toast(ar?'Nessuna postazione con i due posti liberi':'Nessun posto libero');return}
+  var M=modal({title:'Sposta '+(ar?'il 18 m ':'')+'da '+(fx?posLbl(fx.vid,from):pname(from))+' a…',html:(ar?'<div class="sub" style="margin-bottom:10px">Autosnodato da 18 m: solo postazioni con tutti e due i posti liberi.</div>':'')+'<div class="chips">'+free.map(function(p){var l=OFF.label[bayOf(p)];return '<button data-p="'+p+'">'+(ar?bayOf(p)+'/1+2':pname(p))+(l?' · '+esc(l):'')+'</button>'}).join('')+'</div>'});
+  $$('.chips button',M.el).forEach(function(b){b.onclick=function(){M.close();var x=OFF.post[from];if(x&&x.vid)put(b.dataset.p,x.vid)}});
+}
+function put(pid,vid){
+  if(!canEdit())return;var v=BYID[vid];if(!v)return;
+  var old=offOf(vid),oks=keysOf(vid),ar=isArti(v),b=bayOf(pid),tg=ar?[b+'a',b+'b']:[pid];
+  if(ar){
+    if(old&&bayOf(old)===b&&oks.length===2)return;
+    var busy=tg.filter(function(k){var x=OFF.post[k];return x&&x.vid!==v.id})[0];
+    if(busy){toast('⚠ '+v.n+' è un 18 m: servono tutti e due i posti di '+b+', ma '+pname(busy)+' è occupato da '+(OFF.post[busy].n||'un altro mezzo'));return}
+  }else if(old===pid)return;
+  var up={},prev=old?OFF.post[old]:null,ts=prev&&prev.ts?prev.ts:Date.now(),rid=prev&&prev.rid?prev.rid:nk('o'),lab=OFF.label[b]||'';
+  oks.forEach(function(k){up['post/'+(RK[k]||k)]=null});
+  tg.forEach(function(k){up['post/'+k]={vid:v.id,n:v.n,ts:ts,by:prev&&prev.by?prev.by:(ME.name||''),rid:rid};if(ar)up['post/'+k].arti=true});
+  var dest=ar?b+'/1+2':pname(pid),from=old?posLbl(vid,old):'';
+  /* storico permanente: una riga per ogni passaggio in officina */
+  if(prev&&prev.rid)DB.ref('depotrack_officina_storico/'+rid).update({posto:dest,lab:lab||null}).catch(function(){});
+  else DB.ref('depotrack_officina_storico/'+rid).set({vid:v.id,n:v.n,model:modelOf(v)||'',posto:dest,lab:lab||null,in:ts,by:ME.name||''}).catch(function(){});
+  DB.ref('depotrack_officina').update(up).then(function(){toast('Vet. '+v.n+(ar?' (18 m) → posti ':' → posto ')+dest)}).catch(werr);
+  addLog('officina','Vet. '+v.n+' → Officina '+dest+(lab?' ('+lab+')':'')+(old?' (da '+from+')':''),v.id);
+}
+function remove(pid){
+  if(!canEdit())return;var x=OFF.post[pid];if(!x)return;var v=BYID[x.vid],n=v?v.n:(x.n||'?');
+  var ks=keysOf(x.vid);if(!ks.length)ks=[pid];var where=posLbl(x.vid,pid);
+  confirmBox('Togliere '+n+' da '+where+'?','Lo stato del mezzo non cambia: se è riparato, aggiornalo dalla sua scheda in Aurora.',function(){
+    var up={};ks.forEach(function(k){up['post/'+(RK[k]||k)]=null});
+    DB.ref('depotrack_officina').update(up).then(function(){toast((ks.length>1?'Posti ':'Posto ')+where+(ks.length>1?' liberati':' liberato'))}).catch(werr);
+    var now=Date.now(),out={out:now,outBy:ME.name||'',dur:now-(x.ts||now),statoOut:v?stOf(v.s)[0]:null};
+    if(x.rid)DB.ref('depotrack_officina_storico/'+x.rid).update(out).catch(function(){});
+    else{out.vid=x.vid;out.n=n;out.model=v?modelOf(v):'';out.posto=where;out.lab=OFF.label[bayOf(pid)]||null;out.in=x.ts||now;out.by=x.by||'';DB.ref('depotrack_officina_storico/'+nk('o')).set(out).catch(function(){})}
+    addLog('officina','Vet. '+n+' esce dall\'officina '+where+' dopo '+durTxt(x.ts),x.vid);
+  },'Togli');
+}
+function setLabel(pid,val){if(!canEdit()){render();return}DB.ref('depotrack_officina/label/'+pid).set(val||null).catch(werr)}
+function durShort(ms){if(!(ms>=0))return '—';var m=Math.round(ms/60000);if(m<60)return m+' min';var h=Math.floor(m/60);if(h<24)return h+' h '+(m%60)+'m';return Math.floor(h/24)+' g '+(h%24)+' h'}
+function fmtDT(t){if(!t)return '—';var d=new Date(t);return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)}
+function openStorico(){
+  if(!DB){toast('Database non collegato');return}
+  var M=modal({title:'📋 Storico officina',wide:true,html:'<div class="frm2" style="grid-template-columns:1fr 1fr 1.2fr"><label><div class="lab">Dal</div><input class="field" type="date" id="sf" value="'+isoD(Date.now()-6*864e5)+'"></label><label><div class="lab">Al</div><input class="field" type="date" id="st2" value="'+isoD(Date.now())+'"></label><label><div class="lab">Vettura / posto / etichetta</div><input class="field" id="sq" placeholder="es. 3009, C2, Carrozzeria" autocomplete="off"></label></div><div class="sub" id="ssum" style="margin:12px 0 6px">Carico…</div><div class="sto" id="stab"></div>',
+    foot:[{label:'⬇ Esporta CSV',keep:true,fn:function(){csv()}},{label:'Chiudi',cls:'pri'}]});
+  var ALL=[],rows=[];
+  DB.ref('depotrack_officina_storico').once('value').then(function(sn){var o=sn.val()||{};ALL=Object.keys(o).map(function(k){var r=o[k];r.k=k;return r}).filter(function(r){return r&&r.in});draw()}).catch(function(e){$('#ssum',M.el).textContent='⚠ Non riesco a leggere lo storico: '+(e&&e.message||e)});
+  function draw(){
+    var f=parseD($('#sf',M.el).value),t=parseD($('#st2',M.el).value),q=$('#sq',M.el).value.trim().toLowerCase();
+    if(f==null)f=0;t=(t==null?Date.now():t)+864e5;
+    rows=ALL.filter(function(r){var inR=(r.in>=f&&r.in<t)||(r.out&&r.out>=f&&r.out<t)||(!r.out&&r.in<t);if(!inR)return false;return !q||[r.n,r.posto,r.lab,r.model,r.by,r.outBy].join(' ').toLowerCase().indexOf(q)>-1}).sort(function(a,b){return b.in-a.in});
+    var nin=rows.filter(function(r){return r.in>=f&&r.in<t}).length,nout=rows.filter(function(r){return r.out&&r.out>=f&&r.out<t}).length,dd=rows.filter(function(r){return r.out}),avg=dd.length?dd.reduce(function(a,r){return a+(r.out-r.in)},0)/dd.length:null;
+    $('#ssum',M.el).innerHTML='<b style="color:var(--txt)">'+nin+'</b> entrate · <b style="color:var(--txt)">'+nout+'</b> uscite · permanenza media <b style="color:var(--txt)">'+(avg==null?'—':durShort(avg))+'</b> · '+rows.filter(function(r){return !r.out}).length+' ancora dentro';
+    $('#stab',M.el).innerHTML=rows.length?'<table><thead><tr><th>Vettura</th><th>Posto</th><th>Etichetta</th><th>Entrata</th><th>Uscita</th><th>Durata</th><th>Chi</th></tr></thead><tbody>'+rows.map(function(r){return '<tr><td><b>'+esc(r.n)+'</b><small>'+esc(r.model||'')+'</small></td><td>'+esc(r.posto||'')+'</td><td>'+esc(r.lab||'—')+'</td><td>'+fmtDT(r.in)+'</td><td>'+(r.out?fmtDT(r.out):'<span class="dentro">in officina</span>')+'</td><td>'+durShort((r.out||Date.now())-r.in)+'</td><td>'+esc(r.by||'—')+(r.outBy&&r.outBy!==r.by?' → '+esc(r.outBy):'')+'</td></tr>'}).join('')+'</tbody></table>':'<p class="sub" style="padding:10px">Nessun passaggio in officina nel periodo.</p>';
+  }
+  function csv(){
+    if(!rows.length){toast('Niente da esportare');return}
+    var c=function(x){x=String(x==null?'':x);return /[;"\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x};
+    var lines=['Vettura;Modello;Posto;Etichetta;Entrata;Uscita;Durata (min);Inserita da;Tolta da;Stato in uscita'].concat(rows.map(function(r){var fy=function(t){return new Date(t).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})};return [r.n,r.model,r.posto,r.lab,fy(r.in),r.out?fy(r.out):'in officina',Math.round(((r.out||Date.now())-r.in)/60000),r.by,r.outBy,r.statoOut].map(c).join(';')}));
+    var blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),a=DOCX.createElement('a');
+    a.href=URL.createObjectURL(blob);a.download='storico_officina_'+$('#sf',M.el).value+'_'+$('#st2',M.el).value+'.csv';DOCX.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500);
+  }
+  ['#sf','#st2'].forEach(function(id){$(id,M.el).onchange=draw});$('#sq',M.el).oninput=draw;
+}
+function openCfg(){
+  if(!su()){toast('Solo il superuser modifica blocchi ed etichette');return}
+  var M=modal({title:'⚙ Blocchi ed etichette',html:'<div class="frm"><div class="sub">Nome dei blocchi (es. l\'ente che li usa)</div>'
+    +OBLK.map(function(bk){return '<input class="field" id="ob'+bk.k+'" value="'+esc(blkName(bk.k))+'" placeholder="'+bk.def+' ('+bk.n+' postazioni da 2 posti)">'}).join('')
+    +'<div class="sub">Allarme tempo in officina (ore)</div><div class="frm2"><label><div class="lab">🟡 Giallo dopo</div><input class="field" type="number" min="1" step="1" id="sw" value="'+sogl().w+'"></label><label><div class="lab">🔴 Rosso dopo</div><input class="field" type="number" min="2" step="1" id="sb" value="'+sogl().b+'"></label></div>'
+    +'<div class="sub">Etichette del menu a tendina, una per riga</div><textarea class="field" id="oeti" rows="9">'+esc(etiList().join('\n'))+'</textarea></div>',
+    foot:[{label:'Annulla'},{label:'Salva',cls:'pri',keep:true,fn:function(){
+      if(!canEdit())return;
+      var up={};OBLK.forEach(function(bk){up['blocchi/'+bk.k+'/nome']=$('#ob'+bk.k,M.el).value.trim()||null});
+      var seen={},list=$('#oeti',M.el).value.split('\n').map(function(s){return s.trim()}).filter(function(s){if(!s||seen[s.toLowerCase()])return false;seen[s.toLowerCase()]=1;return true});
+      up.etichette=list.length?list:null;
+      var sw=+$('#sw',M.el).value,sb=+$('#sb',M.el).value;if(!(sw>0)||!(sb>sw)){toast('⚠ Soglie non valide: il rosso deve essere dopo il giallo');return}
+      up['soglie/warn']=sw;up['soglie/bad']=sb;
+      DB.ref('depotrack_officina').update(up).then(function(){toast('Salvato');M.close()}).catch(werr);
+    }}]});
+}
+function openFermi(){
+  var tot=V.length,cnt={};V.forEach(function(v){if(isFerma(v.s))cnt[v.s]=(cnt[v.s]||0)+1});
+  var fl=sortedV().filter(function(v){return isFerma(v.s)}),max=1;Object.keys(cnt).forEach(function(k){max=Math.max(max,cnt[k])});
+  var bars=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]}).map(function(k){return '<div class="fbar" style="--c:'+stOf(k)[1]+'"><span>'+esc(stOf(k)[0])+'</span><i style="width:'+(cnt[k]/max*100)+'%"></i><b>'+cnt[k]+'</b></div>'}).join('');
+  var rows=fl.map(function(v){var p=offOf(v.id);return '<div class="r" style="--c:'+stOf(v.s)[1]+'"><b>'+esc(v.n)+'</b><em>'+esc(stOf(v.s)[0])+(v.note?' · '+esc(v.note):'')+'</em><span>'+(p?'🔧 '+pname(p):(v.stall?esc(shortSid(v.stall)):'—'))+'</span></div>'}).join('');
+  modal({title:'🚨 Fermi: '+fl.length+' su '+tot+' ('+(tot?Math.round(fl.length/tot*100):0)+'%)',wide:true,html:(bars||'<p class="sub">Nessun mezzo fermo.</p>')+(rows?'<div class="list">'+rows+'</div>':'')});
+}
+function openRentri(){
+  var ed=su(),rs=rentriSt(),r=RENTRI||{};
+  var hist=arr(r.storico).sort(function(a,b){return b.ts-a.ts}).slice(0,8);
+  var col={'r-ok':'var(--ok)','r-warn':'var(--warn)','r-bad':'var(--bad)'}[rs.cls];
+  var html='<div class="rbig" style="--c:'+col+'">♻ '+esc(rs.t)+(r.next?' · '+fmtD(r.next):'')+'</div>'
+    +'<dl class="det"><dt>Ultimo controllo</dt><dd>'+(r.last?fmtD(r.last)+(r.by?' · '+esc(r.by):''):'mai registrato')+'</dd><dt>Prossima scadenza</dt><dd>'+(r.next?fmtD(r.next):'—')+'</dd></dl>'
+    +(ed?'<div class="frm" style="margin-top:16px"><div class="frm2"><label><div class="lab">Data controllo</div><input class="field" type="date" id="rl" value="'+isoD(Date.now())+'"></label><label><div class="lab">Prossima scadenza</div><input class="field" type="date" id="rn" value="'+isoD(Date.now()+7*864e5)+'"></label></div><div class="sub">La scadenza si propone a +7 giorni dal controllo: cambiala se serve. Il riquadro diventa giallo 2 giorni prima e rosso il giorno della scadenza.</div></div>':'')
+    +(hist.length?'<div class="sub" style="margin-top:14px">Storico</div><div class="hist">'+hist.map(function(h){return '<div><span>'+fmtD(h.ts)+'</span><span>'+esc(h.by||'')+'</span></div>'}).join('')+'</div>':'');
+  var M=modal({title:'♻ RENTRI',html:html,foot:ed?[{label:'Solo scadenza',keep:true,fn:function(){
+      var n=parseD($('#rn',M.el).value);if(!n){toast('⚠ Data scadenza non valida');return}
+      DB.ref('depotrack_rentri/next').set(n).then(function(){toast('Scadenza RENTRI aggiornata');M.close()}).catch(werr)}},
+    {label:'✅ Registra controllo',cls:'pri',keep:true,fn:function(){
+      var l=parseD($('#rl',M.el).value),n=parseD($('#rn',M.el).value);if(!l||!n){toast('⚠ Date non valide');return}
+      if(day0(l)===day0(Date.now()))l=Date.now();
+      if(n<=day0(l)){toast('⚠ La scadenza deve essere dopo il controllo');return}
+      var up={last:l,by:ME.name||'',next:n};up['storico/'+nk('r')]={ts:l,by:ME.name||'',next:n};
+      DB.ref('depotrack_rentri').update(up).then(function(){toast('Controllo RENTRI registrato');M.close()}).catch(werr);
+      addLog('rentri','Controllo RENTRI registrato, prossima scadenza '+fmtD(n));
+    }}]:[]});
+  var rl=$('#rl',M.el);if(rl)rl.onchange=function(){var l=parseD(rl.value);if(l)$('#rn',M.el).value=isoD(l+7*864e5)};
+}
+
+/* ---------- accesso (stessi utenti di Aurora) ---------- */
+function openLogin(){
+  if(!AUTH){toast('Accesso non disponibile');return}
+  var M=modal({title:'Accedi a DepoTrack',html:'<div class="frm"><div><div class="lab">Email</div><input class="field" id="le" type="email" autocomplete="username"></div><div><div class="lab">Password</div><input class="field" id="lp" type="password" autocomplete="current-password"></div><div class="err" id="lerr"></div></div>',
+    foot:[{label:'Annulla'},{label:'Accedi',cls:'pri',keep:true,fn:go}]});
+  function go(){
+    var e=$('#le',M.el).value.trim(),p=$('#lp',M.el).value,er=$('#lerr',M.el);er.textContent='';
+    if(!e||!p){er.textContent='Inserisci email e password.';return}
+    AUTH.signInWithEmailAndPassword(e,p).then(function(){M.close()}).catch(function(err){
+      var map={'auth/invalid-email':'Email non valida.','auth/user-not-found':'Utente non trovato.','auth/wrong-password':'Password errata.','auth/invalid-credential':'Email o password errati.','auth/too-many-requests':'Troppi tentativi, riprova tra qualche minuto.'};
+      er.textContent=map[err.code]||('Errore: '+err.message);
+    });
+  }
+  $('#lp',M.el).onkeydown=function(ev){if(ev.key==='Enter')go()};
+  setTimeout(function(){$('#le',M.el).focus()},60);
+}
+function onAuth(user){
+  if(!user){var was=!!ME.uid;ME={uid:null,name:'',role:null};paintUser();render();if(was)toast('Disconnesso');return}
+  DB.ref('depotrack_user/'+user.uid).once('value').then(function(s){
+    var u=s.val();if(!u||!u.ruolo){toast('Utente non abilitato');AUTH.signOut();return}
+    ME={uid:user.uid,name:u.nome||user.email,role:String(u.ruolo).trim().toLowerCase()};
+    resetInact();paintUser();render();toast('Ciao '+ME.name+' · '+ME.role);
+  }).catch(function(err){toast('Errore verifica utente: '+err.message);AUTH.signOut()});
+}
+/* stessa regola di Aurora: 20 minuti senza toccare niente = logout (la dashboard resta visibile) */
+var inact=null;
+function resetInact(){if(inact){clearTimeout(inact);inact=null}if(!ME.uid)return;inact=setTimeout(function(){if(ME.uid){toast('Sessione scaduta per inattività');AUTH.signOut()}},20*60*1000)}
+function watchActivity(doc){['mousedown','keydown','touchstart','click'].forEach(function(ev){doc.addEventListener(ev,resetInact,{passive:true})})}
+watchActivity(document);
+
+/* ---------- primo piano: finestra sempre sopra le altre (Chrome / Chromium / Edge) ---------- */
+var PIP=null;
+function pinToggle(){
+  if(PIP){PIP.close();return}
+  if(!('documentPictureInPicture' in window)){
+    modal({title:'📌 Primo piano non disponibile',html:'<div class="sub">Questo browser non permette di tenere una finestra sopra le altre. Serve <b>Chrome, Chromium o Edge</b> aggiornati (versione 116 o successiva).<br><br>In alternativa la dashboard resta comunque una finestra a parte: spostala sul secondo monitor o affiancala ad Aurora.</div>'});
+    return;
+  }
+  var app=document.getElementById('app'),w=Math.min(Math.max(app.offsetWidth,760),1400),h=Math.min(Math.max(Math.round(w*0.56),460),900);
+  documentPictureInPicture.requestWindow({width:w,height:h}).then(function(pw){
+    PIP=pw;
+    [].slice.call(document.styleSheets).forEach(function(ss){
+      try{var css=[].slice.call(ss.cssRules).map(function(r){return r.cssText}).join('\n');var st=pw.document.createElement('style');st.textContent=css;pw.document.head.appendChild(st)}
+      catch(e){if(ss.href){var l=pw.document.createElement('link');l.rel='stylesheet';l.href=ss.href;pw.document.head.appendChild(l)}}
+    });
+    pw.document.title='Officina · DepoTrack';pw.document.documentElement.classList.toggle('t-info',TEMA==='info');
+    pw.document.body.appendChild(app);pw.document.body.appendChild(document.getElementById('toast'));
+    DOCX=pw.document;watchActivity(pw.document);pw.addEventListener('resize',fitSoon);
+    var ph=document.createElement('div');ph.className='ph';ph.id='ph';ph.innerHTML='<div style="font-size:42px">📌</div><div><b style="color:var(--txt)">La dashboard è in primo piano</b><br>Chiudi la finestrella o premi il tasto qui sotto per riportarla qui.</div><button class="btn pri" id="bBack">Riporta qui</button>';
+    document.body.appendChild(ph);document.getElementById('bBack').onclick=function(){if(PIP)PIP.close()};
+    $('#bPin').classList.add('on');
+    pw.addEventListener('pagehide',function(){
+      var a=pw.document.getElementById('app'),t=pw.document.getElementById('toast');
+      [].slice.call(pw.document.querySelectorAll('.scrim')).forEach(function(s){s.remove()});
+      var p=document.getElementById('ph');if(p)p.remove();
+      if(a)document.body.appendChild(a);if(t)document.body.appendChild(t);
+      DOCX=document;PIP=null;var b=document.getElementById('bPin');if(b)b.classList.remove('on');render();
+    });
+    render();
+  }).catch(function(e){toast('⚠ Primo piano non riuscito: '+(e&&e.message||e))});
+}
+
+/* ---------- avvio ---------- */
+document.getElementById('bPin').onclick=pinToggle;
+/* tema: Notte (predefinito) o Infografica, ricordato su questo dispositivo */
+var TEMA='notte';try{TEMA=localStorage.getItem('off_tema')||'notte'}catch(e){}
+function applyTema(t){TEMA=t;[document,DOCX].forEach(function(d){d.documentElement.classList.toggle('t-info',t==='info')});var l=$('#bTemaL');if(l)l.textContent=t==='info'?'Infografica':'Notte';try{localStorage.setItem('off_tema',t)}catch(e){}fitSoon()}
+document.getElementById('bTema').onclick=function(){applyTema(TEMA==='info'?'notte':'info');toast('Tema: '+(TEMA==='info'?'Infografica':'Notte'))};
+applyTema(TEMA);
+window.addEventListener('resize',fitSoon);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitAll);
+document.getElementById('bCfg').onclick=function(){openCfg()};
+document.getElementById('bSto').onclick=function(){openStorico()};
+paintUser();tick();setInterval(tick,1000);wxLoad();setInterval(wxLoad,600000);setInterval(render,60000);render();
+if(typeof firebase==='undefined'){setStatus('err');toast('Firebase non raggiungibile (sei offline?)')}
+else{
+  try{firebase.initializeApp(CFG);DB=firebase.database()}catch(e){setStatus('err')}
+  try{AUTH=firebase.auth();AUTH.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(function(){})}catch(e){AUTH=null}
+  if(DB){
+    setStatus('conn');var first=true;
+    DB.ref('depotrack').on('value',function(s){var d=s.val()||{};ingest(d);LIVE=true;setStatus('live');render();if(first){first=false;if(AUTH)AUTH.onAuthStateChanged(onAuth)}},function(){setStatus('err');toast('Accesso al database negato')});
+    DB.ref('depotrack_officina').on('value',function(s){offIngest(s.val());render()},function(){});
+    DB.ref('depotrack_rentri').on('value',function(s){RENTRI=s.val()||{};render()},function(){});
+    DB.ref('depotrack_log').orderByKey().limitToLast(400).on('value',function(s){
+      var o=s.val()||{},t0=day0(Date.now());
+      TODAY=Object.keys(o).map(function(k){return o[k]}).filter(function(e){return e&&e.type==='officina'&&e.ts>=t0}).sort(function(a,b){return b.ts-a.ts});
+      renderToday();
+    },function(){});
+    DB.ref('.info/connected').on('value',function(s){if(LIVE)setStatus(s.val()?'live':'off')});
+  }
+}
+})();
+</script>
+</body>
+</html>
