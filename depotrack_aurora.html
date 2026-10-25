@@ -719,6 +719,52 @@ body.ui-corallo .li .tag{border-radius:999px}
 body.ui-menta .ibtn.pri,body.ui-menta .mf .ibtn.pri,body.ui-menta .btn-main,body.ui-menta .pri{background:linear-gradient(180deg,#a9ecd2,#7fdcb8)!important;color:#14402f!important;border-color:rgba(255,255,255,.6)!important;box-shadow:0 0 0 3px rgba(127,220,184,.22),0 8px 18px rgba(80,170,135,.32)!important}
 body.ui-corallo .ibtn.pri,body.ui-corallo .mf .ibtn.pri,body.ui-corallo .btn-main,body.ui-corallo .pri{background:linear-gradient(180deg,#ff8a74,#ff6f5b)!important;color:#2a0d07!important;border-color:rgba(255,170,150,.6)!important;box-shadow:0 0 0 1px rgba(255,160,140,.4),0 0 22px rgba(255,111,91,.5)!important}
 
+/* ---------- interfaccia TRAMONTO (indaco notte, gradienti arancio/teal/viola) ---------- */
+body.ui-tramonto{--bg2:#1b1f42;--surf:#262b55;--surf2:#2e3463;--line:rgba(255,255,255,.07);--glass:#262b55;
+  --neo-out:0 16px 36px rgba(6,8,28,.5),inset 0 1px 0 rgba(255,255,255,.06);
+  --neo-in:inset 0 3px 8px rgba(6,8,28,.55),inset 0 -1px 0 rgba(255,255,255,.04);
+  background:radial-gradient(1000px 620px at 105% -15%,rgba(46,230,176,.75) 0,transparent 62%),radial-gradient(900px 700px at -10% 115%,rgba(160,80,250,.6) 0,transparent 62%),radial-gradient(700px 400px at 60% 40%,rgba(255,150,60,.10) 0,transparent 70%),linear-gradient(180deg,#2a2f5c 0,#1c1f40 55%,#241d4d 100%) fixed}
+body.ui-tramonto .bar,body.ui-tramonto .wx,body.ui-tramonto .clk,body.ui-tramonto .fc,body.ui-tramonto .ev,body.ui-tramonto .w.sbar{background:linear-gradient(180deg,#2c3260,#252a52)!important;border:1px solid rgba(255,255,255,.06);border-radius:24px;box-shadow:var(--neo-out);-webkit-backdrop-filter:none;backdrop-filter:none}
+body.ui-tramonto .w{border:0;border-radius:26px;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 18px 40px rgba(6,8,28,.5)}
+body.ui-tramonto .w::after{display:none}
+body.ui-tramonto .w[style*="--acc"]:not(.sbar){background:linear-gradient(150deg,#22d3b0 0,#1f8fa8 45%,#33357e 100%)!important}
+body.ui-tramonto .w[style*="--ok"]{background:linear-gradient(150deg,#ffd23f 0,#ffa62b 55%,#ff8a2b 100%)!important}
+body.ui-tramonto .w[style*="--bad"]{background:linear-gradient(150deg,#ff8a6b 0,#ff5f6d 50%,#e8457c 100%)!important}
+body.ui-tramonto .w[style*="--pre"]{background:linear-gradient(160deg,#f2d44a 0,#c88ad8 45%,#8b4ff0 100%)!important}
+body.ui-tramonto .w:not(.sbar) .wl,body.ui-tramonto .w:not(.sbar) .wn{color:rgba(255,255,255,.82)}
+body.ui-tramonto .w:not(.sbar) .wv,body.ui-tramonto .w:not(.sbar) .wv small{color:#fff}
+body.ui-tramonto .w[style*="--ok"] .wl,body.ui-tramonto .w[style*="--ok"] .wn{color:rgba(58,29,0,.75)}
+body.ui-tramonto .w[style*="--ok"] .wv{color:#3a1d00}
+body.ui-tramonto .w .ring .tr{stroke:rgba(255,255,255,.25)}body.ui-tramonto .w .ring .pg{stroke:#fff}
+body.ui-tramonto .ibtn,body.ui-tramonto .pill-on,body.ui-tramonto .userchip,body.ui-tramonto .mf .ibtn{border-radius:999px;background:linear-gradient(180deg,#323866,#2a2f59);border:1px solid rgba(255,255,255,.07);box-shadow:0 8px 18px rgba(6,8,28,.4),inset 0 1px 0 rgba(255,255,255,.06)}
+body.ui-tramonto .ibtn:hover{border-color:rgba(255,190,90,.5);box-shadow:0 0 16px rgba(255,166,43,.3)}
+body.ui-tramonto .ibtn.pri,body.ui-tramonto .mf .ibtn.pri,body.ui-tramonto .btn-main,body.ui-tramonto .pri{background:linear-gradient(180deg,#ffc23a,#ff9a2b)!important;color:#3a1d00!important;border-color:rgba(255,220,150,.6)!important;border-radius:999px;box-shadow:0 0 0 1px rgba(255,200,120,.35),0 10px 24px rgba(255,140,40,.45)!important}
+body.ui-tramonto .danger{background:linear-gradient(180deg,#ff8a7a,#ff5f6d)!important;color:#fff!important;border-radius:999px}
+body.ui-tramonto .tabs{border-radius:999px;padding:4px;background:#1b1f42;box-shadow:inset 0 2px 6px rgba(6,8,28,.6)}
+body.ui-tramonto .tab-ind{border-radius:999px;background:linear-gradient(180deg,#ffc23a,#ff9a2b);box-shadow:0 0 18px rgba(255,166,43,.55)}
+body.ui-tramonto .tab.on{color:#3a1d00}
+body.ui-tramonto .chip{border-radius:999px;background:#2a2f59;color:#c4c8ee;border:1px solid rgba(255,255,255,.06)}
+body.ui-tramonto .chip.on{background:linear-gradient(180deg,#ffd23f,#ffb02b);color:#3a1d00;box-shadow:0 0 14px rgba(255,190,60,.45)}
+body.ui-tramonto .opt{background:#2a2f59;border:1px solid rgba(255,255,255,.06);border-radius:16px}
+body.ui-tramonto .opt.on{background:linear-gradient(150deg,#22d3b0,#1f8fa8);border-color:transparent;color:#06221c;box-shadow:0 0 16px rgba(34,211,176,.4)}
+body.ui-tramonto .field,body.ui-tramonto .search,body.ui-tramonto .cmd input{border-radius:16px;background:#1b1f42;border:1px solid rgba(255,255,255,.08)!important;box-shadow:var(--neo-in)}
+body.ui-tramonto .search{border-radius:999px}
+body.ui-tramonto .field:focus{border-color:#ffa62b!important;box-shadow:var(--neo-in),0 0 0 3px rgba(255,166,43,.3)}
+body.ui-tramonto .sw{background:#1b1f42;box-shadow:inset 0 2px 4px rgba(0,0,0,.5)}
+body.ui-tramonto .sw.on{background:linear-gradient(180deg,#22d3b0,#1fb59a);box-shadow:0 0 14px rgba(34,211,176,.6)}
+body.ui-tramonto .look,body.ui-tramonto .hmenu,body.ui-tramonto .modal,body.ui-tramonto .cmd,body.ui-tramonto .insp{background:linear-gradient(180deg,#2c3262,#22274d)!important;border:1px solid rgba(255,255,255,.07);border-radius:28px;box-shadow:0 30px 80px rgba(6,8,28,.65),inset 0 1px 0 rgba(255,255,255,.06)}
+body.ui-tramonto .mi{border-radius:14px;border:1px solid transparent}
+body.ui-tramonto .mi:hover{background:linear-gradient(90deg,rgba(255,166,43,.28),rgba(255,166,43,.08));border-color:rgba(255,190,90,.6)}
+body.ui-tramonto .pal,body.ui-tramonto .fnt,body.ui-tramonto .li,body.ui-tramonto .r{background:#2a2f59;border:1px solid rgba(255,255,255,.06);border-radius:18px}
+body.ui-tramonto .pal.on,body.ui-tramonto .fnt.on,body.ui-tramonto .r.on,body.ui-tramonto .li:hover{border-color:rgba(34,211,176,.7);box-shadow:0 0 16px rgba(34,211,176,.3)}
+body.ui-tramonto .li .tag{border-radius:999px}
+body.ui-tramonto .toast{border-radius:999px;background:linear-gradient(180deg,#ffc23a,#ff9a2b)!important;color:#3a1d00;box-shadow:0 14px 34px rgba(255,140,40,.45)}
+body.ui-tramonto .tpop{background:#2a2f59;border-radius:20px}
+body.ui-tramonto .tpop button{border-radius:14px;background:#343a6b}
+body.ui-tramonto .tpop button:hover{background:linear-gradient(180deg,#ffc23a,#ff9a2b);color:#3a1d00}
+body.ui-tramonto .kbd{background:#1b1f42;border:1px solid rgba(255,255,255,.1);border-radius:6px}
+body.ui-tramonto .clk #clkT .fp>span{background:linear-gradient(180deg,#343a6b,#2a2f59)}
+
 /* ---------- orologio a palette (split-flap) ---------- */
 .clk #clkT{display:flex;align-items:center;gap:3px;font-size:0;letter-spacing:0;margin-bottom:6px}
 .clk #clkT .sep{display:flex;flex-direction:column;gap:6px;width:6px;align-items:center;font-size:0;letter-spacing:0;text-transform:none}
@@ -933,9 +979,10 @@ var PALS=[
 ['Dashboard · Notte','#07111D','#DB9941','#3A8FA6','#E5E5DF'],
 ['Dashboard · Infografica','#0b2f44','#ec6a1e','#4fb3c8','#f3ead6'],
 ['Studio · Menta','#ecebe7','#7fdcb8','#2e8f72','#2f2f2d'],
-['Grafite · Corallo','#20252b','#ff6f5b','#ffa08c','#eef0f3']
+['Grafite · Corallo','#20252b','#ff6f5b','#ffa08c','#eef0f3'],
+['Tramonto · Indaco','#1e2246','#ffa62b','#22d3b0','#eef0ff']
 ];
-var UI_OFF=PALS.length-5,UIP={off:UI_OFF,notte:PALS.length-4,info:PALS.length-3,menta:PALS.length-2,corallo:PALS.length-1};/* palette che attiva anche l'interfaccia Officina (grafite, rilievi morbidi) */
+var UI_OFF=PALS.length-6,UIP={off:UI_OFF,notte:PALS.length-5,info:PALS.length-4,menta:PALS.length-3,corallo:PALS.length-2,tramonto:PALS.length-1};/* palette che attiva anche l'interfaccia Officina (grafite, rilievi morbidi) */
 var FONTS=[
 ['Cupertino','"Inter",system-ui,sans-serif','"Inter",system-ui,sans-serif','"JetBrains Mono",ui-monospace,monospace',800,1,'-.045em'],
 ['Officina (Bebas)','"Bebas Neue",Impact,sans-serif','"Barlow Condensed",system-ui,sans-serif','"Barlow Condensed",system-ui,sans-serif',400,1.22,'.01em'],
@@ -959,7 +1006,7 @@ function applyPal(i){
   r.setProperty('--acc',p[2]);r.setProperty('--acc2',p[3]);r.setProperty('--onacc',lum(p[2])>.45?'#0a0c10':'#ffffff');
   r.setProperty('color-scheme',dark?'dark':'light');
   var uk='aur';for(var kk in UIP)if(UIP[kk]===i)uk=kk;
-  document.body.classList.toggle('ui-off',uk!=='aur');['notte','info','menta','corallo'].forEach(function(k){document.body.classList.toggle('ui-'+k,uk===k)});
+  document.body.classList.toggle('ui-off',uk!=='aur');['notte','info','menta','corallo','tramonto'].forEach(function(k){document.body.classList.toggle('ui-'+k,uk===k)});
   $$('#uis .opt').forEach(function(o){o.classList.toggle('on',o.dataset.k===uk)});
   ls('da_pal',i);
   $$('.pal').forEach(function(b,k){b.classList.toggle('on',k===i)});
@@ -1604,7 +1651,7 @@ look.onclick=function(e){e.stopPropagation()};
 document.addEventListener('click',function(e){if(look.classList.contains('open')&&!e.target.closest('#bLook'))closeLook()});
 $('#pals').innerHTML=PALS.map(function(p,i){return '<button class="pal" data-i="'+i+'"><span class="psw"><i style="background:'+p[1]+'"></i><i style="background:'+p[2]+'"></i><i style="background:'+p[3]+'"></i><i style="background:'+p[4]+'"></i></span>'+p[0]+'</button>'}).join('');
 $$('.pal').forEach(function(b){b.onclick=function(){applyPal(+b.dataset.i)}});
-$('#uis').innerHTML=[['aur','Aurora (vetro)'],['off','Officina (grafite)'],['notte','Notte (come la dashboard)'],['info','Infografica (come la dashboard)'],['menta','Studio (chiara, menta)'],['corallo','Grafite corallo']].map(function(s){return '<button class="opt" data-k="'+s[0]+'" style="--c:var(--acc)">'+s[1]+'</button>'}).join('');
+$('#uis').innerHTML=[['aur','Aurora (vetro)'],['off','Officina (grafite)'],['notte','Notte (come la dashboard)'],['info','Infografica (come la dashboard)'],['menta','Studio (chiara, menta)'],['corallo','Grafite corallo'],['tramonto','Tramonto (indaco, arancio)']].map(function(s){return '<button class="opt" data-k="'+s[0]+'" style="--c:var(--acc)">'+s[1]+'</button>'}).join('');
 $$('#uis .opt').forEach(function(b){b.onclick=function(){
   var isUi=function(i){for(var kk in UIP)if(UIP[kk]===i)return true;return false};
   if(b.dataset.k!=='aur'){if(!isUi(S.pal))ls('da_pal_aur',S.pal);applyPal(UIP[b.dataset.k])}
