@@ -1818,9 +1818,9 @@ function sapParse(rows){
     r.forEach(function(c){if(c.indexOf('sede tec')===0||c==='descrizione'||c==='clavresp'||c.indexOf('campo sort')===0||c==='data avviso')hit++});
     if(hit>=2){
       r.forEach(function(c,j){
-        if(c.indexOf('sede tec')===0)C.sede=j;else if(c==='f')C.f=j;else if(c==='clavresp'||c.indexOf('clav')===0)C.clav=j;
+        if(c.indexOf('sede tec')===0)C.sede=j;else if(c==='f')C.f=j;else if(c.indexOf('clav')===0||c.indexOf('centro di lavoro')>-1||c.indexOf('centro lav')>-1||c.indexOf('cdl resp')===0)C.clav=j;
         else if(c==='descrizione')C.descr=j;else if(c.indexOf('campo sort')===0&&(c.indexOf('cus')>-1||c.indexOf('cust')>-1))C.sortc=j;
-        else if(c==='campo sort')C.sort=j;else if(c==='data avviso')C.data=j;else if(c==='avviso')C.avv=j;
+        else if(c==='campo sort'){if(C.sort<0)C.sort=j;else if(C.sortc<0)C.sortc=j}else if(c==='data avviso')C.data=j;else if(c==='avviso')C.avv=j;
       });
       H=rows[i].map(function(x){return String(x).trim()}).filter(Boolean);
       start=i+1;hdr=true;break;
@@ -1834,7 +1834,7 @@ function sapParse(rows){
     if(!cod)continue;last=cod;
     var m=cod.match(/(\d{4})\s*$/),num=m?m[1]:(/^\d{3,5}$/.test(cod)?cod:null);if(!num)continue;
     var sc=g(r,C.sortc),sin=sc.toUpperCase().indexOf('SINISTR')>-1;
-    if(!sin)sin=r.some(function(x){return /^SINISTR/.test(String(x).trim().toUpperCase())}); /* rete di sicurezza: cella che inizia con SINISTRO in qualunque colonna */
+    if(!sin)sin=r.some(function(x){return String(x).trim().toUpperCase()==='SINISTRO'}); /* rete di sicurezza: cella che contiene solo SINISTRO */
     out.push({num:num,f:g(r,C.f).toUpperCase()==='X',avv:g(r,C.avv),data:C.data<0?null:sapDate(r[C.data]),clav:g(r,C.clav).toUpperCase(),descr:g(r,C.descr),sort:g(r,C.sort),sortc:sc,sin:sin});
   }
   return {rows:out,hdr:hdr,cols:C,H:H};
@@ -1848,13 +1848,13 @@ function sapGroup(list){
     if(a.f&&a.data&&(e.d0==null||a.data<e.d0))e.d0=a.data;
   });
   Object.keys(G).forEach(function(n){
-    var e=G[n];e.l.sort(function(a,b){return (b.d||0)-(a.d||0)});
-    var lf=e.l.filter(function(a){return a.f})[0]||e.l[0];e.clav=lf&&lf.clav||'';
+    var e=G[n];e.l.sort(function(a,b){return (b.sin?1:0)-(a.sin?1:0)||(b.f?1:0)-(a.f?1:0)||(b.d||0)-(a.d||0)});
+    e.clav=e.l[0]&&e.l[0].clav||'';
     if(e.d0==null)delete e.d0;
   });
   return G;
 }
-function avvOf(v){return v&&AVV&&AVV.v?AVV.v[String(v.n).trim()]:null}
+function avvOf(v){var e=v&&AVV&&AVV.v?AVV.v[String(v.n).trim()]:null;if(e&&e.l)e.l.sort(function(a,b){return (b.sin?1:0)-(a.sin?1:0)||(b.f?1:0)-(a.f?1:0)||(b.d||0)-(a.d||0)});return e}
 function ggDa(ts){return ts?Math.max(0,Math.floor((Date.now()-ts)/86400000)):null}
 function fmtD(ts){if(!ts)return '—';var d=new Date(ts);return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear()}
 function avvHtml(e,short){
@@ -1870,7 +1870,7 @@ function avvHtml(e,short){
   return h;
 }
 function openAvvisi(){
-  var VV=(AVV&&AVV.v)||{},flt={k:'all'};
+  var VV=(AVV&&AVV.v)||{},flt={k:'all'};V.forEach(function(v){avvOf(v)});
   function rowsFor(){
     var it=[];V.forEach(function(v){var e=VV[String(v.n).trim()];if(!e)return;
       if(!e.l.some(function(a){return a.f})&&!e.sin)return;
@@ -1891,7 +1891,7 @@ function openAvvisi(){
     h+='<div class="opts" style="margin:14px 0 6px"><button class="opt'+(flt.k==='all'?' on':'')+'" data-f="all" style="--c:var(--acc)"><i></i>Tutti</button><button class="opt'+(flt.k==='sin'?' on':'')+'" data-f="sin" style="--c:var(--bad)"><i></i>Solo sinistri</button>'+(flt.k.indexOf('c:')===0?'<button class="opt on" data-f="all" style="--c:var(--acc)"><i></i>'+esc(flt.k.slice(2))+' ✕</button>':'')+'</div>';
     var it=rowsFor();
     if(!it.length)h+='<div class="sub2" style="padding:18px;text-align:center">Nessun mezzo</div>';
-    it.forEach(function(o){var v=o.v,e=o.e,c=stOf(v.s)[1],lf=e.l.filter(function(a){return a.f})[0]||e.l[0];
+    it.forEach(function(o){var v=o.v,e=o.e,c=stOf(v.s)[1],lf=e.l[0];
       h+='<button class="li" data-id="'+esc(v.id)+'" style="--c:'+c+';margin-top:6px"><span class="nn" style="font-size:20px">'+esc(v.n)+'</span><span class="tx"><b>'+esc(lf.descr||'—')+'</b><span>'+esc(e.clav||'—')+(e.d0?' · fermo da '+ggDa(e.d0)+' gg':'')+(e.l.length>1?' · '+e.l.length+' avvisi':'')+'</span>'+(lf.sort?'<span>📝 '+esc(lf.sort)+'</span>':'')+'</span>'+(e.sin?'<span class="tag" style="--c:var(--bad)">SINISTRO</span>':'<span class="tag">'+esc(stOf(v.s)[0])+'</span>')+'</button>';
     });
     $('.mb',M.el).innerHTML=h;
@@ -2292,7 +2292,7 @@ function aiExec(c,add){
 
 /* ---------- elenchi: Fermi, Ferme temporanee, Disponibilità ---------- */
 function vrow(v,extra){var c=stOf(v.s)[1],t=tipoOf(v),sid=v.stall,lbl=sid?(corsiaLbl(sid)||'')+' — Stallo '+sid:'Non assegnata';
-  return '<button class="li" data-id="'+esc(v.id)+'" style="--c:'+c+'"><span class="nn" style="color:'+t.colore+'">'+esc(v.n)+'</span><span class="tx"><b>'+esc(v.model||t.nome)+'</b><span>📍 '+esc(lbl)+' · 🏷 '+esc(t.nome)+' · 📅 '+esc(v.anno||'—')+'</span>'+(v.note?'<span>📝 '+esc(v.note)+'</span>':'')+(function(){var e=avvOf(v);if(!e||!e.l||!e.l.length)return '';var a=e.l.filter(function(x){return x.f})[0]||e.l[0];return '<span>🔧 '+esc(e.clav||'—')+(a.descr?' · '+esc(a.descr):'')+(e.d0?' · '+ggDa(e.d0)+' gg':'')+(e.sin?' · <b style="color:var(--bad)">SINISTRO</b>':'')+'</span>'})()+'</span><span class="tag">'+esc(stOf(v.s)[0])+'</span></button>'}
+  return '<button class="li" data-id="'+esc(v.id)+'" style="--c:'+c+'"><span class="nn" style="color:'+t.colore+'">'+esc(v.n)+'</span><span class="tx"><b>'+esc(v.model||t.nome)+'</b><span>📍 '+esc(lbl)+' · 🏷 '+esc(t.nome)+' · 📅 '+esc(v.anno||'—')+'</span>'+(v.note?'<span>📝 '+esc(v.note)+'</span>':'')+(function(){var e=avvOf(v);if(!e||!e.l||!e.l.length)return '';var a=e.l[0];return '<span>🔧 '+esc(e.clav||'—')+(a.descr?' · '+esc(a.descr):'')+(e.d0?' · '+ggDa(e.d0)+' gg':'')+(e.sin?' · <b style="color:var(--bad)">SINISTRO</b>':'')+'</span>'})()+'</span><span class="tag">'+esc(stOf(v.s)[0])+'</span></button>'}
 function listModal(title,items,empty){
   var h=items.length?'<div class="sub2">'+items.length+' mezzi</div>'+items.map(vrow).join(''):'<div class="sub2">'+empty+'</div>';
   var M=modal({title:title,html:h,wide:true,foot:[{label:'Chiudi'}]});
