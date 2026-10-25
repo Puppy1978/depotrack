@@ -766,7 +766,7 @@ function demoPayload(){
 
 /* ---------- stato dell'app ---------- */
 var AGG={},TIPI={},ST={},ORDER=[],CORSIE=[],V=[],TURNI={},BYID={},BYSTALL={},LIVELOG=[],LOCALLOG=[];
-var hmenu=$('#hmenu'),RAW=null,TL=[],SL=[],DB=null,AUTH=null,ME={uid:null,name:'',role:null},SF={},LOGALL=[],PRES={},SAPTS=null,MANT=false;
+var hmenu=$('#hmenu'),RAW=null,TL=[],SL=[],DB=null,AUTH=null,ME={uid:null,name:'',role:null},SF={},LOGALL=[],PRES={},SAPTS=null,MANT=false,AVV={};
 var S={view:'piazzale',v3d:true,style:'glass',col:'stato',motion:true,pal:0,font:0,sel:null,placing:null,target:null,filter:'all',q:'',live:false};
 function reindex(){BYID={};BYSTALL={};V.forEach(function(v){BYID[v.id]=v;if(v.stall)BYSTALL[v.stall]=v})}
 function byId(id){return BYID[id]}
@@ -1210,6 +1210,7 @@ function openInsp(vid){
   h+='<div><div class="lab">Stato</div><div class="opts">';
   ORDER.filter(function(k){return !AGG[k]||v.s===k}).forEach(function(k){h+='<button class="opt'+(v.s===k?' on':'')+'" data-st="'+esc(k)+'" style="--c:'+stOf(k)[1]+'"'+(cStato||!r?'':' disabled')+'><i></i>'+esc(stOf(k)[0])+'</button>'});
   h+='</div></div>';
+  var AE=avvOf(v);if(AE&&AE.l&&AE.l.length)h+='<div><div class="lab">📋 Avvisi SAP'+(AE.sin?' · <span style="color:var(--bad)">SINISTRO DA GESTIRE</span>':'')+'</div>'+avvHtml(AE,true)+'</div>';
   if(aggList().length){h+='<div><div class="lab">Stato aggiuntivo <span class="sub2" style="text-transform:none;letter-spacing:0">· solo informazione, non cambia lo stato</span></div><div class="opts"><button class="opt'+(!v.x?' on':'')+'" data-x="" style="--c:var(--mut)"'+(cStato||!r?'':' disabled')+'><i></i>Nessuno</button>';
     aggList().forEach(function(s){h+='<button class="opt'+(v.x===s.id?' on':'')+'" data-x="'+esc(s.id)+'" style="--c:'+s.colore+'"'+(cStato||!r?'':' disabled')+'><i></i>'+esc(s.nome)+'</button>'});h+='</div></div>'}
   if(cEdit||!r)h+='<div><div class="lab">Motivo o nota</div><input class="field" id="inote" placeholder="Es. freni, in attesa ricambio" value="'+esc(v.note)+'"'+(cEdit?'':' disabled')+'></div>';
@@ -1800,29 +1801,122 @@ function statPrint(days){
 /* ---------- Importa ferme da Excel SAP (stessa logica di DepoTrack) ---------- */
 function protId(id){var n=lname(id);if(n==='ferma')return false;return n.indexOf('ferm')>-1||n.indexOf('manutenz')>-1||n.indexOf('prestito')>-1||n.indexOf('chiamat')>-1}
 function fermaId(){var r=null;ORDER.forEach(function(i){if(!r&&lname(i)==='ferma')r=i});if(r)return r;ORDER.forEach(function(i){var n=lname(i);if(!r&&n.indexOf('ferm')>-1&&n.indexOf('tempor')<0)r=i});return r}
+/* lettura avvisi SAP (IW28): colonne cercate per intestazione, con ripiego su E (sede) e G (F) */
+function sapNorm(x){return String(x==null?'':x).toLowerCase().replace(/[\s.…]+/g,' ').trim()}
+function sapDate(x){
+  if(x==null||x==='')return null;
+  if(typeof x==='number'&&x>20000&&x<80000)return Math.round((x-25569)*86400000);
+  var m=String(x).trim().match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})/);
+  if(m){var y=+m[3];if(y<100)y+=2000;return new Date(y,+m[2]-1,+m[1]).getTime()}
+  return null;
+}
+function sapParse(rows){
+  var C={sede:4,f:6,clav:-1,descr:-1,sort:-1,sortc:-1,data:-1,avv:-1},start=0,hdr=false;
+  for(var i=0;i<Math.min(rows.length,15);i++){
+    var r=rows[i].map(sapNorm);
+    if(r.some(function(c){return c.indexOf('sede tec')===0})&&r.indexOf('descrizione')>-1){
+      r.forEach(function(c,j){
+        if(c.indexOf('sede tec')===0)C.sede=j;else if(c==='f')C.f=j;else if(c==='clavresp')C.clav=j;
+        else if(c==='descrizione')C.descr=j;else if(c==='campo sort')C.sort=j;else if(c==='campo sort custom')C.sortc=j;
+        else if(c==='data avviso')C.data=j;else if(c==='avviso')C.avv=j;
+      });
+      start=i+1;hdr=true;break;
+    }
+  }
+  function g(r,j){return j<0||r[j]==null?'':String(r[j]).trim()}
+  var out=[],last=null;
+  for(var k=start;k<rows.length;k++){
+    var r=rows[k],cod=g(r,C.sede);
+    if(!cod&&hdr&&last&&r.some(function(x){return String(x).trim()}))cod=last; /* SAP lascia vuota la sede nelle righe dello stesso mezzo */
+    if(!cod)continue;last=cod;
+    var m=cod.match(/(\d{4})\s*$/),num=m?m[1]:(/^\d{3,5}$/.test(cod)?cod:null);if(!num)continue;
+    var sc=g(r,C.sortc);
+    out.push({num:num,f:g(r,C.f).toUpperCase()==='X',avv:g(r,C.avv),data:C.data<0?null:sapDate(r[C.data]),clav:g(r,C.clav).toUpperCase(),descr:g(r,C.descr),sort:g(r,C.sort),sortc:sc,sin:sc.toUpperCase().indexOf('SINISTR')>-1});
+  }
+  return {rows:out,hdr:hdr,cols:C};
+}
+function sapGroup(list){
+  var G={};
+  list.forEach(function(a){
+    var e=G[a.num]||(G[a.num]={l:[],sin:false,clav:'',d0:null});
+    var o={f:a.f,sin:a.sin};['avv','clav','descr','sort','sortc'].forEach(function(k){if(a[k])o[k]=a[k]});if(a.data)o.d=a.data;
+    e.l.push(o);if(a.sin)e.sin=true;
+    if(a.f&&a.data&&(e.d0==null||a.data<e.d0))e.d0=a.data;
+  });
+  Object.keys(G).forEach(function(n){
+    var e=G[n];e.l.sort(function(a,b){return (b.d||0)-(a.d||0)});
+    var lf=e.l.filter(function(a){return a.f})[0]||e.l[0];e.clav=lf&&lf.clav||'';
+    if(e.d0==null)delete e.d0;
+  });
+  return G;
+}
+function avvOf(v){return v&&AVV&&AVV.v?AVV.v[String(v.n).trim()]:null}
+function ggDa(ts){return ts?Math.max(0,Math.floor((Date.now()-ts)/86400000)):null}
+function fmtD(ts){if(!ts)return '—';var d=new Date(ts);return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear()}
+function avvHtml(e,short){
+  if(!e||!e.l||!e.l.length)return '';
+  var h='';
+  e.l.forEach(function(a,i){if(short&&i>2)return;
+    h+='<div style="padding:8px 10px;border-radius:12px;background:rgba(128,128,150,.10);margin-top:6px;'+(a.f?'':'opacity:.7')+'">'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+(a.clav?'<span class="pill" style="--c:var(--acc);margin:0">'+esc(a.clav)+'</span>':'')+(a.sin?'<span class="pill" style="--c:var(--bad);margin:0"><i></i>SINISTRO</span>':'')+'<span class="sub2" style="margin:0">'+(a.d?fmtD(a.d)+' · '+ggDa(a.d)+' gg':'')+(a.avv?' · avv. '+esc(a.avv):'')+(a.f?'':' · non fermo')+'</span></div>'
+      +(a.descr?'<div style="font-weight:700;margin-top:4px">'+esc(a.descr)+'</div>':'')
+      +(a.sort?'<div class="sub2" style="margin:2px 0 0">📝 '+esc(a.sort)+'</div>':'')+'</div>';
+  });
+  if(short&&e.l.length>3)h+='<div class="sub2">+ altri '+(e.l.length-3)+' avvisi</div>';
+  return h;
+}
+function openAvvisi(){
+  var VV=(AVV&&AVV.v)||{},flt={k:'all'};
+  function rowsFor(){
+    var it=[];V.forEach(function(v){var e=VV[String(v.n).trim()];if(!e)return;
+      if(!e.l.some(function(a){return a.f})&&!e.sin)return;
+      if(flt.k==='sin'&&!e.sin)return;if(flt.k.indexOf('c:')===0&&e.clav!==flt.k.slice(2))return;it.push({v:v,e:e})});
+    it.sort(function(a,b){return (a.e.d0||9e15)-(b.e.d0||9e15)});return it;
+  }
+  function draw(){
+    var all=[],cnt={},nSin=0,gg=[];
+    V.forEach(function(v){var e=VV[String(v.n).trim()];if(!e||!e.l.some(function(a){return a.f}))return;all.push(e);var c=e.clav||'—';cnt[c]=(cnt[c]||0)+1;if(e.d0)gg.push(ggDa(e.d0))});
+    V.forEach(function(v){var e=VV[String(v.n).trim()];if(e&&e.sin)nSin++});
+    var med=gg.length?Math.round(gg.reduce(function(a,b){return a+b},0)/gg.length):null,max=1;Object.keys(cnt).forEach(function(k){max=Math.max(max,cnt[k])});
+    var h='<div class="sub2">Ultimo import SAP: '+(SAPTS?fmtD(SAPTS)+' '+new Date(SAPTS).toLocaleTimeString('it',{hour:'2-digit',minute:'2-digit'}):'—')+'</div>';
+    h+='<div class="sgrid" style="margin:10px 0 14px"><div><b>'+all.length+'</b><span>mezzi fermi con avviso</span></div><div><b style="color:var(--bad)">'+nSin+'</b><span>sinistri da gestire</span></div><div><b>'+(med==null?'—':med+' gg')+'</b><span>fermo medio</span></div></div>';
+    h+='<div class="lab">Dove sono fermi (CLavResp)</div>';
+    Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]}).forEach(function(k){
+      h+='<button data-f="c:'+esc(k)+'" style="display:grid;grid-template-columns:110px 1fr 34px;gap:10px;align-items:center;width:100%;padding:4px 0;text-align:left'+(flt.k==='c:'+k?';font-weight:800':'')+'"><span>'+esc(k)+'</span><span style="height:10px;border-radius:6px;background:var(--acc);width:'+Math.max(4,cnt[k]/max*100)+'%"></span><b style="text-align:right">'+cnt[k]+'</b></button>';
+    });
+    h+='<div class="opts" style="margin:14px 0 6px"><button class="opt'+(flt.k==='all'?' on':'')+'" data-f="all" style="--c:var(--acc)"><i></i>Tutti</button><button class="opt'+(flt.k==='sin'?' on':'')+'" data-f="sin" style="--c:var(--bad)"><i></i>Solo sinistri</button>'+(flt.k.indexOf('c:')===0?'<button class="opt on" data-f="all" style="--c:var(--acc)"><i></i>'+esc(flt.k.slice(2))+' ✕</button>':'')+'</div>';
+    var it=rowsFor();
+    if(!it.length)h+='<div class="sub2" style="padding:18px;text-align:center">Nessun mezzo</div>';
+    it.forEach(function(o){var v=o.v,e=o.e,c=stOf(v.s)[1],lf=e.l.filter(function(a){return a.f})[0]||e.l[0];
+      h+='<button class="li" data-id="'+esc(v.id)+'" style="--c:'+c+';margin-top:6px"><span class="nn" style="font-size:20px">'+esc(v.n)+'</span><span class="tx"><b>'+esc(lf.descr||'—')+'</b><span>'+esc(e.clav||'—')+(e.d0?' · fermo da '+ggDa(e.d0)+' gg':'')+(e.l.length>1?' · '+e.l.length+' avvisi':'')+'</span>'+(lf.sort?'<span>📝 '+esc(lf.sort)+'</span>':'')+'</span>'+(e.sin?'<span class="tag" style="--c:var(--bad)">SINISTRO</span>':'<span class="tag">'+esc(stOf(v.s)[0])+'</span>')+'</button>';
+    });
+    $('.mb',M.el).innerHTML=h;
+    $$('[data-f]',M.el).forEach(function(b){b.onclick=function(){flt.k=(flt.k===b.dataset.f&&b.dataset.f!=='all')?'all':b.dataset.f;draw()}});
+    $$('[data-id]',M.el).forEach(function(b){b.onclick=function(){M.close();showAt(b.dataset.id,300)}});
+  }
+  var M=modal({title:'📋 Avvisi SAP',html:'',wide:true,onclose:function(){if(REDRAW===draw)REDRAW=null},foot:[{label:'Chiudi'}]});
+  if(!AVV||!AVV.v){$('.mb',M.el).innerHTML='<div class="sub2">Nessun avviso salvato: fai un "Importa da SAP" con il file IW28.</div>';return}
+  REDRAW=draw;draw();
+}
 function openImportSap(){
   if(!gate('edit'))return;
   if(typeof XLSX==='undefined'){toast('⚠ Libreria Excel non caricata: serve la connessione internet');return}
-  var M=modal({title:'📥 Importa ferme da SAP',wide:true,html:'<div id="sp1"><div class="sub2">Scegli il file Excel esportato da SAP. Leggo la colonna E (sede tecnica, le ultime 4 cifre sono il n. vettura) e la colonna G: contano solo le righe con <b>X</b> (fermo macchina).</div><div class="acts" style="margin-top:14px"><label class="ibtn pri" style="cursor:pointer">📂 Scegli file…<input type="file" id="sp-file" accept=".xlsx,.xls,.csv" style="display:none"></label></div></div><div id="sp2" hidden></div>',foot:[{label:'Annulla'}]});
+  var M=modal({title:'📥 Importa ferme da SAP',wide:true,html:'<div id="sp1"><div class="sub2">Scegli il file Excel esportato da SAP. Export IW28. Le righe con <b>X</b> nella colonna F mettono la vettura in ferma. Salvo anche CLavResp, Descrizione, Campo sort e campo sort custom ("SINISTRO") per ogni avviso.</div><div class="acts" style="margin-top:14px"><label class="ibtn pri" style="cursor:pointer">📂 Scegli file…<input type="file" id="sp-file" accept=".xlsx,.xls,.csv" style="display:none"></label></div></div><div id="sp2" hidden></div>',foot:[{label:'Annulla'}]});
   $('#sp-file',M.el).onchange=function(){
     var f=this.files[0];if(!f)return;var inp=this,rd=new FileReader();
     rd.onload=function(e){
       try{
         var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}),rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''}),nums=[];
-        rows.forEach(function(r){
-          var cod=String(r[4]==null?'':r[4]).trim(),flag=String(r[6]==null?'':r[6]).trim();
-          if(!cod||flag.toUpperCase()!=='X')return;
-          var m=cod.match(/(\d{4})\s*$/),num=m?m[1]:(/^\d{3,5}$/.test(cod)?cod:null);
-          if(num&&nums.indexOf(num)<0)nums.push(num);
-        });
+        var P=sapParse(rows);
+        P.rows.forEach(function(a){if(a.f&&nums.indexOf(a.num)<0)nums.push(a.num)});
         if(!nums.length){toast('⚠ Nessuna vettura con X trovata nel file');return}
-        sapPreview(M,nums);
+        sapPreview(M,nums,P);
       }catch(err){console.error(err);toast('⚠ Errore lettura file Excel')}
     };
     rd.readAsArrayBuffer(f);inp.value='';
   };
 }
-function sapPreview(M,nums){
+function sapPreview(M,nums,P){
   var idF=fermaId(),idD=dispId();
   if(!idF){toast('⚠ Stato FERMA non configurato');return}
   var daF=[],gia=[],prot=[],nonT=[],daL=[],protF=[];
@@ -1834,6 +1928,8 @@ function sapPreview(M,nums){
   var h='<div class="sgrid" style="margin-bottom:12px"><div><b style="color:var(--bad)">'+daF.length+'</b><span>da fermare</span></div><div><b style="color:var(--ok)">'+daL.length+'</b><span>da liberare</span></div><div><b>'+gia.length+'</b><span>già ferme</span></div></div>';
   if(totP)h+='<div class="sub2">🔒 '+totP+' mezzi in stati impostati da te (ferma temporanea, manutenzione, prestito, chiamata): non vengono toccati.</div>';
   if(nonT.length)h+='<div class="sub2">⚠ Nel file ma non in flotta (ignorati): '+esc(nonT.join(' · '))+'</div>';
+  var G=sapGroup(P.rows),nSin=0;Object.keys(G).forEach(function(n){if(G[n].sin)nSin++});
+  h+='<div class="sub2">📋 '+P.rows.length+' avvisi letti'+(nSin?' · <b style="color:var(--bad)">'+nSin+' sinistri</b>':'')+(P.hdr?(P.cols.clav<0||P.cols.descr<0||P.cols.sort<0||P.cols.sortc<0?' · ⚠ mancano colonne: '+[['CLavResp',P.cols.clav],['Descrizione',P.cols.descr],['Campo sort',P.cols.sort],['campo sort custom',P.cols.sortc]].filter(function(x){return x[1]<0}).map(function(x){return x[0]}).join(', '):' · CLavResp, descrizione e note incluse'):' · ⚠ intestazioni non trovate: salvo solo i fermi')+'</div>';
   h+='<div class="frm" style="margin-top:10px">';
   if(daF.length){h+='<div class="lab">→ Da mettere ferme</div>';daF.forEach(function(v){h+=riga(v,'var(--bad)','FERMA')})}
   if(daL.length){h+='<div class="lab">→ Da rimettere disponibili</div>';daL.forEach(function(v){h+=riga(v,'var(--ok)','DISPONIBILE')})}
@@ -1842,11 +1938,14 @@ function sapPreview(M,nums){
   $('#sp1',M.el).hidden=true;var p2=$('#sp2',M.el);p2.hidden=false;p2.innerHTML=h;
   var f=$('.mf',M.el);f.innerHTML='';
   var b1=document.createElement('button');b1.className='ibtn';b1.textContent='Annulla';b1.onclick=M.close;f.appendChild(b1);
-  if(daF.length||(daL.length&&idD)){var b2=document.createElement('button');b2.className='ibtn pri';b2.textContent='Applica '+(daF.length+(idD?daL.length:0))+' modifiche';
-    b2.onclick=function(){b2.disabled=true;sapApply({daF:daF,daL:idD?daL:[],idF:idF,idD:idD,totP:totP},M)};f.appendChild(b2)}
+  var nMod=daF.length+(idD?daL.length:0);
+  var b2=document.createElement('button');b2.className='ibtn pri';b2.textContent=nMod?'Applica '+nMod+' modifiche':'Salva avvisi';
+  b2.onclick=function(){b2.disabled=true;sapApply({daF:daF,daL:idD?daL:[],idF:idF,idD:idD,totP:totP,G:G},M)};f.appendChild(b2);
 }
 function sapApply(d,M){
   var tot=d.daF.length+d.daL.length,done=0,nF=0,nL=0;
+  if(d.G)DB.ref('depotrack_sap_avvisi').set({ts:Date.now(),v:d.G}).catch(werr);
+  if(!tot){tot=1;setTimeout(fin,0)}
   function fin(){
     done++;if(done<tot)return;
     DB.ref('depotrack_sap_import').set(Date.now()).catch(werr);
@@ -2188,7 +2287,7 @@ function aiExec(c,add){
 
 /* ---------- elenchi: Fermi, Ferme temporanee, Disponibilità ---------- */
 function vrow(v,extra){var c=stOf(v.s)[1],t=tipoOf(v),sid=v.stall,lbl=sid?(corsiaLbl(sid)||'')+' — Stallo '+sid:'Non assegnata';
-  return '<button class="li" data-id="'+esc(v.id)+'" style="--c:'+c+'"><span class="nn" style="color:'+t.colore+'">'+esc(v.n)+'</span><span class="tx"><b>'+esc(v.model||t.nome)+'</b><span>📍 '+esc(lbl)+' · 🏷 '+esc(t.nome)+' · 📅 '+esc(v.anno||'—')+'</span>'+(v.note?'<span>📝 '+esc(v.note)+'</span>':'')+'</span><span class="tag">'+esc(stOf(v.s)[0])+'</span></button>'}
+  return '<button class="li" data-id="'+esc(v.id)+'" style="--c:'+c+'"><span class="nn" style="color:'+t.colore+'">'+esc(v.n)+'</span><span class="tx"><b>'+esc(v.model||t.nome)+'</b><span>📍 '+esc(lbl)+' · 🏷 '+esc(t.nome)+' · 📅 '+esc(v.anno||'—')+'</span>'+(v.note?'<span>📝 '+esc(v.note)+'</span>':'')+(function(){var e=avvOf(v);if(!e||!e.l||!e.l.length)return '';var a=e.l.filter(function(x){return x.f})[0]||e.l[0];return '<span>🔧 '+esc(e.clav||'—')+(a.descr?' · '+esc(a.descr):'')+(e.d0?' · '+ggDa(e.d0)+' gg':'')+(e.sin?' · <b style="color:var(--bad)">SINISTRO</b>':'')+'</span>'})()+'</span><span class="tag">'+esc(stOf(v.s)[0])+'</span></button>'}
 function listModal(title,items,empty){
   var h=items.length?'<div class="sub2">'+items.length+' mezzi</div>'+items.map(vrow).join(''):'<div class="sub2">'+empty+'</div>';
   var M=modal({title:title,html:h,wide:true,foot:[{label:'Chiudi'}]});
@@ -2377,7 +2476,7 @@ function menuItems(){
   return [
     {h:'Mezzi'},
     {ic:'🚨',l:'Fermi',fn:openFermi,pin:1},{ic:'⏸',l:'Ferme temporanee',fn:openFermeTemp,pin:1},
-    {ic:'🚌',l:'Aggiorna parco da SAP',fn:openSinossi,pin:1},{ic:'📥',l:'Importa da SAP',fn:openImportSap,pin:1},{ic:'📉',l:'Statistiche fermi',fn:openStatFermi,pin:1},
+    {ic:'🚌',l:'Aggiorna parco da SAP',fn:openSinossi,pin:1},{ic:'📥',l:'Importa da SAP',fn:openImportSap,pin:1},{ic:'📋',l:'Avvisi SAP',fn:openAvvisi,pin:1},{ic:'📉',l:'Statistiche fermi',fn:openStatFermi,pin:1},
     {ic:'🔧',l:'Dashboard officina',fn:openOffWin},
     {h:'Report'},
     {ic:'📈',l:'Disponibilità',fn:openDispo,pin:1},{ic:'🔧',l:'Revisioni',fn:openRevisioni,pin:1},{ic:'📋',l:'Log movimenti',fn:openLog,pin:1},
@@ -2486,6 +2585,7 @@ function startLive(){
   DB.ref('depotrack_stat_fermi').on('value',function(s){SF=s.val()||{};if(REDRAW){try{REDRAW()}catch(e){REDRAW=null}}},function(){});
   DB.ref('depotrack_presence').on('value',function(s){PRES=s.val()||{};$$('.presence-count').forEach(function(e){e.textContent=Object.keys(PRES).length})},function(){});
   DB.ref('depotrack_sap_import').on('value',function(s){SAPTS=s.val()||null;paintSap()},function(){});
+  DB.ref('depotrack_sap_avvisi').on('value',function(s){AVV=s.val()||{};if(REDRAW){try{REDRAW()}catch(e){REDRAW=null}}if(gotData&&S.sel&&insp.classList.contains('open'))openInsp(S.sel)},function(){});
   DB.ref('depotrack_manutenzione').on('value',function(s){MANT=!!s.val();document.body.classList.toggle('mant',MANT);buildMenu()},function(){});
   DB.ref('depotrack_officina').on('value',function(s){offIngest(s.val());if(gotData){renderOff();repaintAll()}},function(){});
   DB.ref('depotrack_rentri').on('value',function(s){RENTRI=s.val()||{};if(gotData)renderOff()},function(){});
