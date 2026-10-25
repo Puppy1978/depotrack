@@ -1802,7 +1802,7 @@ function statPrint(days){
 function protId(id){var n=lname(id);if(n==='ferma')return false;return n.indexOf('ferm')>-1||n.indexOf('manutenz')>-1||n.indexOf('prestito')>-1||n.indexOf('chiamat')>-1}
 function fermaId(){var r=null;ORDER.forEach(function(i){if(!r&&lname(i)==='ferma')r=i});if(r)return r;ORDER.forEach(function(i){var n=lname(i);if(!r&&n.indexOf('ferm')>-1&&n.indexOf('tempor')<0)r=i});return r}
 /* lettura avvisi SAP (IW28): colonne cercate per intestazione, con ripiego su E (sede) e G (F) */
-function sapNorm(x){return String(x==null?'':x).toLowerCase().replace(/[\s.…]+/g,' ').trim()}
+function sapNorm(x){return String(x==null?'':x).toLowerCase().replace(/[^a-z0-9àèéìòù]+/g,' ').trim()}
 function sapDate(x){
   if(x==null||x==='')return null;
   if(typeof x==='number'&&x>20000&&x<80000)return Math.round((x-25569)*86400000);
@@ -1812,14 +1812,17 @@ function sapDate(x){
 }
 function sapParse(rows){
   var C={sede:4,f:6,clav:-1,descr:-1,sort:-1,sortc:-1,data:-1,avv:-1},start=0,hdr=false;
-  for(var i=0;i<Math.min(rows.length,15);i++){
-    var r=rows[i].map(sapNorm);
-    if(r.some(function(c){return c.indexOf('sede tec')===0})&&r.indexOf('descrizione')>-1){
+  var H=[];
+  for(var i=0;i<Math.min(rows.length,25);i++){
+    var r=rows[i].map(sapNorm),hit=0;
+    r.forEach(function(c){if(c.indexOf('sede tec')===0||c==='descrizione'||c==='clavresp'||c.indexOf('campo sort')===0||c==='data avviso')hit++});
+    if(hit>=2){
       r.forEach(function(c,j){
-        if(c.indexOf('sede tec')===0)C.sede=j;else if(c==='f')C.f=j;else if(c==='clavresp')C.clav=j;
-        else if(c==='descrizione')C.descr=j;else if(c==='campo sort')C.sort=j;else if(c==='campo sort custom')C.sortc=j;
-        else if(c==='data avviso')C.data=j;else if(c==='avviso')C.avv=j;
+        if(c.indexOf('sede tec')===0)C.sede=j;else if(c==='f')C.f=j;else if(c==='clavresp'||c.indexOf('clav')===0)C.clav=j;
+        else if(c==='descrizione')C.descr=j;else if(c.indexOf('campo sort')===0&&(c.indexOf('cus')>-1||c.indexOf('cust')>-1))C.sortc=j;
+        else if(c==='campo sort')C.sort=j;else if(c==='data avviso')C.data=j;else if(c==='avviso')C.avv=j;
       });
+      H=rows[i].map(function(x){return String(x).trim()}).filter(Boolean);
       start=i+1;hdr=true;break;
     }
   }
@@ -1830,10 +1833,11 @@ function sapParse(rows){
     if(!cod&&hdr&&last&&r.some(function(x){return String(x).trim()}))cod=last; /* SAP lascia vuota la sede nelle righe dello stesso mezzo */
     if(!cod)continue;last=cod;
     var m=cod.match(/(\d{4})\s*$/),num=m?m[1]:(/^\d{3,5}$/.test(cod)?cod:null);if(!num)continue;
-    var sc=g(r,C.sortc);
-    out.push({num:num,f:g(r,C.f).toUpperCase()==='X',avv:g(r,C.avv),data:C.data<0?null:sapDate(r[C.data]),clav:g(r,C.clav).toUpperCase(),descr:g(r,C.descr),sort:g(r,C.sort),sortc:sc,sin:sc.toUpperCase().indexOf('SINISTR')>-1});
+    var sc=g(r,C.sortc),sin=sc.toUpperCase().indexOf('SINISTR')>-1;
+    if(!sin)sin=r.some(function(x){return /^SINISTR/.test(String(x).trim().toUpperCase())}); /* rete di sicurezza: cella che inizia con SINISTRO in qualunque colonna */
+    out.push({num:num,f:g(r,C.f).toUpperCase()==='X',avv:g(r,C.avv),data:C.data<0?null:sapDate(r[C.data]),clav:g(r,C.clav).toUpperCase(),descr:g(r,C.descr),sort:g(r,C.sort),sortc:sc,sin:sin});
   }
-  return {rows:out,hdr:hdr,cols:C};
+  return {rows:out,hdr:hdr,cols:C,H:H};
 }
 function sapGroup(list){
   var G={};
@@ -1929,6 +1933,7 @@ function sapPreview(M,nums,P){
   if(totP)h+='<div class="sub2">🔒 '+totP+' mezzi in stati impostati da te (ferma temporanea, manutenzione, prestito, chiamata): non vengono toccati.</div>';
   if(nonT.length)h+='<div class="sub2">⚠ Nel file ma non in flotta (ignorati): '+esc(nonT.join(' · '))+'</div>';
   var G=sapGroup(P.rows),nSin=0;Object.keys(G).forEach(function(n){if(G[n].sin)nSin++});
+  h+='<details class="sub2" style="margin-bottom:6px"><summary>🔎 Colonne trovate nel file</summary>'+(P.H.length?esc(P.H.join(' | ')):'nessuna riga di intestazione')+'</details>';
   h+='<div class="sub2">📋 '+P.rows.length+' avvisi letti'+(nSin?' · <b style="color:var(--bad)">'+nSin+' sinistri</b>':'')+(P.hdr?(P.cols.clav<0||P.cols.descr<0||P.cols.sort<0||P.cols.sortc<0?' · ⚠ mancano colonne: '+[['CLavResp',P.cols.clav],['Descrizione',P.cols.descr],['Campo sort',P.cols.sort],['campo sort custom',P.cols.sortc]].filter(function(x){return x[1]<0}).map(function(x){return x[0]}).join(', '):' · CLavResp, descrizione e note incluse'):' · ⚠ intestazioni non trovate: salvo solo i fermi')+'</div>';
   h+='<div class="frm" style="margin-top:10px">';
   if(daF.length){h+='<div class="lab">→ Da mettere ferme</div>';daF.forEach(function(v){h+=riga(v,'var(--bad)','FERMA')})}
