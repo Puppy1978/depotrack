@@ -273,6 +273,7 @@ html.t-light .p .on{text-shadow:none}html.t-light .p .pst{filter:brightness(.85)
     <button class="btn" id="bPin" title="Tiene la dashboard sopra tutte le altre finestre">📌<span class="t">Primo piano</span></button>
     <button class="btn" id="bTema" title="Cambia colori della dashboard">🎨<span class="t" id="bTemaL">Notte</span></button>
     <button class="btn" id="bSto" title="Storico entrate e uscite officina">📋<span class="t">Storico</span></button>
+    <button class="btn" id="bGiro" title="Foglio vuoto da stampare per il giro della mattina">🖨<span class="t">Foglio giro</span></button>
     <button class="btn" id="bCfg" hidden>⚙<span class="t">Blocchi ed etichette</span></button>
     <span id="user"></span>
   </header>
@@ -752,6 +753,39 @@ function pinToggle(){
   }).catch(function(e){toast('⚠ Primo piano non riuscito: '+(e&&e.message||e))});
 }
 
+/* foglio vuoto per il giro della mattina: stesso schema delle postazioni, da compilare a penna */
+function printGiro(){
+  var col={L:'#e5e5df',C:'#DB9941',R:'#3A8FA6'},ink={L:'#1b1f27',C:'#1b1f27',R:'#ffffff'};
+  function posto(n){return '<div class="ps"><div class="pn">'+n+'</div><div class="lv">Vettura</div><div class="vb"></div>'
+    +'<div class="mo"><span><i></i>Lavoraz.</span><span><i></i>Transito</span></div><div class="ln">Motivo</div><div class="ln">Ora</div></div>'}
+  var blk=OBLK.map(function(bk){var c='';for(var i=1;i<=bk.n;i++){var pid=bk.k+i,lab=OFF.label[pid]||'';
+      c+='<div class="bc"><div class="bh"><b>'+pid+'</b><span>'+(lab?esc(lab):'&nbsp;')+'</span></div>'+posto(1)+posto(2)+'</div>'}
+    return '<div class="blk" style="--n:'+bk.n+';flex:'+bk.n+'"><h2 style="background:'+col[bk.k]+';color:'+ink[bk.k]+'"><span>'+esc(blkName(bk.k))+'</span><em>___ / '+(bk.n*2)+'</em></h2><div class="sl">'+c+'</div></div>'}).join('');
+  var css='@page{size:A4 landscape;margin:8mm}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0;font-family:"Segoe UI",Arial,sans-serif;color:#1b1f27;font-size:9px}'
+    +'.hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid #1b1f27;padding-bottom:5px;margin-bottom:6px}.hd h1{margin:0;font-size:19px;letter-spacing:.04em}.hd h1 small{font-size:10px;font-weight:600;color:#666;letter-spacing:.12em;margin-left:8px}'
+    +'.f{display:flex;gap:14px;font-size:11px}.f span{white-space:nowrap}.f u{display:inline-block;width:32mm;border-bottom:1px solid #1b1f27;text-decoration:none}'
+    +'.bay{display:flex;gap:3mm}.blk{border:1.3px solid #1b1f27;border-radius:3mm;overflow:hidden;min-width:0}'
+    +'.blk h2{margin:0;display:flex;justify-content:space-between;align-items:center;padding:1.4mm 2.5mm;font-size:11px;font-weight:800;border-bottom:1.3px solid #1b1f27}.blk h2 em{font-style:normal;font-weight:700;font-size:10px}'
+    +'.sl{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:1.5mm;padding:1.5mm}'
+    +'.bc{border:1px solid #999;border-radius:2mm;padding:1mm;display:flex;flex-direction:column;gap:1mm;min-width:0}'
+    +'.bh{display:flex;flex-direction:column;padding:0 .5mm}.bh b{font-size:12px}.bh span{font-size:8px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+    +'.ps{position:relative;border:1px dashed #888;border-radius:1.5mm;padding:1mm 1.2mm 1.2mm;height:69mm;display:flex;flex-direction:column}'
+    +'.pn{position:absolute;top:.6mm;right:1.2mm;font-size:8px;color:#888;font-weight:700}'
+    +'.lv{font-size:7px;letter-spacing:.08em;text-transform:uppercase;color:#888;margin-top:1mm}.vb{height:13mm;border:1.2px solid #1b1f27;border-radius:1.2mm;margin:.6mm 0 1.6mm;background:#fff}'
+    +'.mo{display:flex;flex-direction:column;gap:1mm;font-size:8px;margin-bottom:1mm}.mo span{display:flex;align-items:center;gap:1mm;white-space:nowrap}.mo i{width:2.8mm;height:2.8mm;border:1px solid #1b1f27;border-radius:.5mm;flex:none}'
+    +'.ln{margin-top:auto;font-size:7px;color:#888;border-bottom:1px solid #999;padding-bottom:5mm;text-transform:uppercase;letter-spacing:.06em}.ln+.ln{margin-top:1.5mm}'
+    +'.nt{margin-top:3mm;border:1px solid #999;border-radius:2mm;height:14mm;padding:1mm 2mm;font-size:8px;color:#888;text-transform:uppercase;letter-spacing:.08em}'
+    +'.ft{display:flex;justify-content:space-between;margin-top:1.5mm;font-size:7.5px;color:#999}';
+  var html='<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Giro officina — foglio da compilare</title><style>'+css+'</style></head><body>'
+    +'<div class="hd"><h1>🔧 GIRO OFFICINA<small>FOGLIO DA COMPILARE</small></h1><div class="f"><span>Data <u></u></span><span>Ora <u style="width:18mm"></u></span><span>Compilato da <u style="width:42mm"></u></span></div></div>'
+    +'<div class="bay">'+blk+'</div>'
+    +'<div class="nt">Note</div>'
+    +'<div class="ft"><span>DepoTrack · dashboard officina</span><span>Snodati 18 m (19xx): scrivi la vettura nel posto 1 e barra il posto 2 · poi inserisci tutto nella dashboard</span></div>'
+    +'<script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script></body></html>';
+  var w=window.open('','_blank');if(!w){toast('⚠ Il browser ha bloccato la finestra di stampa');return}
+  w.document.write(html);w.document.close();
+}
+
 /* ---------- avvio ---------- */
 document.getElementById('bPin').onclick=pinToggle;
 var PALS=[
@@ -817,6 +851,7 @@ applyPalD(palStored());
 window.addEventListener('resize',fitSoon);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitAll);
 document.getElementById('bCfg').onclick=function(){openCfg()};
 document.getElementById('bSto').onclick=function(){openStorico()};
+document.getElementById('bGiro').onclick=function(){printGiro()};
 paintUser();(function loop(){tick();setTimeout(loop,1000-(Date.now()%1000)+15)})();wxLoad();setInterval(wxLoad,600000);setInterval(render,60000);render();
 if(typeof firebase==='undefined'){setStatus('err');toast('Firebase non raggiungibile (sei offline?)')}
 else{
