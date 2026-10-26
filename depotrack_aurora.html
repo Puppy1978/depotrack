@@ -3011,6 +3011,7 @@ $('#bOffWin').onclick=openOffWin;
 setStatus('conn');buildMenu();paintUser();(function loop(){tickClock();setTimeout(loop,1000-(Date.now()%1000)+15)})();
 if(ls('da_compact')==='1')document.body.classList.add('compact');
 var rm=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+window.addEventListener('storage',function(e){if(e.key==='da_pal'&&e.newValue!=null&&PALS[+e.newValue]&&+e.newValue!==S.pal)applyPal(+e.newValue)});
 applyPal(+(ls('da_pal')||0));applyFont(+(ls('da_font')||0));applyStyle(ls('da_style')||'solid');applyCol(ls('da_col')||'stato');
 applyMotion(ls('da_motion')===null?!rm:ls('da_motion')==='1');
 apply3d(ls('da_3d')===null?true:ls('da_3d')==='1');
