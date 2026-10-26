@@ -322,6 +322,24 @@ body.nomotion .st{animation:none!important}
 .modal{width:min(560px,100%);border-radius:28px;background:color-mix(in srgb,var(--surf) 94%,transparent);border:1px solid var(--line);box-shadow:0 40px 100px rgba(0,0,0,.55);animation:pop .45s var(--spring) both;display:flex;flex-direction:column;max-height:86vh}
 .modal.wide{width:min(760px,100%)}
 .modal.kpi{width:min(980px,100%)}
+.kmrem{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:16px;background:rgba(40,0,0,.78);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:kmrBg 1.6s ease-in-out infinite}
+@keyframes kmrBg{50%{background:rgba(90,0,0,.82)}}
+.kmr-box{width:min(620px,100%);max-height:92vh;overflow:auto;padding:30px 28px 24px;border-radius:26px;background:#1a0606;color:#fff;border:4px solid #ff2d2d;text-align:center;box-shadow:0 0 0 0 rgba(255,45,45,.7),0 30px 80px rgba(0,0,0,.6);animation:kmrPulse 1.2s ease-in-out infinite}
+@keyframes kmrPulse{50%{box-shadow:0 0 0 14px rgba(255,45,45,0),0 30px 80px rgba(0,0,0,.6);border-color:#ff7070}}
+.kmr-ic{font-size:72px;line-height:1;animation:kmrShake 1.2s ease-in-out infinite}
+@keyframes kmrShake{0%,100%{transform:rotate(0)}10%{transform:rotate(-12deg)}20%{transform:rotate(12deg)}30%{transform:rotate(-8deg)}40%{transform:rotate(0)}}
+.kmr-k{margin-top:10px;display:inline-block;padding:5px 14px;border-radius:99px;background:#ff2d2d;color:#fff;font-weight:900;letter-spacing:.14em;font-size:13px}
+.kmr-box h2{margin:14px 0 8px;font-size:clamp(30px,6vw,48px);line-height:1.05;font-weight:900;letter-spacing:.02em;color:#ff4d4d}
+.kmr-box p{margin:0 0 14px;color:#ffd0d0;font-size:15px}
+.kmr-box ol{text-align:left;margin:0 auto 12px;padding:14px 16px 14px 36px;max-width:500px;border-radius:14px;background:rgba(255,255,255,.06);font-size:15px;line-height:1.55}
+.kmr-box ol b{color:#fff}
+.kmr-last{font-size:13px;color:#ff9c9c;margin-bottom:16px}
+.kmr-act{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.kmr-go{padding:15px 26px;border-radius:16px;background:#ff2d2d;color:#fff;font-weight:900;font-size:18px;letter-spacing:.05em;box-shadow:0 8px 24px rgba(255,45,45,.45)}
+.kmr-go:hover{background:#ff4747}
+.kmr-later{padding:15px 20px;border-radius:16px;background:rgba(255,255,255,.1);color:#ffd0d0;font-weight:700;font-size:15px}
+@media (prefers-reduced-motion:reduce){.kmrem,.kmr-box,.kmr-ic{animation:none}}
+
 .ksum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
 .ksum>div,.kch,.kbt{flex-shrink:0}
 .ksum>div{padding:12px 14px;border-radius:16px;background:rgba(128,128,150,.12);border-left:4px solid var(--c)}
@@ -1831,7 +1849,7 @@ function onAuth(user){
     if(!u||!u.ruolo){toast('Utente non abilitato (UID '+user.uid+')');AUTH.signOut();return}
     ME={uid:user.uid,name:u.nome||user.email,role:String(u.ruolo).trim().toLowerCase()};
     b.classList.remove('role-superuser','role-piazzale','role-officina');b.classList.add('authed','role-'+ME.role);
-    resetInact();setupPresence();paintUser();setTimeout(kpiSnap,8000);
+    resetInact();setupPresence();paintUser();setTimeout(kpiSnap,8000);setTimeout(kmRemCheck,4000);
     DB.ref('depotrack_log/'+nk('log')).set({ts:Date.now(),type:'accesso',txt:ME.name+' ha effettuato l\'accesso ('+ME.role.toUpperCase()+')'}).catch(function(){});
     toast('Ciao '+ME.name+' · '+ME.role);if(S.sel)openInsp(S.sel);
   }).catch(function(err){toast('Errore verifica utente: '+err.message);AUTH.signOut()});
@@ -2658,6 +2676,31 @@ function kmFor(al){if(!KMRAW)return null;if(!al)return KMX;var k=al+'|'+TL.map(f
 function kmVeh(n){if(!KMX)return null;return KMX.veh[String(n).trim()]||null}
 function kmLast30(n){var v=kmVeh(n);if(!v)return null;var c=day0(Date.now())-30*86400000,s=0;Object.keys(v.days).forEach(function(t){if(+t>c)s+=v.days[t]});return s}
 
+/* ---------- promemoria del lunedì: import km da SAP ---------- */
+function kmMonday(){var d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getTime()}
+var KMREM_OPEN=false,KMMETA_OK=false;
+function kmRemCheck(force){
+  if(KMREM_OPEN||!S.live||!gotData||!KMMETA_OK||ME.role!=='superuser')return;
+  var mon=kmMonday(),now=new Date();
+  if(!force&&now.getTime()<mon+6*3600000)return;                 /* dal lunedì alle 6:00 */
+  if(KMMETA&&KMMETA.ts>=mon)return;                              /* già importati questa settimana */
+  var sn=0;try{sn=+localStorage.getItem('da_kmrem_snooze')||0}catch(e){}
+  if(!force&&Date.now()<sn)return;
+  var late=Math.floor((day0(Date.now())-mon)/86400000),from=KMMETA&&KMMETA.to?fmtD(KMMETA.to+86400000).replace(/\//g,'.'):'01.01.'+now.getFullYear(); /* formato data di SAP */
+  var sc=document.createElement('div');sc.className='kmrem';KMREM_OPEN=true;
+  sc.innerHTML='<div class="kmr-box" role="alertdialog" aria-labelledby="kmr-t"><div class="kmr-ic">🚨</div>'
+    +'<div class="kmr-k">'+(late>0?'IN RITARDO DI '+late+(late===1?' GIORNO':' GIORNI'):'PROMEMORIA DEL LUNEDÌ')+'</div>'
+    +'<h2 id="kmr-t">CARICA I KM DA SAP</h2>'
+    +'<p>Senza l\'import settimanale i KPI di utilizzo, km medi e fermi ogni 10.000 km restano indietro.</p>'
+    +'<ol><li>SAP → <b>IK17</b></li><li>Sede tecnica: <b>selezione multipla</b> → incolla la colonna B di Situazione Rotabili</li><li>Caratteristica <b>KM_CHILOMETRI</b> · Data <b>dal '+esc(from)+'</b> · N. doc. <b>9999</b> · Layout <b>/KMAURORA</b></li><li><b>F8</b> → esporta in Excel → importa qui</li></ol>'
+    +(KMMETA&&KMMETA.ts?'<div class="kmr-last">Ultimo import: '+fmtD(KMMETA.ts)+(KMMETA.by?' · '+esc(KMMETA.by):'')+'</div>':'<div class="kmr-last">Nessun import ancora fatto</div>')
+    +'<div class="kmr-act"><button class="kmr-go">📏 IMPORTA ORA</button><button class="kmr-later">Più tardi (1 ora)</button></div></div>';
+  document.body.appendChild(sc);
+  function close(){if(sc.parentNode)sc.parentNode.removeChild(sc);KMREM_OPEN=false}
+  sc.querySelector('.kmr-go').onclick=function(){close();openImportKm()};
+  sc.querySelector('.kmr-later').onclick=function(){try{localStorage.setItem('da_kmrem_snooze',Date.now()+3600000)}catch(e){}close()};
+}
+
 /* ---------- KPI FLEET: foto giornaliera, target, trend ---------- */
 var KCFG={},KSNAP_LAST=0;
 var KPIS=[
@@ -3080,7 +3123,7 @@ function menuItems(){
   return [
     {h:'Mezzi'},
     {ic:'🚨',l:'Fermi',fn:openFermi,pin:1},{ic:'⏸',l:'Ferme temporanee',fn:openFermeTemp,pin:1},
-    {ic:'🚌',l:'Aggiorna parco da SAP',fn:openSinossi,pin:1},{ic:'📥',l:'Importa da SAP',fn:openImportSap,pin:1},{ic:'📏',l:'Importa km da SAP',fn:openImportKm,pin:1},{ic:'📋',l:'Avvisi SAP',fn:openAvvisi,pin:1},{ic:'📉',l:'Statistiche fermi',fn:openStatFermi,pin:1},
+    {ic:'🚌',l:'Aggiorna parco da SAP',fn:openSinossi,pin:1},{ic:'📥',l:'Importa da SAP',fn:openImportSap,pin:1},{ic:'📏',l:'Importa km da SAP',s:(KMMETA&&KMMETA.ts>=kmMonday())?'✓':'⚠',fn:openImportKm,pin:1},{ic:'📋',l:'Avvisi SAP',fn:openAvvisi,pin:1},{ic:'📉',l:'Statistiche fermi',fn:openStatFermi,pin:1},
     {ic:'🔧',l:'Dashboard officina',fn:openOffWin},
     {h:'Report'},
     {ic:'🎯',l:'KPI FLEET',fn:openKpi,pin:1},{ic:'📈',l:'Disponibilità',fn:openDispo,pin:1},{ic:'🔧',l:'Revisioni',fn:openRevisioni,pin:1},{ic:'📋',l:'Log movimenti',fn:openLog,pin:1},
@@ -3192,7 +3235,8 @@ function startLive(){
   DB.ref('depotrack_sap_avvisi').on('value',function(s){AVV=s.val()||{};if(REDRAW){try{REDRAW()}catch(e){REDRAW=null}}if(gotData&&S.sel&&insp.classList.contains('open'))openInsp(S.sel)},function(){});
   DB.ref('depotrack_manutenzione').on('value',function(s){MANT=!!s.val();document.body.classList.toggle('mant',MANT);buildMenu()},function(){});
   DB.ref('depotrack_officina').on('value',function(s){offIngest(s.val());if(gotData){renderOff();repaintAll()}},function(){});
-  DB.ref('depotrack_km_meta').on('value',function(s){var m=s.val()||null;if(KMMETA&&m&&m.ts!==KMMETA.ts){KMX=null;KMRAW=null}KMMETA=m},function(){});
+  DB.ref('depotrack_km_meta').on('value',function(s){var m=s.val()||null;if(KMMETA&&m&&m.ts!==KMMETA.ts){KMX=null;KMRAW=null}KMMETA=m;KMMETA_OK=true;if(m&&m.ts>=kmMonday()){var r=$('.kmrem');if(r){r.remove();KMREM_OPEN=false}}else setTimeout(kmRemCheck,3000)},function(){});
+  setInterval(kmRemCheck,5*60000);
   DB.ref('depotrack_kpi_cfg').on('value',function(s){KCFG=s.val()||{};if(REDRAW){try{REDRAW()}catch(e){REDRAW=null}}},function(){});
   setInterval(kpiSnap,10*60000);setTimeout(kpiSnap,20000);
   DB.ref('depotrack_rentri').on('value',function(s){RENTRI=s.val()||{};if(gotData)renderOff()},function(){});
