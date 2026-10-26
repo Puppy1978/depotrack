@@ -2129,7 +2129,7 @@ function openAvvisi(){
     $$('[data-id]',M.el).forEach(function(b){b.onclick=function(){M.close();showAt(b.dataset.id,300)}});
   }
   var M=modal({title:'📋 Avvisi SAP',html:'',wide:true,onclose:function(){if(REDRAW===draw)REDRAW=null},foot:[{label:'🖨 Esporta report',cls:'pri',keep:true,fn:function(){printAvvisi(rowsFor(),flt.k)}},{label:'Chiudi'}]});
-  if(!AVV||!AVV.v){$('.mb',M.el).innerHTML='<div class="sub2">Nessun avviso salvato: fai un "Importa da SAP" con il file IW28.</div>';return}
+  if(!AVV||!AVV.v){$('.mb',M.el).innerHTML='<div class="sub2">Nessun avviso salvato: fai un "Importa FERMI da SAP" con il file IW28.</div>';return}
   REDRAW=draw;draw();
 }
 function printAvvisi(it,fk){
@@ -3202,7 +3202,7 @@ function menuItems(){
   return [
     {h:'Mezzi'},
     {ic:'🚨',l:'Fermi',fn:openFermi,pin:1},{ic:'⏸',l:'Ferme temporanee',fn:openFermeTemp,pin:1},
-    {ic:'🚌',l:'Aggiorna parco da SAP',fn:openSinossi,pin:1},{ic:'📥',l:'Importa da SAP',fn:openImportSap,pin:1},{ic:'📏',l:'Importa km da SAP',s:(KMMETA&&KMMETA.ts>=kmMonday())?'✓':'⚠',fn:openImportKm,pin:1},{ic:'⛽',l:'Importa gasolio da SAP',fn:openImportGas,pin:1},{ic:'📋',l:'Avvisi SAP',fn:openAvvisi,pin:1},{ic:'📉',l:'Statistiche fermi',fn:openStatFermi,pin:1},
+    {ic:'🚌',l:'Aggiorna parco da SAP',fn:openSinossi,pin:1},{ic:'📥',l:'Importa FERMI da SAP',fn:openImportSap,pin:1},{ic:'📏',l:'Importa km da SAP',s:(KMMETA&&KMMETA.ts>=kmMonday())?'✓':'⚠',fn:openImportKm,pin:1},{ic:'⛽',l:'Importa gasolio da SAP',fn:openImportGas,pin:1},{ic:'📋',l:'Avvisi SAP',fn:openAvvisi,pin:1},{ic:'📉',l:'Statistiche fermi',fn:openStatFermi,pin:1},
     {ic:'🔧',l:'Dashboard officina',fn:openOffWin},
     {h:'Report'},
     {ic:'🎯',l:'KPI FLEET',fn:openKpi,pin:1},{ic:'📈',l:'Disponibilità',fn:openDispo,pin:1},{ic:'🔧',l:'Revisioni',fn:openRevisioni,pin:1},{ic:'📋',l:'Log movimenti',fn:openLog,pin:1},
@@ -3314,7 +3314,7 @@ function startLive(){
   DB.ref('depotrack_sap_avvisi').on('value',function(s){AVV=s.val()||{};if(REDRAW){try{REDRAW()}catch(e){REDRAW=null}}if(gotData&&S.sel&&insp.classList.contains('open'))openInsp(S.sel)},function(){});
   DB.ref('depotrack_manutenzione').on('value',function(s){MANT=!!s.val();document.body.classList.toggle('mant',MANT);buildMenu()},function(){});
   DB.ref('depotrack_officina').on('value',function(s){offIngest(s.val());if(gotData){renderOff();repaintAll()}},function(){});
-  DB.ref('depotrack_km_meta').on('value',function(s){var m=s.val()||null;if(KMMETA&&m&&m.ts!==KMMETA.ts){KMX=null;KMRAW=null}KMMETA=m;KMMETA_OK=true;if(m&&m.ts>=kmMonday()){var r=$('.kmrem');if(r){r.remove();KMREM_OPEN=false}}else setTimeout(kmRemCheck,3000)},function(){});
+  DB.ref('depotrack_km_meta').on('value',function(s){var m=s.val()||null;if(KMMETA&&m&&m.ts!==KMMETA.ts){KMX=null;KMRAW=null}KMMETA=m;KMMETA_OK=true;try{buildMenu()}catch(e){}if(m&&m.ts>=kmMonday()){var r=$('.kmrem');if(r){r.remove();KMREM_OPEN=false}}else setTimeout(kmRemCheck,3000)},function(){});
   setInterval(kmRemCheck,5*60000);
   DB.ref('depotrack_gas_meta').on('value',function(s){var m=s.val()||null;if(GASMETA&&m&&m.ts!==GASMETA.ts)GAS=null;GASMETA=m},function(){});
   DB.ref('depotrack_kpi_cfg').on('value',function(s){KCFG=s.val()||{};if(REDRAW){try{REDRAW()}catch(e){REDRAW=null}}},function(){});
