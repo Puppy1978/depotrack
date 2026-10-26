@@ -321,6 +321,34 @@ body.nomotion .st{animation:none!important}
 .mscrim.top{z-index:110}
 .modal{width:min(560px,100%);border-radius:28px;background:color-mix(in srgb,var(--surf) 94%,transparent);border:1px solid var(--line);box-shadow:0 40px 100px rgba(0,0,0,.55);animation:pop .45s var(--spring) both;display:flex;flex-direction:column;max-height:86vh}
 .modal.wide{width:min(760px,100%)}
+.modal.kpi{width:min(980px,100%)}
+.ksum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.ksum>div,.kch,.kbt{flex-shrink:0}
+.ksum>div{padding:12px 14px;border-radius:16px;background:rgba(128,128,150,.12);border-left:4px solid var(--c)}
+.ksum b{display:block;font-family:var(--f-display);font-size:30px;color:var(--c);line-height:1.1}
+.ksum span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.ktw{flex-shrink:0;overflow-x:auto;margin:0 -4px 16px;-webkit-overflow-scrolling:touch}
+.kt{width:100%;border-collapse:collapse;font-size:13px;min-width:620px}
+.kt th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.kt td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+.kt td small.kmt{display:none}
+.kt td small{display:block;color:var(--mut);font-size:11px;font-weight:400}
+.kt td.n,.kt th:not(:first-child){text-align:right;white-space:nowrap}
+.kt tr{cursor:pointer}.kt tbody tr:hover,.kt tr.on{background:rgba(128,128,150,.10)}
+.kt tr.on td:first-child{box-shadow:inset 3px 0 0 var(--acc)}
+.khd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.kch{padding:10px;border-radius:16px;background:rgba(128,128,150,.08)}
+.kleg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--mut);margin-top:6px}
+.kleg i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.kbt{display:grid;gap:8px}
+.kbt>div{display:grid;grid-template-columns:minmax(0,190px) 1fr 46px 50px;gap:10px;align-items:center;font-size:13px}
+.kbt .kn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.kbt .kn i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.kbt .kb{position:relative;height:10px;border-radius:6px;background:rgba(128,128,150,.2)}
+.kbt .kb i{display:block;height:100%;border-radius:6px}
+.kbt .kb u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--pre)}
+.kbt b{text-align:right}.kbt small{color:var(--mut);text-align:right}
+@media(max-width:560px){.kt{min-width:0}.kt th:nth-child(3),.kt td:nth-child(3),.kt th:nth-child(5),.kt td:nth-child(5),.kt th:nth-child(6),.kt td:nth-child(6){display:none}.kt td.n small.kmt{display:block}.ksum span{font-size:9px;letter-spacing:.05em}.ksum b{font-size:24px}.kbt>div{grid-template-columns:1fr 46px 46px}.kbt .kb{grid-column:1/-1;order:3}}
+
 .mh{display:flex;align-items:center;gap:12px;padding:18px 20px 12px}
 .mh h2{margin:0;font-family:var(--f-display);font-weight:var(--dw);font-size:calc(26px * var(--dsc));letter-spacing:var(--dls);flex:1}
 .mh .x2{width:34px;height:34px;border-radius:50%;background:rgba(128,128,150,.2);font-size:19px;line-height:1}
@@ -1767,7 +1795,7 @@ function onAuth(user){
     if(!u||!u.ruolo){toast('Utente non abilitato (UID '+user.uid+')');AUTH.signOut();return}
     ME={uid:user.uid,name:u.nome||user.email,role:String(u.ruolo).trim().toLowerCase()};
     b.classList.remove('role-superuser','role-piazzale','role-officina');b.classList.add('authed','role-'+ME.role);
-    resetInact();setupPresence();paintUser();
+    resetInact();setupPresence();paintUser();setTimeout(kpiSnap,8000);
     DB.ref('depotrack_log/'+nk('log')).set({ts:Date.now(),type:'accesso',txt:ME.name+' ha effettuato l\'accesso ('+ME.role.toUpperCase()+')'}).catch(function(){});
     toast('Ciao '+ME.name+' · '+ME.role);if(S.sel)openInsp(S.sel);
   }).catch(function(err){toast('Errore verifica utente: '+err.message);AUTH.signOut()});
@@ -2500,6 +2528,155 @@ function openDispo(){
   $$('[data-id]',M.el).forEach(function(b){b.onclick=function(){M.close();showAt(b.dataset.id,300)}});
 }
 
+/* ---------- KPI FLEET: foto giornaliera, target, trend ---------- */
+var KCFG={},KSNAP_LAST=0;
+var KPIS=[
+  {id:'disp',n:'Disponibilità flotta',u:'%',dir:'up',def:90,snap:function(s){return s.tot?s.disp/s.tot*100:null}},
+  {id:'ferma',n:'Mezzi in ferma',u:'%',dir:'down',def:10,snap:function(s){return s.tot?s.pura/s.tot*100:null}},
+  {id:'sin',n:'Sinistri da gestire',u:'n.',dir:'down',def:5,snap:function(s){return s.sin}},
+  {id:'fmed',n:'Fermo medio (avvisi SAP)',u:'gg',dir:'down',def:30,snap:function(s){return s.fMed}},
+  {id:'off',n:'Permanenza media officina',u:'h',dir:'down',def:24},
+  {id:'rec',n:'Recidive entro 30 gg',u:'n.',dir:'down',def:3}
+];
+function kTarget(k){var t=KCFG&&KCFG.targets&&KCFG.targets[k.id];return t==null||t===''?k.def:+t}
+function kMet(k,v){var t=kTarget(k);if(v==null||t==null||isNaN(t))return null;return k.dir==='up'?v>=t:v<=t}
+function kFmt(k,v){if(v==null||isNaN(v))return '—';var d=k.u==='%'||k.u==='h'||k.u==='gg'?1:(Math.round(v)===v?0:1);return v.toFixed(d).replace('.',',')+(k.u==='%'?'%':k.u==='n.'?'':' '+k.u)}
+/* fotografia dello stato attuale */
+function kpiNow(){
+  var DP=dispId(),s={ts:Date.now(),tot:V.length,disp:0,pura:0,temp:0,sin:0,fMed:null,off:Object.keys(OFFBY).length,bt:{}};
+  var VV=(AVV&&AVV.v)||{},gg=[];
+  V.forEach(function(v){
+    var t=v.tipo||'?',b=s.bt[t]||(s.bt[t]={t:0,d:0});b.t++;
+    if(DP&&v.s===DP){s.disp++;b.d++}
+    if(isPura(v.s))s.pura++;else if(isTemp(v.s))s.temp++;
+    var e=VV[String(v.n).trim()];if(!e)return;
+    if(e.sin)s.sin++;
+    if(e.l&&e.l.some(function(a){return a.f})&&e.d0){var d=ggDa(e.d0);if(d<=QUAR_GG)gg.push(d)}
+  });
+  if(gg.length)s.fMed=gg.reduce(function(a,b){return a+b},0)/gg.length;
+  return s;
+}
+/* una foto al giorno su Firebase: la riscrive al massimo ogni 30 min, così resta l'ultima della giornata */
+function kpiSnap(){
+  if(!DB||!S.live||!ME.uid||!gotData||!V.length)return;
+  if(Date.now()-KSNAP_LAST<30*60000)return;
+  KSNAP_LAST=Date.now();
+  DB.ref('depotrack_kpi_snap/'+isoD(Date.now())).set(kpiNow()).catch(function(){KSNAP_LAST=0});
+}
+/* episodi di ferma uniti agli archivi; le fermate spezzate dallo svuotamento vengono ricucite */
+function kEpisodes(arch){
+  var all=[];
+  Object.keys(arch||{}).forEach(function(a){var en=arch[a]&&arch[a].entries||{};Object.keys(en).forEach(function(k){if(en[k]&&en[k].startTs)all.push(en[k])})});
+  Object.keys(SF).forEach(function(k){if(SF[k]&&SF[k].startTs)all.push(SF[k])});
+  var byV={},out=[];
+  all.sort(function(a,b){return a.startTs-b.startTs}).forEach(function(e){
+    var l=byV[e.vid];
+    if(l&&l.ancoraInCorso&&e.startTs-l.endTs<5*60000){l.endTs=e.endTs;l.ancoraInCorso=e.ancoraInCorso;return}
+    var c={vid:e.vid,startTs:e.startTs,endTs:e.endTs,ancoraInCorso:!!e.ancoraInCorso};byV[e.vid]=c;out.push(c);
+  });
+  return out;
+}
+function kRecidive(eps){
+  var byV={},r=[];
+  eps.forEach(function(e){var p=byV[e.vid];if(p&&p.endTs&&e.startTs-p.endTs<=30*86400000&&e.startTs>p.endTs)r.push(e.startTs);byV[e.vid]=e});
+  return r;
+}
+/* valore di un KPI in un intervallo [a,b) */
+function kRange(k,a,b,D){
+  if(k.snap){
+    var vals=[];D.snaps.forEach(function(s){if(s.ts>=a&&s.ts<b){var x=k.snap(s);if(x!=null)vals.push(x)}});
+    if(vals.length)return {v:vals.reduce(function(x,y){return x+y},0)/vals.length};
+    if(k.id==='ferma'&&V.length){ /* ricostruito dalle statistiche fermi */
+      var n=[],now=Date.now();
+      for(var d=day0(a);d<b&&d<=now;d+=86400000){var t=Math.min(d+86400000-1,now),c=0;
+        D.eps.forEach(function(e){if(e.startTs<=t&&(e.endTs==null||e.endTs>t))c++});n.push(c/V.length*100)}
+      if(n.length&&D.eps.length&&D.eps[0].startTs<b)return {v:n.reduce(function(x,y){return x+y},0)/n.length,rec:true};
+    }
+    return {v:null};
+  }
+  if(k.id==='off'){var dd=D.off.filter(function(r){return r.out&&r.out>=a&&r.out<b});return {v:dd.length?dd.reduce(function(x,r){return x+(r.out-r.in)},0)/dd.length/3600000:null}}
+  if(k.id==='rec'){if(!D.eps.length||D.eps[0].startTs>=b)return {v:null};return {v:D.rec.filter(function(t){return t>=a&&t<b}).length}}
+  return {v:null};
+}
+function kNowVal(k,s,D){
+  if(k.snap)return k.snap(s);
+  var n=Date.now();return kRange(k,n-30*86400000,n+1,D).v;
+}
+function openKpi(){
+  var D={snaps:[],eps:[],rec:[],off:[]},sel=ls('da_kpi_sel')||'disp',mode=ls('da_kpi_mode')||'m',M;
+  function mStart(y,m){return new Date(y,m,1).getTime()}
+  function chart(k){
+    var t=kTarget(k),pts=[],nw=new Date(),i;
+    if(mode==='m'){for(i=11;i>=0;i--){var y=nw.getFullYear(),m=nw.getMonth()-i,a=mStart(y,m),b=mStart(y,m+1),py=kRange(k,mStart(y-1,m),mStart(y-1,m+1),D);
+        var cur=kRange(k,a,b,D);if(i===0&&cur.v==null&&k.snap)cur={v:k.snap(kpiNow())};
+        pts.push({lab:new Date(a).toLocaleDateString('it',{month:'short'}).replace('.','')+(new Date(a).getMonth()===0||i===11?' '+String(new Date(a).getFullYear()).slice(2):''),v:cur.v,rec:cur.rec,py:py.v})}}
+    else{var d0=day0(Date.now());for(i=29;i>=0;i--){var a2=d0-i*86400000,c2=kRange(k,a2,a2+86400000,D);if(i===0&&k.snap)c2={v:k.snap(kpiNow())};
+        var dt=new Date(a2);pts.push({lab:dt.getDate()+(dt.getDate()===1||i===29?'/'+(dt.getMonth()+1):''),v:c2.v,rec:c2.rec,py:null})}}
+    var has=pts.some(function(p){return p.v!=null});
+    if(!has)return '<div class="sub2" style="padding:26px 0;text-align:center">Nessuno storico per questo KPI. La foto giornaliera parte da oggi: il grafico si riempie giorno dopo giorno.</div>';
+    var mx=Math.max.apply(null,pts.map(function(p){return Math.max(p.v||0,p.py||0)}).concat([t||0]))*1.15||1;
+    var W=window.innerWidth<600?380:700,H=window.innerWidth<600?220:230,L=34,R=8,T=14,B=28,cw=(W-L-R)/pts.length,bw=Math.min(28,cw*.62),sv='';
+    var Y=function(v){return T+(H-T-B)*(1-v/mx)};
+    for(i=0;i<=4;i++){var gv=mx/4*i;sv+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(gv)+'" y2="'+Y(gv)+'" stroke="currentColor" stroke-opacity=".08"/><text x="'+(L-6)+'" y="'+(Y(gv)+4)+'" text-anchor="end" font-size="10" fill="currentColor" fill-opacity=".5">'+(gv>=10?Math.round(gv):gv.toFixed(1))+'</text>'}
+    pts.forEach(function(p,j){var x=L+cw*j+cw/2;
+      if(p.py!=null){sv+='<rect x="'+(x-bw/2-3)+'" y="'+Y(p.py)+'" width="'+bw+'" height="'+(H-B-Y(p.py))+'" rx="3" fill="currentColor" fill-opacity=".14"/>'}
+      if(p.v!=null){var ok=kMet(k,p.v),c=ok==null?'var(--acc)':ok?'var(--ok)':'var(--bad)';
+        sv+='<rect x="'+(x-bw/2+(p.py!=null?3:0))+'" y="'+Y(p.v)+'" width="'+bw+'" height="'+Math.max(1,H-B-Y(p.v))+'" rx="3" fill="'+c+'"'+(p.rec?' fill-opacity=".45"':'')+'><title>'+esc(p.lab)+': '+esc(kFmt(k,p.v))+(p.rec?' (ricostruito)':'')+(p.py!=null?' · anno prec. '+esc(kFmt(k,p.py)):'')+'</title></rect>';
+        if(pts.length<=12)sv+='<text x="'+(x+(p.py!=null?3:0))+'" y="'+(Y(p.v)-4)+'" text-anchor="middle" font-size="10" font-weight="700" fill="currentColor">'+esc(kFmt(k,p.v).replace(/ (h|gg)$/,'').replace('%',''))+'</text>'}
+      if(pts.length<=12||j%3===0||j===pts.length-1)sv+='<text x="'+x+'" y="'+(H-10)+'" text-anchor="middle" font-size="10" fill="currentColor" fill-opacity=".6">'+esc(p.lab)+'</text>'});
+    if(t!=null&&!isNaN(t))sv+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(t)+'" y2="'+Y(t)+'" stroke="var(--pre)" stroke-width="2" stroke-dasharray="6 5"/><rect x="'+(L+4)+'" y="'+(Y(t)-17)+'" width="76" height="14" rx="4" fill="var(--bg2,#111)" fill-opacity=".85"/><text x="'+(L+8)+'" y="'+(Y(t)-6)+'" text-anchor="start" font-size="10" font-weight="700" fill="var(--pre)">target '+esc(kFmt(k,t))+'</text>';
+    return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block;color:var(--txt)" role="img" aria-label="Trend '+esc(k.n)+'">'+sv+'</svg>'
+      +'<div class="kleg"><span><i style="background:var(--ok)"></i>In target</span><span><i style="background:var(--bad)"></i>Fuori target</span>'+(pts.some(function(p){return p.py!=null})?'<span><i style="background:currentColor;opacity:.2"></i>Anno precedente</span>':'')+'<span><i style="background:var(--pre);height:3px"></i>Target</span>'+(pts.some(function(p){return p.rec})?'<span><i style="background:var(--ok);opacity:.45"></i>Ricostruito dalle statistiche fermi</span>':'')+'</div>';
+  }
+  function draw(){
+    var s=kpiNow(),nw=new Date(),ms=mStart(nw.getFullYear(),nw.getMonth()),pms=mStart(nw.getFullYear(),nw.getMonth()-1);
+    var rows=KPIS.map(function(k){var v=kNowVal(k,s,D),mtd=kRange(k,ms,Date.now()+1,D),pm=kRange(k,pms,ms,D);if(mtd.v==null&&k.snap)mtd={v:v};return {k:k,v:v,mtd:mtd,pm:pm,ok:kMet(k,v)}});
+    var tot=rows.filter(function(r){return r.ok!=null}).length,okN=rows.filter(function(r){return r.ok===true}).length;
+    var h='<div class="ksum"><div style="--c:var(--acc)"><b>'+tot+'</b><span>KPI misurati</span></div><div style="--c:var(--ok)"><b>'+okN+'</b><span>Target raggiunti</span></div><div style="--c:var(--bad)"><b>'+(tot-okN)+'</b><span>Target mancati</span></div></div>';
+    h+='<div class="ktw"><table class="kt"><thead><tr><th>KPI</th><th>Oggi</th><th>Target</th><th>Oggi / tgt</th><th>Mese</th><th>Mese prec.</th><th>vs prec.</th></tr></thead><tbody>';
+    rows.forEach(function(r){var k=r.k,t=kTarget(k),pc=r.v!=null&&t?Math.round(r.v/t*100):null,dv=r.mtd.v!=null&&r.pm.v?Math.round(r.mtd.v/r.pm.v*100):null,c=r.ok==null?'var(--mut)':r.ok?'var(--ok)':'var(--bad)';
+      var better=dv==null?null:k.dir==='up'?dv>=100:dv<=100;
+      h+='<tr data-k="'+k.id+'"'+(k.id===sel?' class="on"':'')+'><td><b>'+esc(k.n)+'</b><small>'+(k.dir==='up'?'↑ più alto è meglio':'↓ più basso è meglio')+(k.snap?'':' · ultimi 30 gg')+'</small></td>'
+        +'<td class="n"><b>'+kFmt(k,r.v)+'</b><small class="kmt">tgt '+kFmt(k,t)+'</small></td><td class="n">'+kFmt(k,t)+'</td>'
+        +'<td class="n" style="color:'+c+'">'+(pc==null?'—':(r.ok?'✓ ':'✗ ')+pc+'%')+'</td>'
+        +'<td class="n">'+kFmt(k,r.mtd.v)+(r.mtd.rec?'<small>ricostr.</small>':'')+'</td><td class="n">'+kFmt(k,r.pm.v)+(r.pm.rec?'<small>ricostr.</small>':'')+'</td>'
+        +'<td class="n" style="color:'+(better==null?'var(--mut)':better?'var(--ok)':'var(--bad)')+'">'+(dv==null?'—':(dv>=100?'▲ ':'▼ ')+dv+'%')+'</td></tr>'});
+    h+='</tbody></table></div>';
+    var K=KPIS.filter(function(k){return k.id===sel})[0]||KPIS[0];
+    h+='<div class="khd"><div class="lab" style="margin:0">Trend · '+esc(K.n)+'</div><div class="chips"><button class="chip'+(mode==='m'?' on':'')+'" data-m="m">12 mesi</button><button class="chip'+(mode==='d'?' on':'')+'" data-m="d">30 giorni</button></div></div>';
+    h+='<div class="chips" style="margin-bottom:10px">'+KPIS.map(function(k){return '<button class="chip'+(k.id===sel?' on':'')+'" data-s="'+k.id+'">'+esc(k.n)+'</button>'}).join('')+'</div>';
+    h+='<div class="kch">'+chart(K)+'</div>';
+    var DPk=KPIS[0],td=kTarget(DPk),tl=TL.filter(function(t){return s.bt[t.id]});
+    if(tl.length){h+='<div class="lab" style="margin-top:18px">Disponibilità per tipologia · target '+kFmt(DPk,td)+'</div><div class="kbt">';
+      tl.forEach(function(t){var b=s.bt[t.id],p=b.t?b.d/b.t*100:0,ok=p>=td;
+        h+='<div><span class="kn"><i style="background:'+t.colore+'"></i>'+esc(t.nome)+'</span><span class="kb"><i style="width:'+p+'%;background:'+(ok?'var(--ok)':'var(--bad)')+'"></i><u style="left:'+Math.min(100,td)+'%"></u></span><b style="color:'+(ok?'var(--ok)':'var(--bad)')+'">'+Math.round(p)+'%</b><small>'+b.d+'/'+b.t+'</small></div>'});
+      h+='</div>'}
+    h+='<div class="sub2" style="margin-top:14px">'+(S.live?'Foto giornaliere salvate: <b>'+D.snaps.length+'</b>'+(D.snaps.length?' · dal '+fmtD(D.snaps[0].ts):'')+'. Si aggiorna da sola mentre Aurora è aperta con un utente collegato.':'Dati di esempio: niente storico.')+'</div>';
+    $('.mb',M.el).innerHTML=h;
+    $$('[data-k]',M.el).forEach(function(r){r.onclick=function(){sel=r.dataset.k;ls('da_kpi_sel',sel);draw()}});
+    $$('[data-s]',M.el).forEach(function(b){b.onclick=function(){sel=b.dataset.s;ls('da_kpi_sel',sel);draw()}});
+    $$('[data-m]',M.el).forEach(function(b){b.onclick=function(){mode=b.dataset.m;ls('da_kpi_mode',mode);draw()}});
+  }
+  M=modal({title:'🎯 KPI FLEET',html:'<div class="sub2">Caricamento storico…</div>',wide:true,onclose:function(){if(REDRAW===draw)REDRAW=null},foot:[{label:'🎯 Target',keep:true,fn:function(){openKpiTarget(draw)}},{label:'Chiudi',cls:'pri'}]});
+  M.el.querySelector('.modal').classList.add('kpi');
+  if(!DB||!S.live){draw();return}
+  kpiSnap();
+  Promise.all([DB.ref('depotrack_kpi_snap').once('value'),DB.ref('depotrack_stat_fermi_archivi').once('value').catch(function(){return null}),DB.ref('depotrack_officina_storico').once('value').catch(function(){return null})]).then(function(r){
+    var o=r[0].val()||{};D.snaps=Object.keys(o).sort().map(function(k){return o[k]}).filter(function(x){return x&&x.ts});
+    D.eps=kEpisodes(r[1]&&r[1].val());D.rec=kRecidive(D.eps);
+    var of=r[2]&&r[2].val()||{};D.off=Object.keys(of).map(function(k){return of[k]}).filter(function(x){return x&&x.in});
+    REDRAW=function(){D.eps=kEpisodes(r[1]&&r[1].val());D.rec=kRecidive(D.eps);draw()};draw();
+  }).catch(function(e){$('.mb',M.el).innerHTML='<div class="mt-warn">Storico KPI non leggibile: '+esc(e.code||e.message)+'</div>'});
+}
+function openKpiTarget(after){
+  if(!gate('admin'))return;
+  var h='<div class="frm"><div class="sub2">Il target decide se il KPI è verde o rosso. Freccia ↑ = deve stare sopra, ↓ = deve stare sotto.</div>'+KPIS.map(function(k){return '<label class="frm2" style="align-items:center"><span><b>'+(k.dir==='up'?'↑ ':'↓ ')+esc(k.n)+'</b><br><small class="sub2">unità: '+esc(k.u)+' · predefinito '+k.def+'</small></span><input class="field" type="number" step="any" min="0" id="kt_'+k.id+'" value="'+kTarget(k)+'"></label>'}).join('')+'</div>';
+  modal({title:'🎯 Target KPI',html:h,top:true,foot:[{label:'Annulla'},{label:'Salva target',cls:'pri',fn:function(){
+    var t={};KPIS.forEach(function(k){var v=parseFloat(String($('#kt_'+k.id).value).replace(',','.'));if(!isNaN(v))t[k.id]=v});
+    DB.ref('depotrack_kpi_cfg/targets').set(t).then(function(){toast('🎯 Target salvati');if(after)after()}).catch(werr);
+  }}]});
+}
+
 /* ---------- log movimenti ---------- */
 var LOGF='all',LOGDATE='';
 var LOGI={assign:'🚌',libera:'↩',stato:'🔄',turno:'📌',fermo:'🚨',nuovo:'＋',rimosso:'✕',reset:'↺',accesso:'🔑',uscita:'🚪'};
@@ -2673,7 +2850,7 @@ function menuItems(){
     {ic:'🚌',l:'Aggiorna parco da SAP',fn:openSinossi,pin:1},{ic:'📥',l:'Importa da SAP',fn:openImportSap,pin:1},{ic:'📋',l:'Avvisi SAP',fn:openAvvisi,pin:1},{ic:'📉',l:'Statistiche fermi',fn:openStatFermi,pin:1},
     {ic:'🔧',l:'Dashboard officina',fn:openOffWin},
     {h:'Report'},
-    {ic:'📈',l:'Disponibilità',fn:openDispo,pin:1},{ic:'🔧',l:'Revisioni',fn:openRevisioni,pin:1},{ic:'📋',l:'Log movimenti',fn:openLog,pin:1},
+    {ic:'🎯',l:'KPI FLEET',fn:openKpi,pin:1},{ic:'📈',l:'Disponibilità',fn:openDispo,pin:1},{ic:'🔧',l:'Revisioni',fn:openRevisioni,pin:1},{ic:'📋',l:'Log movimenti',fn:openLog,pin:1},
     {ic:'⬆',l:'Esporta / Backup',fn:openBackup,pin:1},{ic:'📊',l:'Excel (CSV)',fn:doExcel,pin:1},{ic:'📄',l:'PDF piazzale',fn:printPiazzale,pin:1},
     {h:'Configurazione'},
     {ic:'🏷',l:'Tipologie',fn:openTipi,pin:1},{ic:'🚦',l:'Stati',fn:openStati,pin:1},{ic:'✏',l:'Corsie',fn:openCorsie,pin:1},{ic:'🤖',l:'Assistente AI',fn:openAI,pin:1},
@@ -2782,6 +2959,8 @@ function startLive(){
   DB.ref('depotrack_sap_avvisi').on('value',function(s){AVV=s.val()||{};if(REDRAW){try{REDRAW()}catch(e){REDRAW=null}}if(gotData&&S.sel&&insp.classList.contains('open'))openInsp(S.sel)},function(){});
   DB.ref('depotrack_manutenzione').on('value',function(s){MANT=!!s.val();document.body.classList.toggle('mant',MANT);buildMenu()},function(){});
   DB.ref('depotrack_officina').on('value',function(s){offIngest(s.val());if(gotData){renderOff();repaintAll()}},function(){});
+  DB.ref('depotrack_kpi_cfg').on('value',function(s){KCFG=s.val()||{};if(REDRAW){try{REDRAW()}catch(e){REDRAW=null}}},function(){});
+  setInterval(kpiSnap,10*60000);setTimeout(kpiSnap,20000);
   DB.ref('depotrack_rentri').on('value',function(s){RENTRI=s.val()||{};if(gotData)renderOff()},function(){});
   DB.ref('.info/connected').on('value',function(snap){if(!gotData)return;setStatus(snap.val()?'live':'off')});
   setInterval(paintSap,60000);
