@@ -946,6 +946,11 @@ var S={view:'piazzale',v3d:true,style:'glass',col:'stato',motion:true,pal:0,font
 function reindex(){BYID={};BYSTALL={};V.forEach(function(v){BYID[v.id]=v;if(v.stall)BYSTALL[v.stall]=v})}
 function byId(id){return BYID[id]}
 function atStall(sid){return BYSTALL[sid]}
+var ALIMS=[['el','⚡ Elettrico'],['ga','⛽ Gasolio'],['ib','🔋 Ibrido'],['me','🔥 Metano']];
+/* alimentazione: quella impostata sulla tipologia, altrimenti dedotta dal nome */
+function alimOfT(t){if(!t)return '';if(t.alim)return t.alim;var n=String(t.nome||'').toLowerCase();if(/elett|\belt\b|electric|\bev\b|e-?bus/.test(n))return 'el';if(/ibrid|hybrid/.test(n))return 'ib';if(/metano|cng|\bgas\b/.test(n))return 'me';if(/gasolio|diesel/.test(n))return 'ga';return ''}
+function alimOf(v){return alimOfT(TIPI[v.tipo])}
+function alimLab(k){var a=ALIMS.filter(function(x){return x[0]===k})[0];return a?a[1]:'Non indicata'}
 function tipoOf(v){return TIPI[v.tipo]||{nome:v.tipo||'?',code:v.tipo||'?',colore:'#7d8590'}}
 function stOf(s){return ST[s]||[s||'?','#7d8590']}
 function isFerma(s){return isPura(s)||isTemp(s)}
@@ -957,7 +962,7 @@ function stallIds(){var o=[];CORSIE.forEach(function(c){for(var i=1;i<=c.slots;i
 
 function ingest(d){
   RAW=d;
-  TL=arr(d.tipi).map(function(t){return {id:t.id,nome:t.nome||t.id,code:t.code||t.id,colore:t.colore||'#7d8590'}});
+  TL=arr(d.tipi).map(function(t){var o={id:t.id,nome:t.nome||t.id,code:t.code||t.id,colore:t.colore||'#7d8590'};if(t.alim)o.alim=t.alim;return o});
   TIPI={};TL.forEach(function(t){TIPI[t.id]=t});
   SL=arr(d.stati).map(function(s){return {id:s.id,nome:s.nome||s.id,colore:s.colore||'#7d8590',agg:!!s.agg}});
   AGG={};SL.forEach(function(s){if(s.agg)AGG[s.id]=1});
@@ -2609,7 +2614,7 @@ function openImportKm(){
           DB.ref('depotrack_km').update(up).then(function(){
             var to=Math.max(P.to,KMMETA&&KMMETA.to||0);
             DB.ref('depotrack_km_meta').set({ts:Date.now(),from:Math.min(P.from,KMMETA&&KMMETA.from||P.from),to:to,by:ME.name||'',n:P.n});
-            KMRAW=null;KMX=null;addLog('stato','Importate '+P.n+' letture km da SAP ('+P.nv+' vetture)');toast('📏 '+P.n.toLocaleString('it')+' letture km salvate');M.close();
+            KMRAW=null;KMX=null;KMG={};addLog('stato','Importate '+P.n+' letture km da SAP ('+P.nv+' vetture)');toast('📏 '+P.n.toLocaleString('it')+' letture km salvate');M.close();
           }).catch(werr);
         };
       }catch(err){console.error(err);$('#km-prev',M.el).innerHTML='<div class="mt-warn">Errore lettura file Excel</div>'}
@@ -2626,10 +2631,11 @@ function kmLoad(){
   return KMLOADING;
 }
 /* serie giornaliera: km del giorno (salti di più giorni ripartiti in parti uguali) e giorni di uscita (solo letture di giorni consecutivi) */
-function kmBuild(raw){
+function kmBuild(raw,keep){
   var day={},veh={},D1=86400000;
   function slot(t){return day[t]||(day[t]={km:0,used:0,known:0,act:0})}
   Object.keys(raw||{}).forEach(function(n){
+    if(keep&&!keep(n))return;
     var o=raw[n]||{},ks=Object.keys(o).sort(),pts=ks.map(function(k){return [kmKeyTs(k),+o[k]]}).filter(function(p){return p[1]>=0});
     if(!pts.length)return;
     var vv=veh[n]={first:pts[0][0],last:pts[pts.length-1][0],km:pts[pts.length-1][1],lastMove:null,days:{}};
@@ -2644,6 +2650,11 @@ function kmBuild(raw){
   return {day:day,veh:veh};
 }
 function kmSum(X,a,b){var r={km:0,used:0,known:0,act:0,n:0};if(!X)return r;Object.keys(X.day).forEach(function(t){t=+t;if(t>=a&&t<b){var s=X.day[t];r.km+=s.km;r.used+=s.used;r.known+=s.known;r.act+=s.act;r.n++}});return r}
+var KMG={};
+/* filtro alimentazione dei KPI: '' = tutta la flotta */
+var KALF='';try{KALF=localStorage.getItem('da_kpi_alim')||''}catch(e){}
+function alimOfNum(n){var v=V.filter(function(x){return String(x.n).trim()===String(n).trim()})[0];return v?alimOf(v):''}
+function kmFor(al){if(!KMRAW)return null;if(!al)return KMX;var k=al+'|'+TL.map(function(t){return t.id+':'+alimOfT(t)}).join(',');if(!KMG[k]){KMG={};KMG[k]=kmBuild(KMRAW,function(n){return alimOfNum(n)===al})}return KMG[k]}
 function kmVeh(n){if(!KMX)return null;return KMX.veh[String(n).trim()]||null}
 function kmLast30(n){var v=kmVeh(n);if(!v)return null;var c=day0(Date.now())-30*86400000,s=0;Object.keys(v.days).forEach(function(t){if(+t>c)s+=v.days[t]});return s}
 
@@ -2661,7 +2672,7 @@ var KPIS=[
   {id:'kmm',n:'Km medi per mezzo al giorno',u:'km',dir:'up',def:100,km:1},
   {id:'fkm',n:'Fermi ogni 10.000 km',u:'n.',dir:'down',def:1,km:1}
 ];
-function kTarget(k){var t=KCFG&&KCFG.targets&&KCFG.targets[k.id];return t==null||t===''?k.def:+t}
+function kTarget(k){var T=KCFG&&KCFG.targets||{},t=KALF&&k.km&&T[k.id+'_'+KALF]!=null&&T[k.id+'_'+KALF]!==''?T[k.id+'_'+KALF]:T[k.id];return t==null||t===''?k.def:+t}
 function kMet(k,v){var t=kTarget(k);if(v==null||t==null||isNaN(t))return null;return k.dir==='up'?v>=t:v<=t}
 function kFmt(k,v){if(v==null||isNaN(v))return '—';if(k.u==='km')return Math.round(v).toLocaleString('it')+' km';var d=k.u==='%'||k.u==='h'||k.u==='gg'?1:(Math.round(v)===v?0:1);return v.toFixed(d).replace('.',',')+(k.u==='%'?'%':k.u==='n.'?'':' '+k.u)}
 /* fotografia dello stato attuale */
@@ -2722,7 +2733,7 @@ function kRange(k,a,b,D){
   if(k.km){var ks=kmSum(D.km,a,b);
     if(k.id==='uti')return {v:ks.known?ks.used/ks.known*100:null};
     if(k.id==='kmm')return {v:ks.act?ks.km/ks.act:null};
-    if(k.id==='fkm'){if(ks.km<2000)return {v:null};return {v:D.eps.filter(function(e){return e.startTs>=a&&e.startTs<b}).length/(ks.km/10000)}}}
+    if(k.id==='fkm'){if(ks.km<2000)return {v:null};return {v:D.eps.filter(function(e){if(e.startTs<a||e.startTs>=b)return false;if(!KALF)return true;var v=byId(e.vid);return v&&alimOf(v)===KALF}).length/(ks.km/10000)}}}
   if(k.id==='rec'){if(!D.eps.length||D.eps[0].startTs>=b)return {v:null};return {v:D.rec.filter(function(t){return t>=a&&t<b}).length}}
   return {v:null};
 }
@@ -2761,6 +2772,9 @@ function openKpi(){
     var rows=KPIS.map(function(k){var v=kNowVal(k,s,D),mtd=kRange(k,ms,Date.now()+1,D),pm=kRange(k,pms,ms,D);if(mtd.v==null&&k.snap)mtd={v:v};return {k:k,v:v,mtd:mtd,pm:pm,ok:kMet(k,v)}});
     var tot=rows.filter(function(r){return r.ok!=null}).length,okN=rows.filter(function(r){return r.ok===true}).length;
     var h='<div class="ksum"><div style="--c:var(--acc)"><b>'+tot+'</b><span>KPI misurati</span></div><div style="--c:var(--ok)"><b>'+okN+'</b><span>Target raggiunti</span></div><div style="--c:var(--bad)"><b>'+(tot-okN)+'</b><span>Target mancati</span></div></div>';
+    var als=[];TL.forEach(function(t){var a=alimOfT(t);if(a&&als.indexOf(a)<0&&V.some(function(v){return v.tipo===t.id}))als.push(a)});
+    if(KALF&&als.indexOf(KALF)<0)KALF='';
+    if(als.length>1)h+='<div class="chips" style="margin-bottom:12px"><button class="chip'+(KALF?'':' on')+'" data-al="">Tutta la flotta</button>'+als.map(function(a){return '<button class="chip'+(KALF===a?' on':'')+'" data-al="'+a+'">'+alimLab(a)+'</button>'}).join('')+'</div>'+(KALF?'<div class="sub2" style="margin:-4px 0 12px">Il filtro vale per utilizzo, km medi, fermi ogni 10.000 km, disponibili che non escono e tipologie. Gli altri KPI restano su tutta la flotta.</div>':'');
     h+='<div class="ktw"><table class="kt"><thead><tr><th>KPI</th><th>Oggi</th><th>Target</th><th>Oggi / tgt</th><th>Mese</th><th>Mese prec.</th><th>vs prec.</th></tr></thead><tbody>';
     rows.forEach(function(r){var k=r.k,t=kTarget(k),pc=r.v!=null&&t?Math.round(r.v/t*100):null,dv=r.mtd.v!=null&&r.pm.v?Math.round(r.mtd.v/r.pm.v*100):null,c=r.ok==null?'var(--mut)':r.ok?'var(--ok)':'var(--bad)';
       var better=dv==null?null:k.dir==='up'?dv>=100:dv<=100;
@@ -2774,13 +2788,13 @@ function openKpi(){
     h+='<div class="khd"><div class="lab" style="margin:0">Trend · '+esc(K.n)+'</div><div class="chips"><button class="chip'+(mode==='m'?' on':'')+'" data-m="m">12 mesi</button><button class="chip'+(mode==='d'?' on':'')+'" data-m="d">30 giorni</button></div></div>';
     h+='<div class="chips" style="margin-bottom:10px">'+KPIS.map(function(k){return '<button class="chip'+(k.id===sel?' on':'')+'" data-s="'+k.id+'">'+esc(k.n)+'</button>'}).join('')+'</div>';
     h+='<div class="kch">'+chart(K)+'</div>';
-    var DPk=KPIS[0],td=kTarget(DPk),tl=TL.filter(function(t){return s.bt[t.id]});
+    var DPk=KPIS[0],td=kTarget(DPk),tl=TL.filter(function(t){return s.bt[t.id]&&(!KALF||alimOfT(t)===KALF)});
     if(tl.length){h+='<div class="lab" style="margin-top:18px">Disponibilità per tipologia · target '+kFmt(DPk,td)+'</div><div class="kbt">';
       tl.forEach(function(t){var b=s.bt[t.id],p=b.t?b.d/b.t*100:0,ok=p>=td;
         h+='<div><span class="kn"><i style="background:'+t.colore+'"></i>'+esc(t.nome)+'</span><span class="kb"><i style="width:'+p+'%;background:'+(ok?'var(--ok)':'var(--bad)')+'"></i><u style="left:'+Math.min(100,td)+'%"></u></span><b style="color:'+(ok?'var(--ok)':'var(--bad)')+'">'+Math.round(p)+'%</b><small>'+b.d+'/'+b.t+'</small></div>'});
       h+='</div>'}
     if(D.km){var DPi=dispId(),ref=KMMETA&&KMMETA.to?KMMETA.to:day0(Date.now()),idle=[];
-      V.forEach(function(v){if(v.s!==DPi||offOf(v.id))return;var kv=kmVeh(v.n);if(!kv||kv.last<ref-3*86400000)return;var gg=kv.lastMove?Math.round((ref-kv.lastMove)/86400000):null;if(gg==null||gg>=5)idle.push({v:v,gg:gg})});
+      V.forEach(function(v){if(v.s!==DPi||offOf(v.id)||(KALF&&alimOf(v)!==KALF))return;var kv=kmVeh(v.n);if(!kv||kv.last<ref-3*86400000)return;var gg=kv.lastMove?Math.round((ref-kv.lastMove)/86400000):null;if(gg==null||gg>=5)idle.push({v:v,gg:gg})});
       idle.sort(function(a,b){return (b.gg==null?9999:b.gg)-(a.gg==null?9999:a.gg)});
       h+='<div class="lab" style="margin-top:18px">Disponibili che non escono · nessun km da 5+ giorni ('+idle.length+')</div>';
       h+=idle.length?'<div class="frm">'+idle.slice(0,12).map(function(o){return '<button class="li" data-id="'+esc(o.v.id)+'" style="--c:var(--pre)"><span class="nn" style="font-size:18px">'+esc(o.v.n)+'</span><span class="tx"><b>'+esc(modelOf(o.v))+'</b><span>'+(o.gg==null?'nessun movimento registrato':'ultimo km '+o.gg+' giorni fa')+(o.v.stall?' · stallo '+esc(shortSid(o.v.stall)):'')+'</span></span><span class="tag" style="--c:var(--pre)">'+(o.gg==null?'—':o.gg+' gg')+'</span></button>'}).join('')+'</div>'+(idle.length>12?'<div class="sub2">+ altri '+(idle.length-12)+'</div>':''):'<div class="sub2">Tutti i disponibili hanno fatto km negli ultimi giorni.</div>';
@@ -2788,6 +2802,7 @@ function openKpi(){
     h+='<div class="sub2" style="margin-top:14px">'+(s.dispLav?'🔧 '+s.dispLav+(s.dispLav===1?' mezzo «Disponibile» è':' mezzi «Disponibili» sono')+' in lavorazione in officina: '+(s.dispLav===1?'non conta':'non contano')+' come disponibil'+(s.dispLav===1?'e':'i')+'. ':'')+(s.trn?'🅿 '+s.trn+' in transito, non contati. ':'')+(S.live?'Foto giornaliere salvate: <b>'+D.snaps.length+'</b>'+(D.snaps.length?' · dal '+fmtD(D.snaps[0].ts):'')+'. Si aggiorna da sola mentre Aurora è aperta con un utente collegato.':'Dati di esempio: niente storico.')+'</div>';
     $('.mb',M.el).innerHTML=h;
     $$('.li[data-id]',M.el).forEach(function(b){b.onclick=function(){M.close();showAt(b.dataset.id,300)}});
+    $$('[data-al]',M.el).forEach(function(b){b.onclick=function(){KALF=b.dataset.al;try{localStorage.setItem('da_kpi_alim',KALF)}catch(e){}D.km=kmFor(KALF);draw()}});
     $$('[data-k]',M.el).forEach(function(r){r.onclick=function(){sel=r.dataset.k;ls('da_kpi_sel',sel);draw()}});
     $$('[data-s]',M.el).forEach(function(b){b.onclick=function(){sel=b.dataset.s;ls('da_kpi_sel',sel);draw()}});
     $$('[data-m]',M.el).forEach(function(b){b.onclick=function(){mode=b.dataset.m;ls('da_kpi_mode',mode);draw()}});
@@ -2797,7 +2812,7 @@ function openKpi(){
   if(!DB||!S.live){draw();return}
   kpiSnap();
   Promise.all([DB.ref('depotrack_kpi_snap').once('value'),DB.ref('depotrack_stat_fermi_archivi').once('value').catch(function(){return null}),DB.ref('depotrack_officina_storico').once('value').catch(function(){return null}),kmLoad()]).then(function(r){
-    D.km=r[3];
+    D.kmAll=r[3];D.km=kmFor(KALF);
     var o=r[0].val()||{};D.snaps=Object.keys(o).sort().map(function(k){return o[k]}).filter(function(x){return x&&x.ts});
     D.eps=kEpisodes(r[1]&&r[1].val());D.rec=kRecidive(D.eps);
     var of=r[2]&&r[2].val()||{};D.off=Object.keys(of).map(function(k){return of[k]}).filter(function(x){return x&&x.in});
@@ -2806,9 +2821,10 @@ function openKpi(){
 }
 function openKpiTarget(after){
   if(!gate('admin'))return;
-  var h='<div class="frm"><div class="sub2">Il target decide se il KPI è verde o rosso. Freccia ↑ = deve stare sopra, ↓ = deve stare sotto.</div>'+KPIS.map(function(k){return '<label class="frm2" style="align-items:center"><span><b>'+(k.dir==='up'?'↑ ':'↓ ')+esc(k.n)+'</b><br><small class="sub2">unità: '+esc(k.u)+' · predefinito '+k.def+'</small></span><input class="field" type="number" step="any" min="0" id="kt_'+k.id+'" value="'+kTarget(k)+'"></label>'}).join('')+'</div>';
+  var h='<div class="frm"><div class="sub2">Il target decide se il KPI è verde o rosso. Freccia ↑ = deve stare sopra, ↓ = deve stare sotto. Per i KPI dei km puoi dare un target diverso per alimentazione: se lo lasci vuoto vale quello generale.</div>'+KPIS.map(function(k){var T=KCFG&&KCFG.targets||{},g=T[k.id]!=null?T[k.id]:k.def;return '<label class="frm2" style="align-items:center"><span><b>'+(k.dir==='up'?'↑ ':'↓ ')+esc(k.n)+'</b><br><small class="sub2">unità: '+esc(k.u)+' · predefinito '+k.def+'</small></span><input class="field" type="number" step="any" min="0" id="kt_'+k.id+'" value="'+g+'"></label>'
+      +(k.km?ALIMS.map(function(a){return '<label class="frm2" style="align-items:center;margin-left:18px"><span class="sub2">'+a[1]+'</span><input class="field" type="number" step="any" min="0" id="kt_'+k.id+'_'+a[0]+'" placeholder="come generale" value="'+(T[k.id+'_'+a[0]]!=null?T[k.id+'_'+a[0]]:'')+'"></label>'}).join(''):'')}).join('')+'</div>';
   modal({title:'🎯 Target KPI',html:h,top:true,foot:[{label:'Annulla'},{label:'Salva target',cls:'pri',fn:function(){
-    var t={};KPIS.forEach(function(k){var v=parseFloat(String($('#kt_'+k.id).value).replace(',','.'));if(!isNaN(v))t[k.id]=v});
+    var t={},rd=function(id){var el=$('#'+id);return el?parseFloat(String(el.value).replace(',','.')):NaN};KPIS.forEach(function(k){var v=rd('kt_'+k.id);if(!isNaN(v))t[k.id]=v;if(k.km)ALIMS.forEach(function(a){var x=rd('kt_'+k.id+'_'+a[0]);if(!isNaN(x))t[k.id+'_'+a[0]]=x})});
     DB.ref('depotrack_kpi_cfg/targets').set(t).then(function(){toast('🎯 Target salvati');if(after)after()}).catch(werr);
   }}]});
 }
@@ -2860,7 +2876,7 @@ function kpiPrint(kind,ref,D){
     +'<td class="n">'+kFmt(k,r.p.v)+'</td><td class="n" style="color:'+(r.better==null?'#888':r.better?'#2e9e6a':'#d64545')+'">'+(r.dv==null?'—':(r.dv>=100?'▲ ':'▼ ')+r.dv+'%')+'</td></tr>'}).join('');
   var charts=KPIS.map(function(k){var pts=P.buck.map(function(bk){var r=kPerVal(k,bk.a,bk.b,D);return {v:r.v,rec:r.rec,l:bk.l,t:kTgtP(k,bk.a,bk.b)}});
     return '<div class="ch"><h4>'+esc(k.n)+' <span>target '+esc(kFmt(k,kTarget(k)))+(k.id==='rec'?' ogni 30 gg':'')+'</span></h4>'+kSvgPrint(k,pts)+'</div>'}).join('');
-  var s=kpiNow(),td=kTarget(KPIS[0]),bt=TL.filter(function(t){return s.bt[t.id]}).map(function(t){var b=s.bt[t.id],p=b.t?b.d/b.t*100:0,ok=p>=td;
+  var s=kpiNow(),td=kTarget(KPIS[0]),bt=TL.filter(function(t){return s.bt[t.id]&&(!KALF||alimOfT(t)===KALF)}).map(function(t){var b=s.bt[t.id],p=b.t?b.d/b.t*100:0,ok=p>=td;
     return '<tr><td><i class="dot" style="background:'+t.colore+'"></i>'+esc(t.nome)+'</td><td class="n">'+b.d+' / '+b.t+'</td><td class="bar"><span><i style="width:'+p+'%;background:'+(ok?'#2e9e6a':'#d64545')+'"></i><u style="left:'+Math.min(100,td)+'%"></u></span></td><td class="n" style="color:'+(ok?'#2e9e6a':'#d64545')+'"><b>'+Math.round(p)+'%</b></td></tr>'}).join('');
   var prevLab={g:'Giorno prec.',s:'Settimana prec.',m:'Mese prec.',a:'Anno prec.'}[kind],chLab={g:'Ultimi 14 giorni',s:'Giorno per giorno',m:'Giorno per giorno',a:'Mese per mese'}[kind];
   var css='@page{size:A4 portrait;margin:11mm}*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}body{font-family:Segoe UI,Arial,sans-serif;font-size:10.5px;color:#111;margin:0}'
@@ -2872,7 +2888,7 @@ function kpiPrint(kind,ref,D){
    +'.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.bar{width:45%}.bar span{position:relative;display:block;height:8px;border-radius:4px;background:#eee;margin-top:3px}.bar i{display:block;height:100%;border-radius:4px}.bar u{position:absolute;top:-3px;bottom:-3px;width:2px;background:#e0a030}'
    +'.leg{font-size:8.5px;color:#666;margin-top:6px}.leg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 4px 0 10px;vertical-align:-1px}.f{margin-top:14px;font-size:8.5px;color:#aaa;border-top:1px solid #eee;padding-top:6px;display:flex;justify-content:space-between}';
   var html='<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>KPI FLEET — report '+KN+' — '+esc(P.lab)+'</title><style>'+css+'</style></head><body>'
-   +'<div class="h"><div><div class="t">🎯 KPI FLEET</div><div class="s">'+app+' · report '+KN+'</div></div><div class="r">Periodo: <strong>'+esc(P.lab)+'</strong><br>Stampato: '+nd.toLocaleDateString('it')+' '+nd.toLocaleTimeString('it',{hour:'2-digit',minute:'2-digit'})+(ME.name?'<br>da '+esc(ME.name):'')+'</div></div>'
+   +'<div class="h"><div><div class="t">🎯 KPI FLEET</div><div class="s">'+app+' · report '+KN+'</div></div><div class="r">Periodo: <strong>'+esc(P.lab)+'</strong>'+(KALF?'<br>KPI km: <strong>'+esc(alimLab(KALF).replace(/^\S+ /,''))+'</strong>':'')+'<br>Stampato: '+nd.toLocaleDateString('it')+' '+nd.toLocaleTimeString('it',{hour:'2-digit',minute:'2-digit'})+(ME.name?'<br>da '+esc(ME.name):'')+'</div></div>'
    +'<div class="sum"><div class="c" style="--c:#4a7fb5"><b>'+mis+'</b><span>KPI misurati</span></div><div class="c" style="--c:#2e9e6a"><b>'+okN+'</b><span>Target raggiunti</span></div><div class="c" style="--c:#d64545"><b>'+(mis-okN)+'</b><span>Target mancati</span></div></div>'
    +'<table><thead><tr><th>KPI</th><th>Valore</th><th>Target</th><th>Valore / tgt</th><th>'+prevLab+'</th><th>vs prec.</th></tr></thead><tbody>'+tr+'</tbody></table>'
    +'<h3>Andamento · '+chLab+'</h3><div class="grid">'+charts+'</div>'
@@ -2928,7 +2944,7 @@ function openTipi(){
   function save(a,msg){DB.ref('depotrack/tipi').set(a).then(function(){toast(msg)}).catch(werr)}
   function draw(){
     if(!M.el.parentNode)return;
-    $('#tl',M.el).innerHTML=TL.map(function(t){var n=V.filter(function(v){return v.tipo===t.id}).length;return '<div class="li" style="--c:'+t.colore+'"><i class="sw1"></i><span class="tx"><b>'+esc(t.nome)+'</b><span>'+esc(String(t.code).toUpperCase())+' · '+n+' mezzi</span></span><button class="ibtn" data-e="'+esc(t.id)+'">✏</button><button class="ibtn danger" data-d="'+esc(t.id)+'">✕</button></div>'}).join('')||'<div class="sub2">Nessuna tipologia.</div>';
+    $('#tl',M.el).innerHTML=TL.map(function(t){var n=V.filter(function(v){return v.tipo===t.id}).length,al=alimOfT(t);return '<div class="li" style="--c:'+t.colore+'"><i class="sw1"></i><span class="tx"><b>'+esc(t.nome)+'</b><span>'+esc(String(t.code).toUpperCase())+' · '+n+' mezzi · '+(al?alimLab(al)+(t.alim?'':' (dedotta dal nome)'):'<span style="color:var(--pre)">alimentazione da indicare</span>')+'</span></span><button class="ibtn" data-e="'+esc(t.id)+'">✏</button><button class="ibtn danger" data-d="'+esc(t.id)+'">✕</button></div>'}).join('')||'<div class="sub2">Nessuna tipologia.</div>';
     $$('[data-d]',M.el).forEach(function(b){b.onclick=function(){var t=TIPI[b.dataset.d],n=V.filter(function(v){return v.tipo===t.id}).length;if(n){toast('⚠ '+n+' mezzi usano questa tipologia: riassegnali prima');return}confirmBox('Eliminare "'+t.nome+'"?','Nessun mezzo assegnato.',function(){save(TL.filter(function(x){return x.id!==t.id}),'Tipologia eliminata')},'Elimina',true)}});
     $$('[data-e]',M.el).forEach(function(b){b.onclick=function(){editTipo(TIPI[b.dataset.e])}});
   }
@@ -2936,14 +2952,14 @@ function openTipi(){
     var n=$('#tn',M.el).value.trim(),c=$('#tc',M.el).value.trim().toLowerCase().replace(/\s/g,'');
     if(!n||!c){toast('⚠ Nome e codice obbligatori');return}if(c.length>4){toast('⚠ Codice max 4 caratteri');return}
     if(TL.some(function(t){return t.code===c})){toast('⚠ Codice già in uso');return}
-    save(TL.concat([{id:uidx('T'),nome:n,code:c,colore:$('#tcol',M.el).dataset.v}]),'Tipologia "'+n+'" aggiunta');$('#tn',M.el).value='';$('#tc',M.el).value='';
+    save(TL.concat([{id:uidx('T'),nome:n,code:c,colore:$('#tcol',M.el).dataset.v}]).map(function(x){var o={id:x.id,nome:x.nome,code:x.code,colore:x.colore};if(x.alim)o.alim=x.alim;return o}),'Tipologia "'+n+'" aggiunta');$('#tn',M.el).value='';$('#tc',M.el).value='';
   }
   function editTipo(t){
-    var E=modal({title:'Modifica tipologia',top:true,html:'<div class="frm2"><input class="field" id="en" value="'+esc(t.nome)+'"><input class="field" id="ec" value="'+esc(t.code)+'"></div>'+colorPick('ecol',t.colore),foot:[{label:'Annulla'},{label:'Salva',cls:'pri',keep:true,fn:function(){
+    var ca=alimOfT(t),E=modal({title:'Modifica tipologia',top:true,html:'<div class="frm2"><input class="field" id="en" value="'+esc(t.nome)+'"><input class="field" id="ec" value="'+esc(t.code)+'"></div><div class="lab" style="margin-top:12px">Alimentazione</div><select class="field" id="eal"><option value="">— non indicata —</option>'+ALIMS.map(function(a){return '<option value="'+a[0]+'"'+(a[0]===ca?' selected':'')+'>'+a[1]+'</option>'}).join('')+'</select><div style="height:12px"></div>'+colorPick('ecol',t.colore),foot:[{label:'Annulla'},{label:'Salva',cls:'pri',keep:true,fn:function(){
       var n=$('#en',E.el).value.trim(),c=$('#ec',E.el).value.trim().toLowerCase().replace(/\s/g,'');
       if(!n||!c){toast('⚠ Campi obbligatori');return}if(c.length>4){toast('⚠ Codice max 4 caratteri');return}
       if(TL.some(function(x){return x.code===c&&x.id!==t.id})){toast('⚠ Codice già in uso');return}
-      save(TL.map(function(x){return x.id===t.id?{id:t.id,nome:n,code:c,colore:$('#ecol',E.el).dataset.v}:x}),'Tipologia aggiornata');E.close()}}]});
+      var al=$('#eal',E.el).value;save(TL.map(function(x){if(x.id!==t.id)return x;var o={id:t.id,nome:n,code:c,colore:$('#ecol',E.el).dataset.v};if(al)o.alim=al;return o}),'Tipologia aggiornata');E.close()}}]});
     bindColor(E.el,'ecol');
   }
   M.redraw=draw;draw();REDRAW=draw;
