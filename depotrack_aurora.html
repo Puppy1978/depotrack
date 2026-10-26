@@ -2824,10 +2824,12 @@ function kEpisodes(arch){
   var byV={},out=[];
   all.sort(function(a,b){return a.startTs-b.startTs}).forEach(function(e){
     var l=byV[e.vid];
-    if(l&&l.ancoraInCorso&&e.startTs-l.endTs<5*60000){l.endTs=e.endTs;l.ancoraInCorso=e.ancoraInCorso;return}
+    /* stessa fermata se il mezzo torna fermo entro 24 ore: import SAP e cambi di stato ravvicinati non sono fermi nuovi */
+    if(l&&l.endTs==null)return; /* doppione: fermata già aperta */
+    if(l&&l.endTs!=null&&e.startTs-l.endTs<24*3600000){l.endTs=e.endTs;l.ancoraInCorso=e.ancoraInCorso;return}
     var c={vid:e.vid,startTs:e.startTs,endTs:e.endTs,ancoraInCorso:!!e.ancoraInCorso};byV[e.vid]=c;out.push(c);
   });
-  return out;
+  return out.filter(function(e){return e.endTs==null||e.endTs-e.startTs>=2*3600000}); /* sotto le 2 ore non è un fermo */
 }
 function kRecidive(eps){
   var byV={},r=[];
