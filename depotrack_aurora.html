@@ -966,7 +966,7 @@ function byId(id){return BYID[id]}
 function atStall(sid){return BYSTALL[sid]}
 var ALIMS=[['el','⚡ Elettrico'],['ga','⛽ Gasolio'],['ib','🔋 Ibrido'],['me','🔥 Metano']];
 /* alimentazione: quella impostata sulla tipologia, altrimenti dedotta dal nome */
-function alimOfT(t){if(!t)return '';if(t.alim)return t.alim;var n=String(t.nome||'').toLowerCase();if(/elett|\belt\b|electric|\bev\b|e-?bus/.test(n))return 'el';if(/ibrid|hybrid/.test(n))return 'ib';if(/metano|cng|\bgas\b/.test(n))return 'me';if(/gasolio|diesel/.test(n))return 'ga';return ''}
+function alimOfT(t){if(!t)return '';if(t.alim)return t.alim;var n=String(t.nome||'').toLowerCase();if(/elett|\belt\b|electric|\bev\b|e-?bus/.test(n))return 'el';if(/ibrid|hybrid/.test(n))return 'ib';if(/metano|cng|\bgas\b/.test(n))return 'me';if(/gasolio|diesel|iveco|city\s?s\b|citys|crafter|volkswagen|\bvw\b|sprinter|daily/.test(n))return 'ga';return ''} /* minibus Iveco Citys e VW Crafter: gasolio */
 function alimOf(v){return alimOfT(TIPI[v.tipo])}
 function alimLab(k){var a=ALIMS.filter(function(x){return x[0]===k})[0];return a?a[1]:'Non indicata'}
 function tipoOf(v){return TIPI[v.tipo]||{nome:v.tipo||'?',code:v.tipo||'?',colore:'#7d8590'}}
