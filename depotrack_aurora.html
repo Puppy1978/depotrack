@@ -1388,6 +1388,8 @@ function openInsp(vid){
   h+='<div><div class="lab">Stato</div><div class="opts">';
   ORDER.filter(function(k){return !AGG[k]||v.s===k}).forEach(function(k){h+='<button class="opt'+(v.s===k?' on':'')+'" data-st="'+esc(k)+'" style="--c:'+stOf(k)[1]+'"'+(cStato||!r?'':' disabled')+'><i></i>'+esc(stOf(k)[0])+'</button>'});
   h+='</div></div>';
+  if(KMMETA&&!KMX&&S.live)kmLoad().then(function(x){if(x&&S.sel===vid&&insp.classList.contains('open'))openInsp(vid)});
+  var KV=kmVeh(v.n);if(KV){var l30=kmLast30(v.n),gm=KV.lastMove?Math.round(((KMMETA&&KMMETA.to||Date.now())-KV.lastMove)/86400000):null;h+='<div><div class="lab">📏 Km SAP</div><div class="sub2" style="margin:0"><b style="color:var(--txt);font-size:16px">'+KV.km.toLocaleString('it')+' km</b> al '+fmtD(KV.last)+' · ultimi 30 gg <b style="color:var(--txt)">'+Math.round(l30||0).toLocaleString('it')+' km</b>'+(gm!=null&&gm>=5?' · <span style="color:var(--pre)">fermo da '+gm+' gg</span>':'')+'</div></div>'}
   var AE=avvOf(v);if(AE&&AE.l&&AE.l.length)h+='<div><div class="lab">📋 Avvisi SAP'+(AE.sin?' · <span style="color:var(--bad)">SINISTRO DA GESTIRE</span>':'')+'</div>'+avvHtml(AE,true)+'</div>';
   if(aggList().length){h+='<div><div class="lab">Stato aggiuntivo <span class="sub2" style="text-transform:none;letter-spacing:0">· solo informazione, non cambia lo stato</span></div><div class="opts"><button class="opt'+(!v.x?' on':'')+'" data-x="" style="--c:var(--mut)"'+(cStato||!r?'':' disabled')+'><i></i>Nessuno</button>';
     aggList().forEach(function(s){h+='<button class="opt'+(v.x===s.id?' on':'')+'" data-x="'+esc(s.id)+'" style="--c:'+s.colore+'"'+(cStato||!r?'':' disabled')+'><i></i>'+esc(s.nome)+'</button>'});h+='</div></div>'}
@@ -2557,6 +2559,94 @@ function openDispo(){
   $$('[data-id]',M.el).forEach(function(b){b.onclick=function(){M.close();showAt(b.dataset.id,300)}});
 }
 
+/* ---------- KM da SAP (IK17, caratteristica KM_CHILOMETRI) ---------- */
+var KMRAW=null,KMX=null,KMMETA=null,KMLOADING=null;
+function kmDayKey(t){var d=new Date(t);return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)}
+function kmKeyTs(k){return new Date(+k.slice(0,4),+k.slice(4,6)-1,+k.slice(6,8)).getTime()}
+function kmCellDate(x){
+  if(x instanceof Date)return day0(x.getTime());
+  if(typeof x==='number'&&x>20000&&x<90000)return day0(Math.round((x-25569)*86400000)+new Date().getTimezoneOffset()*60000);
+  var m=/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})$/.exec(String(x||'').trim());
+  if(m){var y=+m[3];if(y<100)y+=2000;return new Date(y,+m[2]-1,+m[1]).getTime()}
+  return null;
+}
+function kmCellNum(x){if(typeof x==='number')return x;var s=String(x||'').trim().replace(/\s/g,'');if(!s)return NaN;if(/,\d{1,2}$/.test(s))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/[.,](?=\d{3}(\D|$))/g,'');return parseFloat(s)}
+function kmParse(rows){
+  var hi=-1,C={};
+  for(var i=0;i<Math.min(rows.length,15)&&hi<0;i++){var r=rows[i].map(function(c){return sapNorm(c)});
+    var st=r.findIndex(function(c){return c.indexOf('sede tec')===0}),dt=r.findIndex(function(c){return c==='data'}),vm=r.findIndex(function(c){return c.indexOf('valmis')===0||c.indexOf('lettura')===0||c.indexOf('pos')===0&&c.indexOf('cont')>-1});
+    if(st>-1&&dt>-1&&vm>-1){hi=i;C={st:st,dt:dt,vm:vm,car:r.findIndex(function(c){return c.indexOf('caratt')===0||c.indexOf('nome caratt')===0})}}}
+  if(hi<0)return {err:'Non trovo le colonne "Sede tecnica", "Data" e "ValMis/PosGlCon": controlla il layout dell\'export IK17.'};
+  var out={},n=0,skip=0,from=null,to=null;
+  rows.slice(hi+1).forEach(function(r){
+    if(C.car>-1&&r[C.car]&&String(r[C.car]).toUpperCase().indexOf('KM')<0){skip++;return}
+    var num=sinCode(r[C.st]),t=kmCellDate(r[C.dt]),km=kmCellNum(r[C.vm]);
+    if(!num||t==null||!(km>=0)){skip++;return}
+    var k=kmDayKey(t),o=out[num]||(out[num]={});if(o[k]==null||km>o[k])o[k]=Math.round(km);n++;
+    if(from==null||t<from)from=t;if(to==null||t>to)to=t;
+  });
+  return {v:out,n:n,skip:skip,from:from,to:to,nv:Object.keys(out).length};
+}
+function openImportKm(){
+  if(!gate('edit'))return;
+  if(typeof XLSX==='undefined'){toast('⚠ Libreria Excel non caricata: serve la connessione internet');return}
+  var M=modal({title:'📏 Importa km da SAP',wide:true,html:'<div class="sub2">Export <b>IK17</b> con caratteristica <b>KM_CHILOMETRI</b> e la colonna <b>Sede tecnica</b> nel layout. Le letture si <b>aggiungono</b> a quelle già salvate: puoi importare anche solo l\'ultimo mese.</div>'
+    +(KMMETA&&KMMETA.ts?'<div class="sub2" style="margin-top:8px">Ultimo import: '+fmtD(KMMETA.ts)+(KMMETA.to?' · letture fino al '+fmtD(KMMETA.to):'')+(KMMETA.by?' · '+esc(KMMETA.by):'')+'</div>':'')
+    +'<div class="acts" style="margin-top:14px"><label class="ibtn pri" style="cursor:pointer">📂 Scegli file Excel<input type="file" id="km-file" accept=".xlsx,.xls" hidden></label></div><div id="km-prev" style="margin-top:12px"></div>',foot:[{label:'Chiudi'}]});
+  $('#km-file',M.el).onchange=function(){
+    var f=this.files[0];if(!f)return;var inp=this,rd=new FileReader();$('#km-prev',M.el).innerHTML='<div class="sub2">Lettura del file…</div>';
+    rd.onload=function(e){
+      try{
+        var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true}),rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+        var P=kmParse(rows);if(P.err){$('#km-prev',M.el).innerHTML='<div class="mt-warn">'+esc(P.err)+'</div>';return}
+        var inF=Object.keys(P.v).filter(function(n){return V.some(function(v){return String(v.n).trim()===n})}).length;
+        $('#km-prev',M.el).innerHTML='<div class="sgrid"><div><b>'+P.nv+'</b><span>vetture · '+inF+' nel parco</span></div><div><b>'+P.n.toLocaleString('it')+'</b><span>letture km</span></div><div><b style="font-size:17px">'+fmtD(P.from)+'<br>'+fmtD(P.to)+'</b><span>periodo</span></div></div>'
+          +(P.skip?'<div class="sub2" style="margin-top:8px">'+P.skip+' righe scartate (senza data, sede tecnica o km).</div>':'')
+          +'<div class="acts" style="margin-top:14px"><button class="ibtn pri" id="km-go">Salva letture km</button></div>';
+        $('#km-go',M.el).onclick=function(){
+          var up={};Object.keys(P.v).forEach(function(n){Object.keys(P.v[n]).forEach(function(k){up[n+'/'+k]=P.v[n][k]})});
+          this.disabled=true;this.textContent='Salvataggio…';
+          DB.ref('depotrack_km').update(up).then(function(){
+            var to=Math.max(P.to,KMMETA&&KMMETA.to||0);
+            DB.ref('depotrack_km_meta').set({ts:Date.now(),from:Math.min(P.from,KMMETA&&KMMETA.from||P.from),to:to,by:ME.name||'',n:P.n});
+            KMRAW=null;KMX=null;addLog('stato','Importate '+P.n+' letture km da SAP ('+P.nv+' vetture)');toast('📏 '+P.n.toLocaleString('it')+' letture km salvate');M.close();
+          }).catch(werr);
+        };
+      }catch(err){console.error(err);$('#km-prev',M.el).innerHTML='<div class="mt-warn">Errore lettura file Excel</div>'}
+    };
+    rd.readAsArrayBuffer(f);inp.value='';
+  };
+}
+/* carica le letture una volta sola (si ricaricano dopo un nuovo import) */
+function kmLoad(){
+  if(KMX)return Promise.resolve(KMX);
+  if(!DB||!S.live)return Promise.resolve(null);
+  if(KMLOADING)return KMLOADING;
+  KMLOADING=DB.ref('depotrack_km').once('value').then(function(s){KMRAW=s.val()||{};KMX=kmBuild(KMRAW);KMLOADING=null;return KMX}).catch(function(){KMLOADING=null;return null});
+  return KMLOADING;
+}
+/* serie giornaliera: km del giorno (salti di più giorni ripartiti in parti uguali) e giorni di uscita (solo letture di giorni consecutivi) */
+function kmBuild(raw){
+  var day={},veh={},D1=86400000;
+  function slot(t){return day[t]||(day[t]={km:0,used:0,known:0,act:0})}
+  Object.keys(raw||{}).forEach(function(n){
+    var o=raw[n]||{},ks=Object.keys(o).sort(),pts=ks.map(function(k){return [kmKeyTs(k),+o[k]]}).filter(function(p){return p[1]>=0});
+    if(!pts.length)return;
+    var vv=veh[n]={first:pts[0][0],last:pts[pts.length-1][0],km:pts[pts.length-1][1],lastMove:null,days:{}};
+    for(var i=1;i<pts.length;i++){
+      var a=pts[i-1],b=pts[i],g=Math.max(1,Math.round((b[0]-a[0])/D1)),d=b[1]-a[1];
+      if(d<0||a[1]===0||d/g>800)continue; /* azzeramento, mezzo nuovo o lettura sbagliata */
+      if(d>=10)vv.lastMove=b[0]; /* sotto i 10 km sono manovre in deposito */
+      for(var j=1;j<=g;j++){var t=day0(a[0]+j*D1+3600000),s=slot(t);s.km+=d/g;s.act++;vv.days[t]=(vv.days[t]||0)+d/g}
+      if(g===1){var s2=slot(b[0]);s2.known++;if(d>=10)s2.used++}
+    }
+  });
+  return {day:day,veh:veh};
+}
+function kmSum(X,a,b){var r={km:0,used:0,known:0,act:0,n:0};if(!X)return r;Object.keys(X.day).forEach(function(t){t=+t;if(t>=a&&t<b){var s=X.day[t];r.km+=s.km;r.used+=s.used;r.known+=s.known;r.act+=s.act;r.n++}});return r}
+function kmVeh(n){if(!KMX)return null;return KMX.veh[String(n).trim()]||null}
+function kmLast30(n){var v=kmVeh(n);if(!v)return null;var c=day0(Date.now())-30*86400000,s=0;Object.keys(v.days).forEach(function(t){if(+t>c)s+=v.days[t]});return s}
+
 /* ---------- KPI FLEET: foto giornaliera, target, trend ---------- */
 var KCFG={},KSNAP_LAST=0;
 var KPIS=[
@@ -2566,11 +2656,14 @@ var KPIS=[
   {id:'fmed',n:'Fermo medio (avvisi SAP)',u:'gg',dir:'down',def:30,snap:function(s){return s.fMed}},
   {id:'lav',n:'Mezzi in lavorazione in officina',u:'n.',dir:'down',def:10,snap:function(s){return s.lav!=null?s.lav:null}},
   {id:'off',n:'Permanenza media officina',u:'h',dir:'down',def:24},
-  {id:'rec',n:'Recidive entro 30 gg',u:'n.',dir:'down',def:3}
+  {id:'rec',n:'Recidive entro 30 gg',u:'n.',dir:'down',def:3},
+  {id:'uti',n:'Utilizzo flotta (giorni in uscita)',u:'%',dir:'up',def:80,km:1},
+  {id:'kmm',n:'Km medi per mezzo al giorno',u:'km',dir:'up',def:100,km:1},
+  {id:'fkm',n:'Fermi ogni 10.000 km',u:'n.',dir:'down',def:1,km:1}
 ];
 function kTarget(k){var t=KCFG&&KCFG.targets&&KCFG.targets[k.id];return t==null||t===''?k.def:+t}
 function kMet(k,v){var t=kTarget(k);if(v==null||t==null||isNaN(t))return null;return k.dir==='up'?v>=t:v<=t}
-function kFmt(k,v){if(v==null||isNaN(v))return '—';var d=k.u==='%'||k.u==='h'||k.u==='gg'?1:(Math.round(v)===v?0:1);return v.toFixed(d).replace('.',',')+(k.u==='%'?'%':k.u==='n.'?'':' '+k.u)}
+function kFmt(k,v){if(v==null||isNaN(v))return '—';if(k.u==='km')return Math.round(v).toLocaleString('it')+' km';var d=k.u==='%'||k.u==='h'||k.u==='gg'?1:(Math.round(v)===v?0:1);return v.toFixed(d).replace('.',',')+(k.u==='%'?'%':k.u==='n.'?'':' '+k.u)}
 /* fotografia dello stato attuale */
 function kpiNow(){
   var DP=dispId(),s={ts:Date.now(),tot:V.length,disp:0,pura:0,temp:0,sin:0,fMed:null,off:0,lav:0,trn:0,dispLav:0,bt:{}},LAV={},seen={};
@@ -2626,6 +2719,10 @@ function kRange(k,a,b,D){
     return {v:null};
   }
   if(k.id==='off'){var dd=D.off.filter(function(r){return r.out&&!r.tr&&r.out>=a&&r.out<b});return {v:dd.length?dd.reduce(function(x,r){return x+(r.out-r.in)},0)/dd.length/3600000:null}}
+  if(k.km){var ks=kmSum(D.km,a,b);
+    if(k.id==='uti')return {v:ks.known?ks.used/ks.known*100:null};
+    if(k.id==='kmm')return {v:ks.act?ks.km/ks.act:null};
+    if(k.id==='fkm'){if(ks.km<2000)return {v:null};return {v:D.eps.filter(function(e){return e.startTs>=a&&e.startTs<b}).length/(ks.km/10000)}}}
   if(k.id==='rec'){if(!D.eps.length||D.eps[0].startTs>=b)return {v:null};return {v:D.rec.filter(function(t){return t>=a&&t<b}).length}}
   return {v:null};
 }
@@ -2634,7 +2731,7 @@ function kNowVal(k,s,D){
   var n=Date.now();return kRange(k,n-30*86400000,n+1,D).v;
 }
 function openKpi(){
-  var D={snaps:[],eps:[],rec:[],off:[]},sel=ls('da_kpi_sel')||'disp',mode=ls('da_kpi_mode')||'m',M;
+  var D={snaps:[],eps:[],rec:[],off:[],km:null},sel=ls('da_kpi_sel')||'disp',mode=ls('da_kpi_mode')||'m',M;
   function mStart(y,m){return new Date(y,m,1).getTime()}
   function chart(k){
     var t=kTarget(k),pts=[],nw=new Date(),i;
@@ -2682,8 +2779,15 @@ function openKpi(){
       tl.forEach(function(t){var b=s.bt[t.id],p=b.t?b.d/b.t*100:0,ok=p>=td;
         h+='<div><span class="kn"><i style="background:'+t.colore+'"></i>'+esc(t.nome)+'</span><span class="kb"><i style="width:'+p+'%;background:'+(ok?'var(--ok)':'var(--bad)')+'"></i><u style="left:'+Math.min(100,td)+'%"></u></span><b style="color:'+(ok?'var(--ok)':'var(--bad)')+'">'+Math.round(p)+'%</b><small>'+b.d+'/'+b.t+'</small></div>'});
       h+='</div>'}
+    if(D.km){var DPi=dispId(),ref=KMMETA&&KMMETA.to?KMMETA.to:day0(Date.now()),idle=[];
+      V.forEach(function(v){if(v.s!==DPi||offOf(v.id))return;var kv=kmVeh(v.n);if(!kv||kv.last<ref-3*86400000)return;var gg=kv.lastMove?Math.round((ref-kv.lastMove)/86400000):null;if(gg==null||gg>=5)idle.push({v:v,gg:gg})});
+      idle.sort(function(a,b){return (b.gg==null?9999:b.gg)-(a.gg==null?9999:a.gg)});
+      h+='<div class="lab" style="margin-top:18px">Disponibili che non escono · nessun km da 5+ giorni ('+idle.length+')</div>';
+      h+=idle.length?'<div class="frm">'+idle.slice(0,12).map(function(o){return '<button class="li" data-id="'+esc(o.v.id)+'" style="--c:var(--pre)"><span class="nn" style="font-size:18px">'+esc(o.v.n)+'</span><span class="tx"><b>'+esc(modelOf(o.v))+'</b><span>'+(o.gg==null?'nessun movimento registrato':'ultimo km '+o.gg+' giorni fa')+(o.v.stall?' · stallo '+esc(shortSid(o.v.stall)):'')+'</span></span><span class="tag" style="--c:var(--pre)">'+(o.gg==null?'—':o.gg+' gg')+'</span></button>'}).join('')+'</div>'+(idle.length>12?'<div class="sub2">+ altri '+(idle.length-12)+'</div>':''):'<div class="sub2">Tutti i disponibili hanno fatto km negli ultimi giorni.</div>';
+    }else if(S.live)h+='<div class="sub2" style="margin-top:14px">📏 Importa i km da SAP (menu → Importa km da SAP) per utilizzo flotta, km medi e fermi ogni 10.000 km.</div>';
     h+='<div class="sub2" style="margin-top:14px">'+(s.dispLav?'🔧 '+s.dispLav+(s.dispLav===1?' mezzo «Disponibile» è':' mezzi «Disponibili» sono')+' in lavorazione in officina: '+(s.dispLav===1?'non conta':'non contano')+' come disponibil'+(s.dispLav===1?'e':'i')+'. ':'')+(s.trn?'🅿 '+s.trn+' in transito, non contati. ':'')+(S.live?'Foto giornaliere salvate: <b>'+D.snaps.length+'</b>'+(D.snaps.length?' · dal '+fmtD(D.snaps[0].ts):'')+'. Si aggiorna da sola mentre Aurora è aperta con un utente collegato.':'Dati di esempio: niente storico.')+'</div>';
     $('.mb',M.el).innerHTML=h;
+    $$('.li[data-id]',M.el).forEach(function(b){b.onclick=function(){M.close();showAt(b.dataset.id,300)}});
     $$('[data-k]',M.el).forEach(function(r){r.onclick=function(){sel=r.dataset.k;ls('da_kpi_sel',sel);draw()}});
     $$('[data-s]',M.el).forEach(function(b){b.onclick=function(){sel=b.dataset.s;ls('da_kpi_sel',sel);draw()}});
     $$('[data-m]',M.el).forEach(function(b){b.onclick=function(){mode=b.dataset.m;ls('da_kpi_mode',mode);draw()}});
@@ -2692,7 +2796,8 @@ function openKpi(){
   M.el.querySelector('.modal').classList.add('kpi');
   if(!DB||!S.live){draw();return}
   kpiSnap();
-  Promise.all([DB.ref('depotrack_kpi_snap').once('value'),DB.ref('depotrack_stat_fermi_archivi').once('value').catch(function(){return null}),DB.ref('depotrack_officina_storico').once('value').catch(function(){return null})]).then(function(r){
+  Promise.all([DB.ref('depotrack_kpi_snap').once('value'),DB.ref('depotrack_stat_fermi_archivi').once('value').catch(function(){return null}),DB.ref('depotrack_officina_storico').once('value').catch(function(){return null}),kmLoad()]).then(function(r){
+    D.km=r[3];
     var o=r[0].val()||{};D.snaps=Object.keys(o).sort().map(function(k){return o[k]}).filter(function(x){return x&&x.ts});
     D.eps=kEpisodes(r[1]&&r[1].val());D.rec=kRecidive(D.eps);
     var of=r[2]&&r[2].val()||{};D.off=Object.keys(of).map(function(k){return of[k]}).filter(function(x){return x&&x.in});
@@ -2959,7 +3064,7 @@ function menuItems(){
   return [
     {h:'Mezzi'},
     {ic:'🚨',l:'Fermi',fn:openFermi,pin:1},{ic:'⏸',l:'Ferme temporanee',fn:openFermeTemp,pin:1},
-    {ic:'🚌',l:'Aggiorna parco da SAP',fn:openSinossi,pin:1},{ic:'📥',l:'Importa da SAP',fn:openImportSap,pin:1},{ic:'📋',l:'Avvisi SAP',fn:openAvvisi,pin:1},{ic:'📉',l:'Statistiche fermi',fn:openStatFermi,pin:1},
+    {ic:'🚌',l:'Aggiorna parco da SAP',fn:openSinossi,pin:1},{ic:'📥',l:'Importa da SAP',fn:openImportSap,pin:1},{ic:'📏',l:'Importa km da SAP',fn:openImportKm,pin:1},{ic:'📋',l:'Avvisi SAP',fn:openAvvisi,pin:1},{ic:'📉',l:'Statistiche fermi',fn:openStatFermi,pin:1},
     {ic:'🔧',l:'Dashboard officina',fn:openOffWin},
     {h:'Report'},
     {ic:'🎯',l:'KPI FLEET',fn:openKpi,pin:1},{ic:'📈',l:'Disponibilità',fn:openDispo,pin:1},{ic:'🔧',l:'Revisioni',fn:openRevisioni,pin:1},{ic:'📋',l:'Log movimenti',fn:openLog,pin:1},
@@ -3071,6 +3176,7 @@ function startLive(){
   DB.ref('depotrack_sap_avvisi').on('value',function(s){AVV=s.val()||{};if(REDRAW){try{REDRAW()}catch(e){REDRAW=null}}if(gotData&&S.sel&&insp.classList.contains('open'))openInsp(S.sel)},function(){});
   DB.ref('depotrack_manutenzione').on('value',function(s){MANT=!!s.val();document.body.classList.toggle('mant',MANT);buildMenu()},function(){});
   DB.ref('depotrack_officina').on('value',function(s){offIngest(s.val());if(gotData){renderOff();repaintAll()}},function(){});
+  DB.ref('depotrack_km_meta').on('value',function(s){var m=s.val()||null;if(KMMETA&&m&&m.ts!==KMMETA.ts){KMX=null;KMRAW=null}KMMETA=m},function(){});
   DB.ref('depotrack_kpi_cfg').on('value',function(s){KCFG=s.val()||{};if(REDRAW){try{REDRAW()}catch(e){REDRAW=null}}},function(){});
   setInterval(kpiSnap,10*60000);setTimeout(kpiSnap,20000);
   DB.ref('depotrack_rentri').on('value',function(s){RENTRI=s.val()||{};if(gotData)renderOff()},function(){});
