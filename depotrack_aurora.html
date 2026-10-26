@@ -1656,7 +1656,7 @@ setInterval(function(){if(S.view==='officina')renderOff()},60000);
 
 /* dashboard officina: file a parte, finestra propria (riusa la stessa se è già aperta) */
 function openOffWin(){
-  var u=new URL('officina_dashboard.html',location.href).href;
+  var u=new URL('officina_dashboard.html?v='+Date.now(),location.href).href; /* sempre l'ultima versione, niente cache */
   var w=window.open(u,'depotrack_officina','popup=yes,width=1320,height=780');
   if(w){try{w.focus()}catch(e){}}else toast('Il browser ha bloccato la finestra: consenti i popup per questo sito');
 }
