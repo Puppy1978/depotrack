@@ -2676,6 +2676,79 @@ function kmFor(al){if(!KMRAW)return null;if(!al)return KMX;var k=al+'|'+TL.map(f
 function kmVeh(n){if(!KMX)return null;return KMX.veh[String(n).trim()]||null}
 function kmLast30(n){var v=kmVeh(n);if(!v)return null;var c=day0(Date.now())-30*86400000,s=0;Object.keys(v.days).forEach(function(t){if(+t>c)s+=v.days[t]});return s}
 
+/* ---------- GASOLIO da SAP (MB51, prelievi 261 sull'ordine del deposito) ---------- */
+var GAS=null,GASMETA=null;
+function gasParse(rows){
+  var hi=-1,C={};
+  for(var i=0;i<Math.min(rows.length,15)&&hi<0;i++){var r=rows[i].map(function(c){return sapNorm(c)});
+    var dt=r.findIndex(function(c){return c.indexOf('data di reg')===0||c==='data reg'}),q=r.findIndex(function(c){return c.indexOf('quantit')===0||c.indexOf('qt')===0}),o=r.findIndex(function(c){return c==='ordine'});
+    if(dt>-1&&q>-1){hi=i;C={dt:dt,q:q,o:o,e:r.findIndex(function(c){return c.indexOf('imp')===0}),tm:r.findIndex(function(c){return c==='tipo movimento'||c==='tipo mov'||c==='tmv'}),mt:r.findIndex(function(c){return c.indexOf('testo breve mat')===0})}}}
+  if(hi<0)return {err:'Non trovo le colonne "Data di reg." e "Quantità": controlla il layout dell\'export MB51.'};
+  var L=[],ords={},skip=0;
+  rows.slice(hi+1).forEach(function(r){
+    var t=kmCellDate(r[C.dt]),q=kmCellNum(r[C.q]),e=C.e>-1?kmCellNum(r[C.e]):NaN,od=C.o>-1?String(r[C.o]||'').trim():'',tm=C.tm>-1?String(r[C.tm]||'').trim():'';
+    if(t==null||isNaN(q)){skip++;return}
+    if(C.mt>-1&&r[C.mt]&&!/gasol|diesel/i.test(String(r[C.mt]))){skip++;return}
+    if(tm&&tm!=='261'&&tm!=='262'){skip++;return} /* 261 prelievo, 262 storno: le entrate in cisterna non sono consumo */
+    L.push({t:t,l:-q,e:isNaN(e)?null:-e,o:od});if(od)ords[od]=(ords[od]||0)-q;
+  });
+  return {rows:L,ords:ords,skip:skip};
+}
+function openImportGas(){
+  if(!gate('edit'))return;
+  if(typeof XLSX==='undefined'){toast('⚠ Libreria Excel non caricata: serve la connessione internet');return}
+  var M=modal({title:'⛽ Importa gasolio da SAP',wide:true,html:'<div class="sub2">Export <b>MB51</b> del materiale gasolio, <b>lista piatta</b>, con le colonne Data di reg., Tipo movimento, Quantità, Importo e Ordine. Ogni giorno del file <b>sostituisce</b> quello già salvato, quindi puoi reimportare lo stesso periodo senza doppioni.</div>'
+    +(GASMETA&&GASMETA.ts?'<div class="sub2" style="margin-top:8px">Ultimo import: '+fmtD(GASMETA.ts)+(GASMETA.to?' · dati fino al '+fmtD(GASMETA.to):'')+'</div>':'')
+    +'<div class="acts" style="margin-top:14px"><label class="ibtn pri" style="cursor:pointer">📂 Scegli file Excel<input type="file" id="gs-file" accept=".xlsx,.xls" hidden></label></div><div id="gs-prev" style="margin-top:12px"></div>',foot:[{label:'Chiudi'}]});
+  $('#gs-file',M.el).onchange=function(){
+    var f=this.files[0];if(!f)return;var inp=this,rd=new FileReader();
+    rd.onload=function(e){
+      try{
+        var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true}),rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+        var P=gasParse(rows);if(P.err){$('#gs-prev',M.el).innerHTML='<div class="mt-warn">'+esc(P.err)+'</div>';return}
+        var saved=(KCFG&&KCFG.gasOrd)||'12279598',ok=Object.keys(P.ords).sort(function(a,b){return P.ords[b]-P.ords[a]});
+        var sel={};ok.forEach(function(o){if(o===saved||(saved.split&&saved.split(',').indexOf(o)>-1))sel[o]=1});if(ok.length&&!Object.keys(sel).length)sel[ok[0]]=1;
+        function draw(){
+          var rr=P.rows.filter(function(x){return !ok.length||sel[x.o]}),day={},lt=0,eu=0,from=null,to=null;
+          rr.forEach(function(x){var k=kmDayKey(x.t),d=day[k]||(day[k]={l:0,e:0});d.l+=x.l;if(x.e!=null)d.e+=x.e;lt+=x.l;eu+=x.e||0;if(from==null||x.t<from)from=x.t;if(to==null||x.t>to)to=x.t});
+          var h=(ok.length>1?'<div class="lab">Ordini da contare (solo quelli del tuo deposito)</div><div class="frm">'+ok.map(function(o){return '<label class="li" style="cursor:pointer"><input type="checkbox" data-o="'+esc(o)+'"'+(sel[o]?' checked':'')+'><span class="tx"><b>'+esc(o)+'</b><span>'+Math.round(P.ords[o]).toLocaleString('it')+' litri nel file</span></span></label>'}).join('')+'</div>':'')
+            +'<div class="sgrid" style="margin-top:12px"><div><b>'+Math.round(lt).toLocaleString('it')+'</b><span>litri</span></div><div><b>'+(lt?(eu/lt).toFixed(3).replace('.',','):'—')+'</b><span>€ al litro</span></div><div><b style="font-size:17px">'+(from?fmtD(from)+'<br>'+fmtD(to):'—')+'</b><span>periodo · '+Object.keys(day).length+' giorni</span></div></div>'
+            +(P.skip?'<div class="sub2" style="margin-top:8px">'+P.skip+' righe scartate (entrate in cisterna, altri materiali o righe incomplete).</div>':'')
+            +'<div class="acts" style="margin-top:14px"><button class="ibtn pri" id="gs-go"'+(rr.length?'':' disabled')+'>Salva gasolio</button></div>';
+          $('#gs-prev',M.el).innerHTML=h;
+          $$('[data-o]',M.el).forEach(function(c){c.onchange=function(){if(c.checked)sel[c.dataset.o]=1;else delete sel[c.dataset.o];draw()}});
+          $('#gs-go',M.el).onclick=function(){
+            var up={};Object.keys(day).forEach(function(k){up[k]={l:Math.round(day[k].l*100)/100,e:Math.round(day[k].e*100)/100}});
+            this.disabled=true;this.textContent='Salvataggio…';
+            DB.ref('depotrack_gas').update(up).then(function(){
+              if(ok.length)DB.ref('depotrack_kpi_cfg/gasOrd').set(Object.keys(sel).join(','));
+              DB.ref('depotrack_gas_meta').set({ts:Date.now(),to:Math.max(to,GASMETA&&GASMETA.to||0),from:Math.min(from,GASMETA&&GASMETA.from||from),by:ME.name||''});
+              GAS=null;addLog('stato','Importato gasolio da SAP: '+Math.round(lt)+' litri');toast('⛽ '+Math.round(lt).toLocaleString('it')+' litri salvati');M.close();
+            }).catch(werr);
+          };
+        }
+        draw();
+      }catch(err){console.error(err);$('#gs-prev',M.el).innerHTML='<div class="mt-warn">Errore lettura file Excel</div>'}
+    };
+    rd.readAsArrayBuffer(f);inp.value='';
+  };
+}
+function gasLoad(){
+  if(GAS)return Promise.resolve(GAS);if(!DB||!S.live)return Promise.resolve(null);
+  return DB.ref('depotrack_gas').once('value').then(function(s){var o=s.val()||{},g={};Object.keys(o).forEach(function(k){g[kmKeyTs(k)]=o[k]});GAS=g;return g}).catch(function(){return null});
+}
+/* km dei mezzi che consumano gasolio: alimentazione gasolio o ibrido */
+function kmDiesel(){if(!KMRAW)return null;var k='dies|'+TL.map(function(t){return t.id+':'+alimOfT(t)}).join(',');if(!KMG[k]){var keep=KMG;keep[k]=kmBuild(KMRAW,function(n){var a=alimOfNum(n);return a==='ga'||a==='ib'})}return KMG[k]}
+function gasRange(a,b,D){
+  if(!D.gas||!D.kmD)return null;
+  var gd=Object.keys(D.gas).map(Number),kd=Object.keys(D.kmD.day).map(Number);if(!gd.length||!kd.length)return null;
+  var a2=Math.max(a,Math.min.apply(null,gd),Math.min.apply(null,kd)),b2=Math.min(b,Math.max.apply(null,gd)+86400000,Math.max.apply(null,kd)+86400000);
+  if(b2<=a2)return null;
+  var l=0,e=0;gd.forEach(function(t){if(t>=a2&&t<b2){l+=D.gas[t].l||0;e+=D.gas[t].e||0}});
+  var km=kmSum(D.kmD,a2,b2).km;if(km<1000||l<=0)return null;
+  return {l:l,e:e,km:km};
+}
+
 /* ---------- promemoria del lunedì: import km da SAP ---------- */
 function kmMonday(){var d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getTime()}
 var KMREM_OPEN=false,KMMETA_OK=false;
@@ -2713,11 +2786,13 @@ var KPIS=[
   {id:'rec',n:'Recidive entro 30 gg',u:'n.',dir:'down',def:3},
   {id:'uti',n:'Utilizzo flotta (giorni in uscita)',u:'%',dir:'up',def:80,km:1},
   {id:'kmm',n:'Km medi per mezzo al giorno',u:'km',dir:'up',def:100,km:1},
-  {id:'fkm',n:'Fermi ogni 10.000 km',u:'n.',dir:'down',def:1,km:1}
+  {id:'fkm',n:'Fermi ogni 10.000 km',u:'n.',dir:'down',def:1,km:1},
+  {id:'lkm',n:'Gasolio ogni 100 km',u:'L',dir:'down',def:45,gas:1},
+  {id:'ekm',n:'Costo gasolio al km',u:'€',dir:'down',def:0.8,gas:1}
 ];
 function kTarget(k){var T=KCFG&&KCFG.targets||{},t=KALF&&k.km&&T[k.id+'_'+KALF]!=null&&T[k.id+'_'+KALF]!==''?T[k.id+'_'+KALF]:T[k.id];return t==null||t===''?k.def:+t}
 function kMet(k,v){var t=kTarget(k);if(v==null||t==null||isNaN(t))return null;return k.dir==='up'?v>=t:v<=t}
-function kFmt(k,v){if(v==null||isNaN(v))return '—';if(k.u==='km')return Math.round(v).toLocaleString('it')+' km';var d=k.u==='%'||k.u==='h'||k.u==='gg'?1:(Math.round(v)===v?0:1);return v.toFixed(d).replace('.',',')+(k.u==='%'?'%':k.u==='n.'?'':' '+k.u)}
+function kFmt(k,v){if(v==null||isNaN(v))return '—';if(k.u==='km')return Math.round(v).toLocaleString('it')+' km';if(k.u==='L')return v.toFixed(1).replace('.',',')+' L';if(k.u==='€')return v.toFixed(2).replace('.',',')+' €';var d=k.u==='%'||k.u==='h'||k.u==='gg'?1:(Math.round(v)===v?0:1);return v.toFixed(d).replace('.',',')+(k.u==='%'?'%':k.u==='n.'?'':' '+k.u)}
 /* fotografia dello stato attuale */
 function kpiNow(){
   var DP=dispId(),s={ts:Date.now(),tot:V.length,disp:0,pura:0,temp:0,sin:0,fMed:null,off:0,lav:0,trn:0,dispLav:0,bt:{}},LAV={},seen={};
@@ -2773,6 +2848,7 @@ function kRange(k,a,b,D){
     return {v:null};
   }
   if(k.id==='off'){var dd=D.off.filter(function(r){return r.out&&!r.tr&&r.out>=a&&r.out<b});return {v:dd.length?dd.reduce(function(x,r){return x+(r.out-r.in)},0)/dd.length/3600000:null}}
+  if(k.gas){var gr=gasRange(a,b,D);if(!gr)return {v:null};return {v:k.id==='lkm'?gr.l/gr.km*100:gr.e/gr.km}}
   if(k.km){var ks=kmSum(D.km,a,b);
     if(k.id==='uti')return {v:ks.known?ks.used/ks.known*100:null};
     if(k.id==='kmm')return {v:ks.act?ks.km/ks.act:null};
@@ -2821,7 +2897,7 @@ function openKpi(){
     h+='<div class="ktw"><table class="kt"><thead><tr><th>KPI</th><th>Oggi</th><th>Target</th><th>Oggi / tgt</th><th>Mese</th><th>Mese prec.</th><th>vs prec.</th></tr></thead><tbody>';
     rows.forEach(function(r){var k=r.k,t=kTarget(k),pc=r.v!=null&&t?Math.round(r.v/t*100):null,dv=r.mtd.v!=null&&r.pm.v?Math.round(r.mtd.v/r.pm.v*100):null,c=r.ok==null?'var(--mut)':r.ok?'var(--ok)':'var(--bad)';
       var better=dv==null?null:k.dir==='up'?dv>=100:dv<=100;
-      h+='<tr data-k="'+k.id+'"'+(k.id===sel?' class="on"':'')+'><td><b>'+esc(k.n)+'</b><small>'+(k.dir==='up'?'↑ più alto è meglio':'↓ più basso è meglio')+(k.snap?'':' · ultimi 30 gg')+'</small></td>'
+      h+='<tr data-k="'+k.id+'"'+(k.id===sel?' class="on"':'')+'><td><b>'+esc(k.n)+'</b><small>'+(k.dir==='up'?'↑ più alto è meglio':'↓ più basso è meglio')+(k.snap?'':' · ultimi 30 gg')+(k.gas?' · mezzi a gasolio e ibridi':'')+'</small></td>'
         +'<td class="n"><b>'+kFmt(k,r.v)+'</b><small class="kmt">tgt '+kFmt(k,t)+'</small></td><td class="n">'+kFmt(k,t)+'</td>'
         +'<td class="n" style="color:'+c+'">'+(pc==null?'—':(r.ok?'✓ ':'✗ ')+pc+'%')+'</td>'
         +'<td class="n">'+kFmt(k,r.mtd.v)+(r.mtd.rec?'<small>ricostr.</small>':'')+'</td><td class="n">'+kFmt(k,r.pm.v)+(r.pm.rec?'<small>ricostr.</small>':'')+'</td>'
@@ -2842,6 +2918,7 @@ function openKpi(){
       h+='<div class="lab" style="margin-top:18px">Disponibili che non escono · nessun km da 5+ giorni ('+idle.length+')</div>';
       h+=idle.length?'<div class="frm">'+idle.slice(0,12).map(function(o){return '<button class="li" data-id="'+esc(o.v.id)+'" style="--c:var(--pre)"><span class="nn" style="font-size:18px">'+esc(o.v.n)+'</span><span class="tx"><b>'+esc(modelOf(o.v))+'</b><span>'+(o.gg==null?'nessun movimento registrato':'ultimo km '+o.gg+' giorni fa')+(o.v.stall?' · stallo '+esc(shortSid(o.v.stall)):'')+'</span></span><span class="tag" style="--c:var(--pre)">'+(o.gg==null?'—':o.gg+' gg')+'</span></button>'}).join('')+'</div>'+(idle.length>12?'<div class="sub2">+ altri '+(idle.length-12)+'</div>':''):'<div class="sub2">Tutti i disponibili hanno fatto km negli ultimi giorni.</div>';
     }else if(S.live)h+='<div class="sub2" style="margin-top:14px">📏 Importa i km da SAP (menu → Importa km da SAP) per utilizzo flotta, km medi e fermi ogni 10.000 km.</div>';
+    if(D.gas&&D.km&&!TL.some(function(t){var a=alimOfT(t);return (a==='ga'||a==='ib')&&V.some(function(v){return v.tipo===t.id})}))h+='<div class="mt-warn" style="margin-top:14px">⛽ Per gasolio ogni 100 km e costo al km indica quali tipologie vanno a gasolio: Menu → Tipologie → ✏ → Alimentazione.</div>';
     h+='<div class="sub2" style="margin-top:14px">'+(s.dispLav?'🔧 '+s.dispLav+(s.dispLav===1?' mezzo «Disponibile» è':' mezzi «Disponibili» sono')+' in lavorazione in officina: '+(s.dispLav===1?'non conta':'non contano')+' come disponibil'+(s.dispLav===1?'e':'i')+'. ':'')+(s.trn?'🅿 '+s.trn+' in transito, non contati. ':'')+(S.live?'Foto giornaliere salvate: <b>'+D.snaps.length+'</b>'+(D.snaps.length?' · dal '+fmtD(D.snaps[0].ts):'')+'. Si aggiorna da sola mentre Aurora è aperta con un utente collegato.':'Dati di esempio: niente storico.')+'</div>';
     $('.mb',M.el).innerHTML=h;
     $$('.li[data-id]',M.el).forEach(function(b){b.onclick=function(){M.close();showAt(b.dataset.id,300)}});
@@ -2854,8 +2931,8 @@ function openKpi(){
   M.el.querySelector('.modal').classList.add('kpi');
   if(!DB||!S.live){draw();return}
   kpiSnap();
-  Promise.all([DB.ref('depotrack_kpi_snap').once('value'),DB.ref('depotrack_stat_fermi_archivi').once('value').catch(function(){return null}),DB.ref('depotrack_officina_storico').once('value').catch(function(){return null}),kmLoad()]).then(function(r){
-    D.kmAll=r[3];D.km=kmFor(KALF);
+  Promise.all([DB.ref('depotrack_kpi_snap').once('value'),DB.ref('depotrack_stat_fermi_archivi').once('value').catch(function(){return null}),DB.ref('depotrack_officina_storico').once('value').catch(function(){return null}),kmLoad(),gasLoad()]).then(function(r){
+    D.kmAll=r[3];D.km=kmFor(KALF);D.gas=r[4];D.kmD=r[3]?kmDiesel():null;
     var o=r[0].val()||{};D.snaps=Object.keys(o).sort().map(function(k){return o[k]}).filter(function(x){return x&&x.ts});
     D.eps=kEpisodes(r[1]&&r[1].val());D.rec=kRecidive(D.eps);
     var of=r[2]&&r[2].val()||{};D.off=Object.keys(of).map(function(k){return of[k]}).filter(function(x){return x&&x.in});
@@ -3123,7 +3200,7 @@ function menuItems(){
   return [
     {h:'Mezzi'},
     {ic:'🚨',l:'Fermi',fn:openFermi,pin:1},{ic:'⏸',l:'Ferme temporanee',fn:openFermeTemp,pin:1},
-    {ic:'🚌',l:'Aggiorna parco da SAP',fn:openSinossi,pin:1},{ic:'📥',l:'Importa da SAP',fn:openImportSap,pin:1},{ic:'📏',l:'Importa km da SAP',s:(KMMETA&&KMMETA.ts>=kmMonday())?'✓':'⚠',fn:openImportKm,pin:1},{ic:'📋',l:'Avvisi SAP',fn:openAvvisi,pin:1},{ic:'📉',l:'Statistiche fermi',fn:openStatFermi,pin:1},
+    {ic:'🚌',l:'Aggiorna parco da SAP',fn:openSinossi,pin:1},{ic:'📥',l:'Importa da SAP',fn:openImportSap,pin:1},{ic:'📏',l:'Importa km da SAP',s:(KMMETA&&KMMETA.ts>=kmMonday())?'✓':'⚠',fn:openImportKm,pin:1},{ic:'⛽',l:'Importa gasolio da SAP',fn:openImportGas,pin:1},{ic:'📋',l:'Avvisi SAP',fn:openAvvisi,pin:1},{ic:'📉',l:'Statistiche fermi',fn:openStatFermi,pin:1},
     {ic:'🔧',l:'Dashboard officina',fn:openOffWin},
     {h:'Report'},
     {ic:'🎯',l:'KPI FLEET',fn:openKpi,pin:1},{ic:'📈',l:'Disponibilità',fn:openDispo,pin:1},{ic:'🔧',l:'Revisioni',fn:openRevisioni,pin:1},{ic:'📋',l:'Log movimenti',fn:openLog,pin:1},
@@ -3237,6 +3314,7 @@ function startLive(){
   DB.ref('depotrack_officina').on('value',function(s){offIngest(s.val());if(gotData){renderOff();repaintAll()}},function(){});
   DB.ref('depotrack_km_meta').on('value',function(s){var m=s.val()||null;if(KMMETA&&m&&m.ts!==KMMETA.ts){KMX=null;KMRAW=null}KMMETA=m;KMMETA_OK=true;if(m&&m.ts>=kmMonday()){var r=$('.kmrem');if(r){r.remove();KMREM_OPEN=false}}else setTimeout(kmRemCheck,3000)},function(){});
   setInterval(kmRemCheck,5*60000);
+  DB.ref('depotrack_gas_meta').on('value',function(s){var m=s.val()||null;if(GASMETA&&m&&m.ts!==GASMETA.ts)GAS=null;GASMETA=m},function(){});
   DB.ref('depotrack_kpi_cfg').on('value',function(s){KCFG=s.val()||{};if(REDRAW){try{REDRAW()}catch(e){REDRAW=null}}},function(){});
   setInterval(kpiSnap,10*60000);setTimeout(kpiSnap,20000);
   DB.ref('depotrack_rentri').on('value',function(s){RENTRI=s.val()||{};if(gotData)renderOff()},function(){});
