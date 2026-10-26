@@ -603,6 +603,9 @@ body.v-off #stats{display:none}
 .odet{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px}.odet dt{color:var(--mut)}.odet dd{margin:0;font-weight:600}
 .ochips{display:flex;flex-wrap:wrap;gap:8px}.ochips button{padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(128,128,150,.12);font-weight:700;font-family:var(--f-mono)}
 .ochips button:hover{border-color:var(--acc)}
+.op.trn{background:transparent;border:1.5px dashed var(--c);box-shadow:none;opacity:.78;animation:none}
+.op .omt{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.op .omt.nm{color:var(--pre)}.op.trn .omt{color:var(--mut)}
+.ochips.mot button.on{border-color:var(--acc)}.ochips.mot button.trb{border-style:dashed}
 .rbig{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);font-weight:800;font-size:17px;margin-bottom:12px}
 .rhist{display:grid;gap:4px;margin-top:6px;font-size:13px}.rhist div{display:flex;justify-content:space-between;gap:10px;padding:6px 10px;border-radius:10px;background:rgba(128,128,150,.08)}
 .fbar{display:grid;grid-template-columns:minmax(0,170px) 1fr 34px;gap:10px;align-items:center;font-size:13px;margin:4px 0}.fbar i{display:block;height:10px;border-radius:6px;background:var(--c)}.fbar b{text-align:right;font-variant-numeric:tabular-nums}
@@ -1489,11 +1492,11 @@ function offCell(pid,su){
   var head='<div class="oh"><span class="pid">'+pid+'</span>'+sel+'</div>';
   if(!x)return '<div class="op free" data-p="'+pid+'" role="button" tabindex="0" aria-label="Postazione '+pid+' libera">'+head+'<div class="oe">'+(su?'<b>+</b>Inserisci vettura':'libera')+'</div></div>';
   if(!v)return '<div class="op miss" data-p="'+pid+'" role="button" tabindex="0">'+head+'<div class="on">'+esc(x.n||'?')+'</div><div class="pst">non più in flotta</div></div>';
-  var cls='op'+(isFerma(v.s)?' fer':'')+(v.x?' x2':'');
+  var cls='op'+(isFerma(v.s)&&!x.tr?' fer':'')+(x.tr?' trn':'')+(v.x?' x2':'');
   return '<div class="'+cls+'" data-p="'+pid+'" role="button" tabindex="0" style="--c:'+stOf(v.s)[1]+(v.x?';--c2:'+stOf(v.x)[1]:'')+'" aria-label="Postazione '+pid+', mezzo '+esc(v.n)+', '+esc(stOf(v.s)[0])+'">'+head
     +'<div class="on">'+esc(v.n)+'</div><div class="om">'+esc(modelOf(v))+'</div>'
     +'<div class="pst" title="'+esc(stOf(v.s)[0])+(v.x?' + '+esc(stOf(v.x)[0]):'')+'"><i></i><span>'+esc(shortSt(v.s))+(v.x?' + '+esc(shortSt(v.x)):'')+'</span></div>'
-    +'<div class="of"><span>⏱ '+durTxt(x.ts)+'</span><span>'+(v.stall?'<span title="Stallo di provenienza: resta suo">↩ '+esc(shortSid(v.stall))+'</span>':'senza stallo')+'</span></div></div>';
+    +(x.mot?'<div class="omt">'+(x.tr?'🅿 TRANSITO':'🔧 '+esc(x.mot))+'</div>':'<div class="omt nm">⚠ motivo?</div>')+'<div class="of"><span>⏱ '+durTxt(x.ts)+'</span><span>'+(v.stall?'<span title="Stallo di provenienza: resta suo">↩ '+esc(shortSid(v.stall))+'</span>':'senza stallo')+'</span></div></div>';
 }
 function renderOff(){
   var root=$('#obay');if(!root)return;
@@ -1525,6 +1528,29 @@ function renderOff(){
   $$('select.olab',root).forEach(function(s){s.onchange=function(){setOffLabel(s.dataset.p,s.value);s.blur()}});
   $('#oHint').textContent=su?'Tocca una postazione per inserire o togliere una vettura. Lo stato lo decide sempre la scheda del mezzo.':'Sola lettura: solo il superuser modifica le postazioni.';
 }
+/* motivo obbligatorio all'ingresso in officina: il transito non conta nei KPI */
+var TRANS='Transito / parcheggio';
+function askMot(v,cur,cb){
+  var opts=etiList().filter(function(o){return o!==TRANS});
+  var M=modal({title:'Perché la '+v.n+' entra in officina?',html:'<div class="sub2" style="margin-bottom:12px">Scelta obbligatoria. Il transito non conta nei KPI dell\'officina e non toglie il mezzo dai disponibili.</div><div class="ochips mot">'
+    +opts.map(function(o){return '<button data-m="'+esc(o)+'"'+(cur===o?' class="on"':'')+'>🔧 '+esc(o)+'</button>'}).join('')
+    +'<button data-m="__tr" class="trb'+(cur===TRANS?' on':'')+'">🅿 '+TRANS+'</button></div>',foot:[{label:'Annulla'}]});
+  $$('.mot button',M.el).forEach(function(b){b.onclick=function(){M.close();var tr=b.dataset.m==='__tr';cb(tr?TRANS:b.dataset.m,tr)}});
+}
+function setMot(pid){
+  if(!gate('admin'))return;var x=OFF.post[pid],v=x&&byId(x.vid);if(!x||!v)return;
+  askMot(v,x.mot||null,function(m,tr){
+    if(m===x.mot)return;var up={},now=Date.now(),rid=x.rid||null;
+    var ks=Object.keys(OFF.post).filter(function(k){return OFF.post[k]&&OFF.post[k].vid===x.vid});
+    if(!!x.tr!==tr&&x.rid){
+      DB.ref('depotrack_officina_storico/'+x.rid).update({out:now,outBy:ME.name||'',dur:now-(x.ts||now),statoOut:stOf(v.s)[0],cambioMotivo:true}).catch(function(){});
+      rid=nk('o');DB.ref('depotrack_officina_storico/'+rid).set({vid:v.id,n:v.n,model:modelOf(v)||'',posto:pid,lab:OFF.label[pid]||null,mot:m,tr:tr||null,in:now,by:ME.name||''}).catch(function(){});
+    }else if(x.rid)DB.ref('depotrack_officina_storico/'+x.rid).update({mot:m,tr:tr||null}).catch(function(){});
+    ks.forEach(function(k){up['post/'+k+'/mot']=m;up['post/'+k+'/tr']=tr||null;if(rid)up['post/'+k+'/rid']=rid});
+    DB.ref('depotrack_officina').update(up).then(function(){toast('Vet. '+v.n+': '+m)}).catch(werr);
+    addLog('officina','Vet. '+v.n+' in officina: motivo → '+m,{vid:v.id});
+  });
+}
 function onPost(pid){
   var x=OFF.post[pid],v=x&&byId(x.vid),su=ME.role==='superuser'&&S.live;
   if(!x){if(gate('admin'))pickVeh(pid);return}
@@ -1532,12 +1558,14 @@ function onPost(pid){
   var lab=OFF.label[pid]||'';
   var html='<dl class="odet"><dt>Vettura</dt><dd>'+esc(v?v.n:(x.n||'?'))+(v?' · '+esc(modelOf(v)):' · non più in flotta')+'</dd>'
     +(v?'<dt>Stato</dt><dd style="color:'+stOf(v.s)[1]+'">● '+esc(stOf(v.s)[0])+(v.x?' + '+esc(stOf(v.x)[0]):'')+'</dd>':'')
+    +'<dt>Motivo</dt><dd>'+(x.mot?(x.tr?'🅿 ':'🔧 ')+esc(x.mot):'<span style="color:var(--pre)">non indicato</span>')+'</dd>'
     +'<dt>Etichetta</dt><dd>'+(lab?esc(lab):'—')+'</dd>'
     +'<dt>Stallo</dt><dd>'+(v&&v.stall?esc(shortSid(v.stall))+' (resta suo)':'senza stallo')+'</dd>'
     +'<dt>In officina da</dt><dd>'+durTxt(x.ts)+(x.by?' · inserita da '+esc(x.by):'')+'</dd>'
     +(v&&v.note?'<dt>Note</dt><dd>'+esc(v.note)+'</dd>':'')+'</dl>';
   modal({title:'🔧 Postazione '+pid+(lab?' · '+lab:''),html:html,foot:[
     {label:'Scheda mezzo',fn:function(){if(v)openInsp(v.id);else toast('Mezzo non più in flotta')}},
+    {label:'Motivo',fn:function(){setMot(pid)}},
     {label:'Sposta',fn:function(){pickPost(pid)}},
     {label:'Togli',cls:'danger',fn:function(){offRemove(pid)}}]});
 }
@@ -1549,7 +1577,7 @@ function pickVeh(pid){
     var list=sortedV().filter(function(v){return !s||(v.n+' '+modelOf(v)+' '+stOf(v.s)[0]).toLowerCase().indexOf(s)>-1});
     list=list.filter(function(v){return isFerma(v.s)}).concat(list.filter(function(v){return !isFerma(v.s)})).slice(0,40);
     l.innerHTML=list.map(function(v){var p=offOf(v.id);return '<button class="r" data-id="'+esc(v.id)+'" style="--c:'+stOf(v.s)[1]+'"><b>'+esc(v.n)+'</b><em>'+esc(modelOf(v))+' · '+esc(stOf(v.s)[0])+'</em><span>'+(p?'già in '+p:(v.stall?esc(shortSid(v.stall)):'senza stallo'))+'</span></button>'}).join('')||'<p class="hint" style="padding:12px">Nessun mezzo trovato.</p>';
-    $$('.r',l).forEach(function(b){b.onclick=function(){M.close();offPut(pid,b.dataset.id)}});
+    $$('.r',l).forEach(function(b){b.onclick=function(){var v=byId(b.dataset.id);if(!v)return;M.close();askMot(v,null,function(m,tr){offPut(pid,v.id,m,tr)})}});
   }
   q.oninput=draw;q.onkeydown=function(e){if(e.key==='Enter'){var f=$('.r',l);if(f)f.click()}};
   draw();setTimeout(function(){q.focus()},40);
@@ -1560,11 +1588,12 @@ function pickPost(from){
   var M=modal({title:'Sposta da '+from+' a…',html:'<div class="ochips">'+free.map(function(p){return '<button data-p="'+p+'">'+p+(OFF.label[p]?' · '+esc(OFF.label[p]):'')+'</button>'}).join('')+'</div>'});
   $$('.ochips button',M.el).forEach(function(b){b.onclick=function(){M.close();var x=OFF.post[from];if(x&&x.vid)offPut(b.dataset.p,x.vid)}});
 }
-function offPut(pid,vid){
+function offPut(pid,vid,mot,tr){
   if(!gate('admin'))return;var v=byId(vid);if(!v)return;
   var old=offOf(vid);if(old===pid)return;
-  var up={};if(old)up['post/'+old]=null;
-  up['post/'+pid]={vid:v.id,n:v.n,ts:old&&OFF.post[old]&&OFF.post[old].ts?OFF.post[old].ts:Date.now(),by:ME.name||''};
+  var up={},po=old?OFF.post[old]:null;if(old)up['post/'+old]=null;
+  if(mot==null&&po){mot=po.mot||null;tr=!!po.tr}
+  up['post/'+pid]={vid:v.id,n:v.n,ts:po&&po.ts?po.ts:Date.now(),by:ME.name||'',mot:mot||null,tr:tr?true:null};if(po&&po.rid)up['post/'+pid].rid=po.rid;
   DB.ref('depotrack_officina').update(up).then(function(){toast('Vet. '+v.n+' → postazione '+pid)}).catch(werr);
   var lab=OFF.label[pid];
   addLog('officina','Vet. '+v.n+' → Officina '+pid+(lab?' ('+lab+')':'')+(old?' (da '+old+')':''),{vid:v.id});
@@ -2535,6 +2564,7 @@ var KPIS=[
   {id:'ferma',n:'Mezzi in ferma',u:'%',dir:'down',def:10,snap:function(s){return s.tot?s.pura/s.tot*100:null}},
   {id:'sin',n:'Sinistri da gestire',u:'n.',dir:'down',def:5,snap:function(s){return s.sin}},
   {id:'fmed',n:'Fermo medio (avvisi SAP)',u:'gg',dir:'down',def:30,snap:function(s){return s.fMed}},
+  {id:'lav',n:'Mezzi in lavorazione in officina',u:'n.',dir:'down',def:10,snap:function(s){return s.lav!=null?s.lav:null}},
   {id:'off',n:'Permanenza media officina',u:'h',dir:'down',def:24},
   {id:'rec',n:'Recidive entro 30 gg',u:'n.',dir:'down',def:3}
 ];
@@ -2543,11 +2573,12 @@ function kMet(k,v){var t=kTarget(k);if(v==null||t==null||isNaN(t))return null;re
 function kFmt(k,v){if(v==null||isNaN(v))return '—';var d=k.u==='%'||k.u==='h'||k.u==='gg'?1:(Math.round(v)===v?0:1);return v.toFixed(d).replace('.',',')+(k.u==='%'?'%':k.u==='n.'?'':' '+k.u)}
 /* fotografia dello stato attuale */
 function kpiNow(){
-  var DP=dispId(),s={ts:Date.now(),tot:V.length,disp:0,pura:0,temp:0,sin:0,fMed:null,off:Object.keys(OFFBY).length,bt:{}};
+  var DP=dispId(),s={ts:Date.now(),tot:V.length,disp:0,pura:0,temp:0,sin:0,fMed:null,off:0,lav:0,trn:0,dispLav:0,bt:{}},LAV={},seen={};
+  Object.keys(OFF.post).forEach(function(k){var x=OFF.post[k];if(!x||!x.vid||seen[x.vid])return;seen[x.vid]=1;s.off++;if(x.tr)s.trn++;else{s.lav++;LAV[x.vid]=1}});
   var VV=(AVV&&AVV.v)||{},gg=[];
   V.forEach(function(v){
     var t=v.tipo||'?',b=s.bt[t]||(s.bt[t]={t:0,d:0});b.t++;
-    if(DP&&v.s===DP){s.disp++;b.d++}
+    if(DP&&v.s===DP){if(LAV[v.id])s.dispLav++;else{s.disp++;b.d++}}
     if(isPura(v.s))s.pura++;else if(isTemp(v.s))s.temp++;
     var e=VV[String(v.n).trim()];if(!e)return;
     if(e.sin)s.sin++;
@@ -2594,7 +2625,7 @@ function kRange(k,a,b,D){
     }
     return {v:null};
   }
-  if(k.id==='off'){var dd=D.off.filter(function(r){return r.out&&r.out>=a&&r.out<b});return {v:dd.length?dd.reduce(function(x,r){return x+(r.out-r.in)},0)/dd.length/3600000:null}}
+  if(k.id==='off'){var dd=D.off.filter(function(r){return r.out&&!r.tr&&r.out>=a&&r.out<b});return {v:dd.length?dd.reduce(function(x,r){return x+(r.out-r.in)},0)/dd.length/3600000:null}}
   if(k.id==='rec'){if(!D.eps.length||D.eps[0].startTs>=b)return {v:null};return {v:D.rec.filter(function(t){return t>=a&&t<b}).length}}
   return {v:null};
 }
@@ -2651,7 +2682,7 @@ function openKpi(){
       tl.forEach(function(t){var b=s.bt[t.id],p=b.t?b.d/b.t*100:0,ok=p>=td;
         h+='<div><span class="kn"><i style="background:'+t.colore+'"></i>'+esc(t.nome)+'</span><span class="kb"><i style="width:'+p+'%;background:'+(ok?'var(--ok)':'var(--bad)')+'"></i><u style="left:'+Math.min(100,td)+'%"></u></span><b style="color:'+(ok?'var(--ok)':'var(--bad)')+'">'+Math.round(p)+'%</b><small>'+b.d+'/'+b.t+'</small></div>'});
       h+='</div>'}
-    h+='<div class="sub2" style="margin-top:14px">'+(S.live?'Foto giornaliere salvate: <b>'+D.snaps.length+'</b>'+(D.snaps.length?' · dal '+fmtD(D.snaps[0].ts):'')+'. Si aggiorna da sola mentre Aurora è aperta con un utente collegato.':'Dati di esempio: niente storico.')+'</div>';
+    h+='<div class="sub2" style="margin-top:14px">'+(s.dispLav?'🔧 '+s.dispLav+(s.dispLav===1?' mezzo «Disponibile» è':' mezzi «Disponibili» sono')+' in lavorazione in officina: '+(s.dispLav===1?'non conta':'non contano')+' come disponibil'+(s.dispLav===1?'e':'i')+'. ':'')+(s.trn?'🅿 '+s.trn+' in transito, non contati. ':'')+(S.live?'Foto giornaliere salvate: <b>'+D.snaps.length+'</b>'+(D.snaps.length?' · dal '+fmtD(D.snaps[0].ts):'')+'. Si aggiorna da sola mentre Aurora è aperta con un utente collegato.':'Dati di esempio: niente storico.')+'</div>';
     $('.mb',M.el).innerHTML=h;
     $$('[data-k]',M.el).forEach(function(r){r.onclick=function(){sel=r.dataset.k;ls('da_kpi_sel',sel);draw()}});
     $$('[data-s]',M.el).forEach(function(b){b.onclick=function(){sel=b.dataset.s;ls('da_kpi_sel',sel);draw()}});

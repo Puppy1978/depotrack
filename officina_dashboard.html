@@ -179,6 +179,10 @@ button{cursor:pointer;background:none;border:0}
 .det{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}.det dt{color:var(--mut)}.det dd{margin:0;font-weight:600}
 .chips{display:flex;flex-wrap:wrap;gap:8px}.chips button{padding:9px 14px;border-radius:999px;background:var(--bg2);border:1px solid var(--line2);font:600 14px var(--fd)}
 .chips button:hover{border-color:var(--ambra)}
+.p.trn{background:transparent;border:1.5px dashed var(--c);box-shadow:none;opacity:.78}
+.p .of .mt{color:var(--txt);font-weight:700}.p .of .mt.nm{color:var(--ambra,#db9941)}.p.trn .of .mt{color:var(--mut)}
+.chips.mot button.on{border-color:var(--ambra,#db9941)}.chips.mot button.trb{border-style:dashed}
+
 .rbig{--c:var(--warn);padding:12px 14px;border-radius:14px;margin-bottom:12px;font-weight:700;font-size:17px;background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
 .hist{display:grid;gap:4px;margin-top:6px;font-size:14px}.hist div{display:flex;justify-content:space-between;padding:6px 10px;border-radius:10px;background:rgba(229,229,223,.04)}
 .fbar{display:grid;grid-template-columns:minmax(0,180px) 1fr 34px;gap:10px;align-items:center;font-size:14px;margin:5px 0}.fbar i{display:block;height:10px;border-radius:6px;background:var(--c)}.fbar b{text-align:right;font-family:var(--fd)}
@@ -381,10 +385,10 @@ function pane(h,dbl){
   if(!x)return '<div class="p free" data-p="'+h+'" role="button" tabindex="0" aria-label="Posto '+pname(h)+' libero">'+pn+'<div class="oe">'+(ed?'<b>+</b>Inserisci':'libero')+'</div></div>';
   if(!v)return '<div class="p miss" data-p="'+h+'" role="button" tabindex="0">'+pn+'<div class="on">'+esc(x.n||'?')+'</div><div class="pst">non più in flotta</div></div>';
   var full=stOf(v.s)[0]+(v.x?' + '+stOf(v.x)[0]:'');
-  return '<div class="p'+(dbl?' arti':'')+(isFerma(v.s)?' fer':'')+(v.x?' x2':'')+ageCls(x.ts)+'" data-p="'+h+'" role="button" tabindex="0" style="--c:'+stOf(v.s)[1]+(v.x?';--c2:'+stOf(v.x)[1]:'')+'" aria-label="'+(dbl?'Posti '+bayOf(h)+' 1 e 2, autosnodato':'Posto '+pname(h))+', mezzo '+esc(v.n)+', '+esc(full)+'">'+pn
+  return '<div class="p'+(dbl?' arti':'')+(isFerma(v.s)&&!x.tr?' fer':'')+(x.tr?' trn':'')+(v.x?' x2':'')+(x.tr?'':ageCls(x.ts))+'" data-p="'+h+'" role="button" tabindex="0" style="--c:'+stOf(v.s)[1]+(v.x?';--c2:'+stOf(v.x)[1]:'')+'" aria-label="'+(dbl?'Posti '+bayOf(h)+' 1 e 2, autosnodato':'Posto '+pname(h))+', mezzo '+esc(v.n)+', '+esc(full)+'">'+pn
     +'<div class="on fit" data-max="34" data-min="14">'+esc(v.n)+'</div><div class="om fit" data-max="11.5" data-min="7">'+esc(modelOf(v))+'</div>'
     +'<div class="pst fit" data-max="13" data-min="7" title="'+esc(full)+'"><span>'+esc(cap(shortSt(v.s)))+'</span>'+(v.x?' + <span>'+esc(cap(shortSt(v.x)))+'</span>':'')+'</div>'
-    +'<div class="of"><span class="fit tm" data-max="10.5" data-min="7">⏱ '+durTxt(x.ts)+'</span><span class="fit" data-max="10.5" data-min="7" title="Stallo di provenienza: resta suo">'+(v.stall?'↩ '+esc(shortSid(v.stall)):'senza stallo')+'</span></div></div>';
+    +'<div class="of">'+(x.mot?'<span class="fit mt" data-max="10.5" data-min="7">'+(x.tr?'🅿 TRANSITO':'🔧 '+esc(x.mot))+'</span>':'<span class="fit mt nm" data-max="10.5" data-min="7">⚠ motivo?</span>')+'<span class="fit tm" data-max="10.5" data-min="7">⏱ '+durTxt(x.ts)+'</span><span class="fit" data-max="10.5" data-min="7" title="Stallo di provenienza: resta suo">'+(v.stall?'↩ '+esc(shortSid(v.stall)):'senza stallo')+'</span></div></div>';
 }
 function render(){
   if(!$('#bay'))return;
@@ -503,17 +507,40 @@ function tick(){
 }
 
 /* ---------- azioni ---------- */
+/* motivo obbligatorio all'ingresso in officina: il transito non conta nei KPI */
+var TRANS='Transito / parcheggio';
+function askMot(v,cur,cb){
+  var opts=etiList().filter(function(o){return o!==TRANS});
+  var M=modal({title:'Perché la '+v.n+' entra in officina?',html:'<div class="sub" style="margin-bottom:12px">Scelta obbligatoria. Il transito non conta nei KPI dell\'officina e non toglie il mezzo dai disponibili.</div><div class="chips mot">'
+    +opts.map(function(o){return '<button data-m="'+esc(o)+'"'+(cur===o?' class="on"':'')+'>🔧 '+esc(o)+'</button>'}).join('')
+    +'<button data-m="__tr" class="trb'+(cur===TRANS?' on':'')+'">🅿 '+TRANS+'</button></div>',foot:[{label:'Annulla'}]});
+  $$('.mot button',M.el).forEach(function(b){b.onclick=function(){M.close();var tr=b.dataset.m==='__tr';cb(tr?TRANS:b.dataset.m,tr)}});
+}
+function setMot(pid){
+  if(!canEdit())return;var x=OFF.post[pid],v=x&&BYID[x.vid];if(!x||!v)return;
+  askMot(v,x.mot||null,function(m,tr){
+    if(m===x.mot)return;var up={},ks=keysOf(x.vid),now=Date.now(),rid=x.rid;
+    if(!!x.tr!==tr&&x.rid){ /* da transito a lavorazione (o viceversa): chiudo il passaggio e ne apro uno nuovo */
+      DB.ref('depotrack_officina_storico/'+x.rid).update({out:now,outBy:ME.name||'',dur:now-(x.ts||now),statoOut:stOf(v.s)[0],cambioMotivo:true}).catch(function(){});
+      rid=nk('o');DB.ref('depotrack_officina_storico/'+rid).set({vid:v.id,n:v.n,model:modelOf(v)||'',posto:posLbl(x.vid,pid),lab:OFF.label[bayOf(pid)]||null,mot:m,tr:tr||null,in:now,by:ME.name||''}).catch(function(){});
+    }else if(x.rid)DB.ref('depotrack_officina_storico/'+x.rid).update({mot:m,tr:tr||null}).catch(function(){});
+    ks.forEach(function(k){var rk=RK[k]||k;up['post/'+rk+'/mot']=m;up['post/'+rk+'/tr']=tr||null;up['post/'+rk+'/rid']=rid});
+    DB.ref('depotrack_officina').update(up).then(function(){toast('Vet. '+v.n+': '+m)}).catch(werr);
+    addLog('officina','Vet. '+v.n+' in officina: motivo → '+m,v.id);
+  });
+}
 function onPost(pid){
   var x=OFF.post[pid],v=x&&BYID[x.vid];
   if(!x){if(canEdit())pickVeh(pid);return}
   var lab=OFF.label[bayOf(pid)]||'';
   var html='<dl class="det"><dt>Vettura</dt><dd>'+esc(v?v.n:(x.n||'?'))+(v?' · '+esc(modelOf(v)):' · non più in flotta')+'</dd>'
     +(v?'<dt>Stato</dt><dd style="color:'+stOf(v.s)[1]+'">● '+esc(stOf(v.s)[0])+(v.x?' + '+esc(stOf(v.x)[0]):'')+'</dd>':'')
+    +'<dt>Motivo</dt><dd>'+(x.mot?(x.tr?'🅿 ':'🔧 ')+esc(x.mot):'<span style="color:var(--pre,#e0a030)">non indicato</span>')+'</dd>'
     +'<dt>Etichetta</dt><dd>'+(lab?esc(lab):'—')+'</dd>'
     +'<dt>Stallo</dt><dd>'+(v&&v.stall?esc(shortSid(v.stall))+' (resta suo)':'senza stallo')+'</dd>'
     +'<dt>In officina da</dt><dd>'+durTxt(x.ts)+(x.by?' · inserita da '+esc(x.by):'')+'</dd>'
     +(v&&v.note?'<dt>Note</dt><dd>'+esc(v.note)+'</dd>':'')+'</dl>';
-  modal({title:'🔧 '+(keysOf(x.vid).length===2?'Posti '+posLbl(x.vid):'Posto '+pname(pid))+(lab?' · '+lab:''),html:html,foot:su()?[{label:'Sposta',fn:function(){pickPost(pid)}},{label:'Togli',cls:'danger',fn:function(){remove(pid)}}]:[]});
+  modal({title:'🔧 '+(keysOf(x.vid).length===2?'Posti '+posLbl(x.vid):'Posto '+pname(pid))+(lab?' · '+lab:''),html:html,foot:su()?[{label:'Motivo',fn:function(){setMot(pid)}},{label:'Sposta',fn:function(){pickPost(pid)}},{label:'Togli',cls:'danger',fn:function(){remove(pid)}}]:[]});
 }
 function pickVeh(pid){
   var M=modal({title:'Inserisci nel posto '+pname(pid),html:'<input class="field" id="q" placeholder="Numero vettura o modello…" autocomplete="off" inputmode="search"><div class="sub" style="margin-top:8px">Prima i mezzi fermi. Lo stato non cambia e lo stallo resta suo.</div><div class="list" id="ql"></div>'});
@@ -524,7 +551,7 @@ function pickVeh(pid){
     list=list.filter(function(v){return isFerma(v.s)}).concat(list.filter(function(v){return !isFerma(v.s)})).slice(0,40);
     var mt=bayOf(pid)+(pid.slice(-1)==='a'?'b':'a'),mx=OFF.post[mt];
     l.innerHTML=list.map(function(v){var p=offOf(v.id),ar=isArti(v),blk=ar&&mx&&mx.vid!==v.id;return '<button class="r'+(blk?' no':'')+'" data-id="'+esc(v.id)+'" style="--c:'+stOf(v.s)[1]+'"><b>'+esc(v.n)+'</b><em>'+esc(modelOf(v))+' · '+esc(stOf(v.s)[0])+(ar?' <i class="t18">18 m</i>':'')+(blk?' · serve anche '+pname(mt):'')+'</em><span>'+(p?'già in '+posLbl(v.id,p):(v.stall?esc(shortSid(v.stall)):'senza stallo'))+'</span></button>'}).join('')||'<p class="sub" style="padding:10px">Nessun mezzo trovato.</p>';
-    $$('.r',l).forEach(function(b){b.onclick=function(){M.close();put(pid,b.dataset.id)}});
+    $$('.r',l).forEach(function(b){b.onclick=function(){var v=BYID[b.dataset.id];if(!v)return;M.close();askMot(v,null,function(m,tr){put(pid,v.id,m,tr)})}});
   }
   q.oninput=draw;q.onkeydown=function(e){if(e.key==='Enter'){var f=$('.r',l);if(f)f.click()}};
   draw();setTimeout(function(){q.focus()},40);
@@ -536,7 +563,7 @@ function pickPost(from){
   var M=modal({title:'Sposta '+(ar?'il 18 m ':'')+'da '+(fx?posLbl(fx.vid,from):pname(from))+' a…',html:(ar?'<div class="sub" style="margin-bottom:10px">Autosnodato da 18 m: solo postazioni con tutti e due i posti liberi.</div>':'')+'<div class="chips">'+free.map(function(p){var l=OFF.label[bayOf(p)];return '<button data-p="'+p+'">'+(ar?bayOf(p)+'/1+2':pname(p))+(l?' · '+esc(l):'')+'</button>'}).join('')+'</div>'});
   $$('.chips button',M.el).forEach(function(b){b.onclick=function(){M.close();var x=OFF.post[from];if(x&&x.vid)put(b.dataset.p,x.vid)}});
 }
-function put(pid,vid){
+function put(pid,vid,mot,tr){
   if(!canEdit())return;var v=BYID[vid];if(!v)return;
   var old=offOf(vid),oks=keysOf(vid),ar=isArti(v),b=bayOf(pid),tg=ar?[b+'a',b+'b']:[pid];
   if(ar){
@@ -545,14 +572,15 @@ function put(pid,vid){
     if(busy){toast('⚠ '+v.n+' è un 18 m: servono tutti e due i posti di '+b+', ma '+pname(busy)+' è occupato da '+(OFF.post[busy].n||'un altro mezzo'));return}
   }else if(old===pid)return;
   var up={},prev=old?OFF.post[old]:null,ts=prev&&prev.ts?prev.ts:Date.now(),rid=prev&&prev.rid?prev.rid:nk('o'),lab=OFF.label[b]||'';
+  if(mot==null&&prev){mot=prev.mot||null;tr=!!prev.tr}tr=!!tr;
   oks.forEach(function(k){up['post/'+(RK[k]||k)]=null});
-  tg.forEach(function(k){up['post/'+k]={vid:v.id,n:v.n,ts:ts,by:prev&&prev.by?prev.by:(ME.name||''),rid:rid};if(ar)up['post/'+k].arti=true});
+  tg.forEach(function(k){up['post/'+k]={vid:v.id,n:v.n,ts:ts,by:prev&&prev.by?prev.by:(ME.name||''),rid:rid,mot:mot||null,tr:tr||null};if(ar)up['post/'+k].arti=true});
   var dest=ar?b+'/1+2':pname(pid),from=old?posLbl(vid,old):'';
   /* storico permanente: una riga per ogni passaggio in officina */
-  if(prev&&prev.rid)DB.ref('depotrack_officina_storico/'+rid).update({posto:dest,lab:lab||null}).catch(function(){});
-  else DB.ref('depotrack_officina_storico/'+rid).set({vid:v.id,n:v.n,model:modelOf(v)||'',posto:dest,lab:lab||null,in:ts,by:ME.name||''}).catch(function(){});
+  if(prev&&prev.rid)DB.ref('depotrack_officina_storico/'+rid).update({posto:dest,lab:lab||null,mot:mot||null,tr:tr||null}).catch(function(){});
+  else DB.ref('depotrack_officina_storico/'+rid).set({vid:v.id,n:v.n,model:modelOf(v)||'',posto:dest,lab:lab||null,mot:mot||null,tr:tr||null,in:ts,by:ME.name||''}).catch(function(){});
   DB.ref('depotrack_officina').update(up).then(function(){toast('Vet. '+v.n+(ar?' (18 m) → posti ':' → posto ')+dest)}).catch(werr);
-  addLog('officina','Vet. '+v.n+' → Officina '+dest+(lab?' ('+lab+')':'')+(old?' (da '+from+')':''),v.id);
+  addLog('officina','Vet. '+v.n+' → Officina '+dest+(mot?' · '+mot:lab?' ('+lab+')':'')+(old?' (da '+from+')':''),v.id);
 }
 function remove(pid){
   if(!canEdit())return;var x=OFF.post[pid];if(!x)return;var v=BYID[x.vid],n=v?v.n:(x.n||'?');
