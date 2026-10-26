@@ -1298,7 +1298,7 @@ function doStato(v,newS,after){
     var f={stato:newS};if(motivo)f.note=motivo;
     fleetPatch(v,f,function(){
       var oldP=isPura(old),newP=isPura(newS);
-      if(!oldP&&newP){var k=nk('sf');DB.ref('depotrack_stat_fermi/'+k).set({vid:v.id,targa:v.n,model:v.model,startTs:Date.now(),endTs:null,durationMs:null})}
+      if(!oldP&&newP){var k=nk('sf'),ent={vid:v.id,targa:v.n,model:v.model,startTs:Date.now(),endTs:null,durationMs:null},av=avvOf(v);if(/incident|sinistr/i.test(motivo||'')||(av&&av.sin))ent.sin=true;DB.ref('depotrack_stat_fermi/'+k).set(ent)}
       else if(oldP&&!newP){var ok=Object.keys(SF).filter(function(k){return SF[k]&&SF[k].vid===v.id&&SF[k].endTs==null})[0];
         if(ok){var t=Date.now();DB.ref('depotrack_stat_fermi/'+ok).update({endTs:t,durationMs:t-SF[ok].startTs})}}
       var nm=stOf(newS)[0];
@@ -2232,7 +2232,7 @@ function sapApply(d,M){
   }
   d.daF.forEach(function(v){
     if(protId(v.s)){fin();return}
-    fleetPatch(v,{stato:d.idF},function(){nF++;DB.ref('depotrack_stat_fermi/'+nk('sf')).set({vid:v.id,targa:v.n,model:v.model,startTs:Date.now(),endTs:null,durationMs:null});fin()});
+    fleetPatch(v,{stato:d.idF},function(){nF++;var g=d.G&&d.G[String(v.n).trim()],ent={vid:v.id,targa:v.n,model:v.model,startTs:Date.now(),endTs:null,durationMs:null};if(g&&g.sin)ent.sin=true;DB.ref('depotrack_stat_fermi/'+nk('sf')).set(ent);fin()});
   });
   d.daL.forEach(function(v){
     if(!isPura(v.s)){fin();return}
@@ -2786,7 +2786,7 @@ var KPIS=[
   {id:'rec',n:'Recidive entro 30 gg',u:'n.',dir:'down',def:3},
   {id:'uti',n:'Utilizzo flotta (giorni in uscita)',u:'%',dir:'up',def:80,km:1},
   {id:'kmm',n:'Km medi per mezzo al giorno',u:'km',dir:'up',def:100,km:1},
-  {id:'fkm',n:'Fermi ogni 10.000 km',u:'n.',dir:'down',def:1,km:1},
+  {id:'fkm',n:'Guasti ogni 10.000 km',u:'n.',dir:'down',def:3,km:1},
   {id:'lkm',n:'Gasolio ogni 100 km',u:'L',dir:'down',def:45,gas:1},
   {id:'ekm',n:'Costo gasolio al km',u:'€',dir:'down',def:0.8,gas:1}
 ];
@@ -2825,10 +2825,11 @@ function kEpisodes(arch){
   all.sort(function(a,b){return a.startTs-b.startTs}).forEach(function(e){
     var l=byV[e.vid];
     /* stessa fermata se il mezzo torna fermo entro 24 ore: import SAP e cambi di stato ravvicinati non sono fermi nuovi */
-    if(l&&l.endTs==null)return; /* doppione: fermata già aperta */
-    if(l&&l.endTs!=null&&e.startTs-l.endTs<24*3600000){l.endTs=e.endTs;l.ancoraInCorso=e.ancoraInCorso;return}
-    var c={vid:e.vid,startTs:e.startTs,endTs:e.endTs,ancoraInCorso:!!e.ancoraInCorso};byV[e.vid]=c;out.push(c);
+    if(l&&l.endTs==null){if(e.sin)l.sin=true;return} /* doppione: fermata già aperta */
+    if(l&&l.endTs!=null&&e.startTs-l.endTs<24*3600000){l.endTs=e.endTs;l.ancoraInCorso=e.ancoraInCorso;if(e.sin)l.sin=true;return}
+    var c={vid:e.vid,startTs:e.startTs,endTs:e.endTs,ancoraInCorso:!!e.ancoraInCorso,sin:!!e.sin};byV[e.vid]=c;out.push(c);
   });
+  out.forEach(function(e){if(e.endTs==null&&!e.sin){var v=byId(e.vid),av=v&&avvOf(v);if(av&&av.sin)e.sin=true}});
   return out.filter(function(e){return e.endTs==null||e.endTs-e.startTs>=2*3600000}); /* sotto le 2 ore non è un fermo */
 }
 function kRecidive(eps){
@@ -2850,14 +2851,16 @@ function kRange(k,a,b,D){
     return {v:null};
   }
   if(k.id==='off'){var dd=D.off.filter(function(r){return r.out&&!r.tr&&r.out>=a&&r.out<b});return {v:dd.length?dd.reduce(function(x,r){return x+(r.out-r.in)},0)/dd.length/3600000:null}}
-  if(k.gas){var gr=gasRange(a,b,D);if(!gr)return {v:null};return {v:k.id==='lkm'?gr.l/gr.km*100:gr.e/gr.km}}
+  if(k.gas){var gr=gasRange(a,b,D);if(!gr)return {v:null};return {v:k.id==='lkm'?gr.l/gr.km*100:gr.e/gr.km,info:k.id==='lkm'?Math.round(gr.l).toLocaleString('it')+' L su '+Math.round(gr.km).toLocaleString('it')+' km':Math.round(gr.e).toLocaleString('it')+' € su '+Math.round(gr.km).toLocaleString('it')+' km'}}
   if(k.km){var ks=kmSum(D.km,a,b);
     if(k.id==='uti')return {v:ks.known?ks.used/ks.known*100:null};
     if(k.id==='kmm')return {v:ks.act?ks.km/ks.act:null};
-    if(k.id==='fkm'){if(ks.km<2000)return {v:null};return {v:D.eps.filter(function(e){if(e.startTs<a||e.startTs>=b)return false;if(!KALF)return true;var v=byId(e.vid);return v&&alimOf(v)===KALF}).length/(ks.km/10000)}}}
+    if(k.id==='fkm'){if(ks.km<2000)return {v:null};var nsin=0,ng=D.eps.filter(function(e){if(e.startTs<a||e.startTs>=b)return false;if(KALF){var v=byId(e.vid);if(!v||alimOf(v)!==KALF)return false}if(e.sin){nsin++;return false}return true}).length;
+      return {v:ng/(ks.km/10000),info:ng+' guasti su '+Math.round(ks.km).toLocaleString('it')+' km'+(nsin?' · '+nsin+' sinistri esclusi':'')}}}
   if(k.id==='rec'){if(!D.eps.length||D.eps[0].startTs>=b)return {v:null};return {v:D.rec.filter(function(t){return t>=a&&t<b}).length}}
   return {v:null};
 }
+function kNowInfo(k,D){if(k.snap)return '';var n=Date.now();return kRange(k,n-30*86400000,n+1,D).info||''}
 function kNowVal(k,s,D){
   if(k.snap)return k.snap(s);
   var n=Date.now();return kRange(k,n-30*86400000,n+1,D).v;
@@ -2900,7 +2903,7 @@ function openKpi(){
     rows.forEach(function(r){var k=r.k,t=kTarget(k),pc=r.v!=null&&t?Math.round(r.v/t*100):null,dv=r.mtd.v!=null&&r.pm.v?Math.round(r.mtd.v/r.pm.v*100):null,c=r.ok==null?'var(--mut)':r.ok?'var(--ok)':'var(--bad)';
       var better=dv==null?null:k.dir==='up'?dv>=100:dv<=100;
       h+='<tr data-k="'+k.id+'"'+(k.id===sel?' class="on"':'')+'><td><b>'+esc(k.n)+'</b><small>'+(k.dir==='up'?'↑ più alto è meglio':'↓ più basso è meglio')+(k.snap?'':' · ultimi 30 gg')+(k.gas?' · mezzi a gasolio e ibridi':'')+'</small></td>'
-        +'<td class="n"><b>'+kFmt(k,r.v)+'</b><small class="kmt">tgt '+kFmt(k,t)+'</small></td><td class="n">'+kFmt(k,t)+'</td>'
+        +'<td class="n"><b>'+kFmt(k,r.v)+'</b>'+(kNowInfo(k,D)?'<small>'+esc(kNowInfo(k,D))+'</small>':'')+'<small class="kmt">tgt '+kFmt(k,t)+'</small></td><td class="n">'+kFmt(k,t)+'</td>'
         +'<td class="n" style="color:'+c+'">'+(pc==null?'—':(r.ok?'✓ ':'✗ ')+pc+'%')+'</td>'
         +'<td class="n">'+kFmt(k,r.mtd.v)+(r.mtd.rec?'<small>ricostr.</small>':'')+'</td><td class="n">'+kFmt(k,r.pm.v)+(r.pm.rec?'<small>ricostr.</small>':'')+'</td>'
         +'<td class="n" style="color:'+(better==null?'var(--mut)':better?'var(--ok)':'var(--bad)')+'">'+(dv==null?'—':(dv>=100?'▲ ':'▼ ')+dv+'%')+'</td></tr>'});
