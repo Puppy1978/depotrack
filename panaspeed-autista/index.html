@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0F18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Autista">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+<title>Panaspeed Autista</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: app a una colonna da cabina di guida — intestazione, contenuto che scorre, barra in basso con 4 tasti grandi.
+   Un solo aspetto scuro, scelto apposta: si legge di notte e col sole, e non abbaglia in cabina. */
+:root{
+  --bg:#0A0F18; --pan:#121A28; --pan2:#1A2436; --line:rgba(226,234,245,.10); --line2:rgba(226,234,245,.18);
+  --tx:#EEF2F8; --tx2:#93A0B6; --acc:#FF3B4A; --acc-tx:#fff;
+  --ok:#2EE88A; --warn:#FFAA2B; --bad:#FF4D5E; --info:#4DA3FF; --adr:#FF8A1E;
+  --f-disp:'Chakra Petch', 'Arial Narrow', system-ui, sans-serif;
+  --f-body:'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --f-mono:'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --r:16px; --tab:76px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{margin:0; background:var(--bg); color:var(--tx); font:16px/1.45 var(--f-body); -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent; overscroll-behavior-y:none;}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top, 0px); z-index:10; background:var(--bg);}
+button,input,select,textarea{font:inherit; color:inherit;}
+button{cursor:pointer;}
+:focus-visible{outline:3px solid var(--info); outline-offset:2px;}
+.mono{font-family:var(--f-mono); font-variant-numeric:tabular-nums;}
+.mut{color:var(--tx2);}
+.app{min-height:100%; display:flex; flex-direction:column;}
+.wrap{padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); max-width:620px; width:100%; margin:0 auto;}
+
+/* intestazione */
+.top{position:sticky; top:env(safe-area-inset-top, 0px); z-index:5; background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-bottom:1px solid var(--line);}
+.top .wrap{display:flex; align-items:center; gap:12px; padding-block:10px;}
+.brand{font:700 18px/1 var(--f-disp); letter-spacing:.14em; text-transform:uppercase;}
+.brand b{color:var(--acc);}
+.top .chi{margin-left:auto; text-align:right; font-size:13px; line-height:1.25;}
+.top .chi b{display:block; font-size:14px;}
+.rete{display:inline-flex; align-items:center; gap:6px; font:700 11.5px var(--f-mono); padding:4px 9px; border-radius:999px; border:1px solid var(--line2); white-space:nowrap;}
+.rete i{width:8px; height:8px; border-radius:50%; background:var(--ok); box-shadow:0 0 8px var(--ok);}
+.rete.off{color:var(--warn); border-color:color-mix(in srgb, var(--warn) 50%, transparent);}
+.rete.off i{background:var(--warn); box-shadow:0 0 8px var(--warn);}
+
+main{flex:1; padding-block:16px calc(var(--tab) + 24px + env(safe-area-inset-bottom, 0px));}
+main.nolog{padding-bottom:24px;}
+.stack{display:flex; flex-direction:column; gap:14px;}
+h1{font:700 26px/1.15 var(--f-disp); margin:4px 0 0; text-wrap:balance; letter-spacing:.01em;}
+h2{font:700 13px/1 var(--f-body); text-transform:uppercase; letter-spacing:.09em; color:var(--tx2); margin:8px 0 0;}
+p{margin:0;}
+
+/* superfici */
+.card{background:var(--pan); border:1px solid var(--line); border-radius:var(--r); padding:16px;}
+.row{display:flex; align-items:center; gap:12px;}
+.row > .grow{flex:1; min-width:0;}
+.pill{display:inline-flex; align-items:center; gap:6px; font:700 12px var(--f-body); padding:4px 10px; border-radius:999px; white-space:nowrap;}
+.p-ok{background:color-mix(in srgb, var(--ok) 14%, transparent); color:var(--ok);}
+.p-warn{background:color-mix(in srgb, var(--warn) 16%, transparent); color:var(--warn);}
+.p-bad{background:color-mix(in srgb, var(--bad) 16%, transparent); color:var(--bad);}
+.p-info{background:color-mix(in srgb, var(--info) 16%, transparent); color:var(--info);}
+.p-adr{background:var(--adr); color:#1b0e00; font-family:var(--f-mono); letter-spacing:.04em;}
+
+/* avviso in cima */
+.avviso{display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:14px; border:1px solid color-mix(in srgb, var(--warn) 45%, transparent); background:color-mix(in srgb, var(--warn) 9%, var(--pan));}
+.avviso.bad{border-color:color-mix(in srgb, var(--bad) 50%, transparent); background:color-mix(in srgb, var(--bad) 10%, var(--pan));}
+.avviso svg{flex:none; margin-top:2px;}
+.avviso b{display:block;}
+
+/* i 4 blocchi grandi */
+.grid4{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.blk{position:relative; display:flex; flex-direction:column; justify-content:space-between; gap:18px; min-height:150px; padding:16px; border-radius:20px; border:1px solid var(--line2); background:linear-gradient(160deg, var(--pan2), var(--pan)); text-align:left; transition:transform .08s;}
+.blk:active{transform:scale(.97);}
+.blk .ic{width:46px; height:46px; border-radius:13px; display:grid; place-items:center; background:color-mix(in srgb, var(--c, var(--info)) 18%, transparent); color:var(--c, var(--info));}
+.blk b{font:700 19px/1.15 var(--f-disp); display:block;}
+.blk small{display:block; color:var(--tx2); font-size:13px; margin-top:4px;}
+.blk .dot{position:absolute; top:14px; right:14px; min-width:22px; height:22px; padding:0 6px; border-radius:11px; background:var(--acc); color:#fff; font:700 12px/22px var(--f-mono); text-align:center;}
+.blk.big{grid-column:1 / -1; min-height:0; flex-direction:row; align-items:center;}
+.blk.big .txt{flex:1; min-width:0;}
+
+/* tasti */
+.btn{display:flex; align-items:center; justify-content:center; gap:10px; width:100%; min-height:60px; padding:14px 18px; border:none; border-radius:16px; background:var(--acc); color:var(--acc-tx); font:800 18px var(--f-body); letter-spacing:.01em; box-shadow:0 8px 24px -10px var(--acc);}
+.btn:disabled{opacity:.45; box-shadow:none;}
+.btn.sec{background:var(--pan2); color:var(--tx); border:1px solid var(--line2); box-shadow:none;}
+.btn.ok{background:var(--ok); color:#04220f; box-shadow:0 8px 24px -10px var(--ok);}
+.btn.sm{min-height:46px; font-size:15px; border-radius:12px;}
+.lnk{background:none; border:none; color:var(--info); font-weight:700; padding:6px 0; text-decoration:underline; text-underline-offset:3px;}
+a.lnk{display:inline-block;}
+.back{display:inline-flex; align-items:center; gap:6px; background:none; border:none; color:var(--tx2); font-weight:700; padding:4px 0;}
+
+/* viaggio */
+.tratta{display:grid; grid-template-columns:22px 1fr; gap:0 12px;}
+.tratta .linea{display:flex; flex-direction:column; align-items:center;}
+.tratta .linea i{width:14px; height:14px; border-radius:50%; border:3px solid var(--tx2); background:var(--bg); flex:none;}
+.tratta .linea i.fatto{border-color:var(--ok); background:var(--ok);}
+.tratta .linea i.ora{border-color:var(--acc); box-shadow:0 0 0 5px color-mix(in srgb, var(--acc) 25%, transparent);}
+.tratta .linea span{flex:1; width:3px; background:var(--line2); margin:4px 0; min-height:26px;}
+.tratta .tappa{padding-bottom:16px; min-width:0;}
+.tratta .tappa b{display:block; font-size:17px;}
+.tratta .tappa small{display:block; color:var(--tx2); font-size:13.5px;}
+dl.kv{display:grid; grid-template-columns:auto 1fr; gap:8px 14px; margin:0; font-size:15px;}
+dl.kv dt{color:var(--tx2);}
+dl.kv dd{margin:0; min-width:0; overflow-wrap:anywhere; font-weight:600;}
+.adrbox{border:1px solid color-mix(in srgb, var(--adr) 55%, transparent); background:color-mix(in srgb, var(--adr) 8%, var(--pan)); border-radius:var(--r); padding:14px 16px;}
+.adr-plate{display:inline-grid; grid-template-rows:1fr 1fr; width:74px; height:52px; border:3px solid #111; border-radius:4px; background:var(--adr); color:#111; font:700 15px/1 var(--f-mono); text-align:center; flex:none;}
+.adr-plate span{display:grid; place-items:center;}
+.adr-plate span + span{border-top:3px solid #111;}
+.check{display:flex; gap:12px; align-items:center; padding:12px 0; border-top:1px solid var(--line); font-weight:600;}
+.check:first-of-type{border-top:none;}
+.check input{width:26px; height:26px; accent-color:var(--ok); flex:none;}
+
+/* guasto */
+.scelte{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.scelta{display:flex; align-items:center; gap:10px; min-height:62px; padding:12px; border-radius:14px; border:1px solid var(--line2); background:var(--pan); font-weight:700; text-align:left;}
+.scelta svg{flex:none; color:var(--tx2);}
+.scelta.on{border-color:var(--acc); background:color-mix(in srgb, var(--acc) 16%, var(--pan));}
+.scelta.on svg{color:var(--acc);}
+.sino{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.sino button{min-height:62px; border-radius:14px; border:1px solid var(--line2); background:var(--pan); font-weight:800; font-size:17px;}
+.sino button.on.si{border-color:var(--ok); background:color-mix(in srgb, var(--ok) 15%, var(--pan)); color:var(--ok);}
+.sino button.on.no{border-color:var(--bad); background:color-mix(in srgb, var(--bad) 15%, var(--pan)); color:var(--bad);}
+.foto-row{display:flex; gap:10px; flex-wrap:wrap;}
+.foto{position:relative; width:96px; height:96px; border-radius:12px; overflow:hidden; border:1px solid var(--line2);}
+.foto img{width:100%; height:100%; object-fit:cover; display:block;}
+.foto button{position:absolute; top:4px; right:4px; width:28px; height:28px; border-radius:50%; border:none; background:rgba(0,0,0,.7); color:#fff; font-weight:800;}
+.addfoto{width:96px; height:96px; border-radius:12px; border:2px dashed var(--line2); display:grid; place-items:center; text-align:center; color:var(--tx2); font-size:13px; font-weight:700; cursor:pointer;}
+.addfoto input{position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;}
+textarea{width:100%; min-height:90px; padding:12px 14px; border-radius:14px; border:1px solid var(--line2); background:var(--pan); resize:vertical;}
+
+/* documenti */
+.doc{display:flex; align-items:center; gap:14px; padding:14px 0; border-top:1px solid var(--line);}
+.doc:first-child{border-top:none; padding-top:0;}
+.doc .grow b{display:block;}
+.doc .barra{height:6px; border-radius:3px; background:var(--line); margin-top:8px; overflow:hidden;}
+.doc .barra i{display:block; height:100%; border-radius:3px;}
+.giorni{text-align:right; font:700 22px/1 var(--f-mono);}
+.giorni small{display:block; font:600 11px var(--f-body); color:var(--tx2); margin-top:3px;}
+
+/* posizioni */
+.pos{display:flex; justify-content:space-between; gap:12px; padding:12px 0; border-top:1px solid var(--line); font-size:14.5px;}
+.pos:first-child{border-top:none;}
+
+/* accesso */
+.login{display:flex; flex-direction:column; gap:18px; padding-top:20px;}
+.login .logo{font:700 34px/1 var(--f-disp); letter-spacing:.16em; text-transform:uppercase;}
+.login .logo b{color:var(--acc);}
+.chi-sono{display:flex; flex-direction:column; gap:8px;}
+.chi-sono button{display:flex; justify-content:space-between; align-items:center; min-height:58px; padding:12px 16px; border-radius:14px; border:1px solid var(--line2); background:var(--pan); font-weight:700; font-size:17px; text-align:left;}
+.chi-sono button.on{border-color:var(--acc); background:color-mix(in srgb, var(--acc) 14%, var(--pan));}
+.pin{display:flex; gap:12px; justify-content:center;}
+.pin i{width:18px; height:18px; border-radius:50%; border:2px solid var(--tx2);}
+.pin i.on{background:var(--tx); border-color:var(--tx);}
+.tastiera{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;}
+.tastiera button{min-height:62px; border-radius:16px; border:1px solid var(--line2); background:var(--pan); font:700 24px var(--f-mono);}
+.tastiera button:active{background:var(--pan2);}
+.err{color:var(--bad); font-weight:700; text-align:center; min-height:22px;}
+
+/* barra in basso */
+.tabbar{position:fixed; left:0; right:0; bottom:0; z-index:6; background:color-mix(in srgb, var(--pan) 94%, transparent); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid var(--line2); padding-bottom:env(safe-area-inset-bottom, 0px); padding-left:env(safe-area-inset-left, 0px); padding-right:env(safe-area-inset-right, 0px);}
+.tabbar .in{display:grid; grid-template-columns:repeat(4, 1fr); max-width:620px; margin:0 auto; height:var(--tab);}
+.tabbar button{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border:none; background:none; color:var(--tx2); font-size:12px; font-weight:700; position:relative;}
+.tabbar button.on{color:var(--tx);}
+.tabbar button.on::before{content:""; position:absolute; top:0; left:28%; right:28%; height:3px; border-radius:0 0 3px 3px; background:var(--acc);}
+.tabbar button .n{position:absolute; top:9px; left:calc(50% + 8px); min-width:18px; height:18px; border-radius:9px; background:var(--acc); color:#fff; font:700 11px/18px var(--f-mono); padding:0 5px;}
+
+/* messaggi a comparsa */
+.toast{position:fixed; left:50%; bottom:calc(var(--tab) + 18px + env(safe-area-inset-bottom, 0px)); transform:translate(-50%, 20px); opacity:0; z-index:20; background:#F4F7FB; color:#0A0F18; padding:12px 18px; border-radius:14px; font-weight:700; box-shadow:0 12px 30px rgba(0,0,0,.5); transition:.2s; max-width:calc(100% - 32px); text-align:center; pointer-events:none;}
+.toast.show{opacity:1; transform:translate(-50%, 0);}
+.ok-ov{position:fixed; inset:0; z-index:30; display:none; place-items:center; background:rgba(5,9,15,.92); padding:24px; text-align:center;}
+.ok-ov.show{display:grid;}
+.ok-ov .tick{width:96px; height:96px; border-radius:50%; margin:0 auto 18px; display:grid; place-items:center; background:var(--ok); color:#04220f;}
+.ok-ov.wait .tick{background:var(--warn); color:#2a1700;}
+.ok-ov b{display:block; font:700 26px/1.2 var(--f-disp);}
+.ok-ov p{color:var(--tx2); margin-top:8px; font-size:16px;}
+.install{border:1px dashed var(--line2); border-radius:var(--r); padding:14px 16px; font-size:14.5px;}
+.coda{display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:12px; background:color-mix(in srgb, var(--warn) 12%, var(--pan)); color:var(--warn); font-weight:700; font-size:14px;}
+.sw-row{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 0; border-top:1px solid var(--line);}
+.sw-row:first-child{border-top:none; padding-top:0;}
+.sw{appearance:none; -webkit-appearance:none; width:54px; height:32px; border-radius:16px; background:var(--line2); position:relative; flex:none; transition:.15s; cursor:pointer;}
+.sw::after{content:""; position:absolute; top:3px; left:3px; width:26px; height:26px; border-radius:50%; background:#fff; transition:.15s;}
+.sw:checked{background:var(--warn);}
+.sw:checked::after{left:25px;}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;}}
+@media (max-width:360px){.grid4,.scelte{grid-template-columns:1fr;} .blk{min-height:0;}}
+</style>
+
+<div class="app">
+  <header class="top" id="top" hidden><div class="wrap">
+    <div class="brand">Pana<b>speed</b></div>
+    <span class="rete" id="rete"><i></i><span>Online</span></span>
+    <div class="chi" id="chi"></div>
+  </div></header>
+  <main id="main"><div class="wrap" id="view"></div></main>
+  <nav class="tabbar" id="tabbar" hidden aria-label="Sezioni"><div class="in">
+    <button data-go="home" aria-label="Home"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+    <button data-go="viaggio" aria-label="Viaggio"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/></svg>Viaggio</button>
+    <button data-go="guasto" aria-label="Guasto"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>Guasto</button>
+    <button data-go="documenti" aria-label="Documenti"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.6-1.4 1.7-2 3-2s2.4.6 3 2M14 10h4M14 13h3"/></svg>Documenti</button>
+  </div></nav>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="ok-ov" id="okOv" role="alertdialog" aria-modal="true"><div>
+  <div class="tick" id="okTick"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></div>
+  <b id="okT"></b><p id="okS"></p>
+  <div style="margin-top:22px;"><button class="btn sec sm" id="okClose" style="max-width:220px; margin:0 auto;">Ok</button></div>
+</div></div>
+
+<script>
+// ============================================================
+// PANASPEED AUTISTA — app web installabile per gli autisti (demo)
+// Dati di esempio salvati solo su questo telefono. Nella versione vera: login con SMS,
+// dati su Firebase condivisi con l'ufficio traffico, foto sul server, notifiche push.
+// ============================================================
+const KEY = 'panaspeed-autista-demo-v1';
+const UFFICIO = {nome: 'Ufficio traffico', tel: '+39 02 9573 7192'};
+const SEDE = {lat: 45.489125, lng: 9.4154294, luogo: 'Sede Panaspeed, Melzo'};
+const LUOGHI = [                                   // per dare un nome alla posizione senza servizi esterni
+  ['Sede Panaspeed, Melzo', 45.4891, 9.4154], ['A4, Agrate Brianza', 45.567, 9.35], ['A4, Bergamo', 45.66, 9.68], ['A4, Brescia Est', 45.53, 10.30],
+  ['A4, Desenzano', 45.45, 10.53], ['A4, Verona Sud', 45.40, 10.97], ['Interporto Quadrante Europa, Verona', 45.405, 10.93], ['Rho', 45.53, 9.04],
+  ['A1, Lodi', 45.30, 9.50], ['A1, Piacenza', 45.05, 9.69], ['Parma', 44.80, 10.33], ['Milano, tangenziale Est', 45.50, 9.27]
+];
+const GUASTI = [
+  ['freni', 'Freni', '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M4 7.5A9 9 0 0 1 7.5 4"/>'],
+  ['gomme', 'Pneumatici', '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v5M12 16v5M3 12h5M16 12h5"/>'],
+  ['motore', 'Motore, spia accesa', '<path d="M4 9h3l2-2h5l2 2h2v3h2v4h-2v2H9l-2-2H4z"/>'],
+  ['luci', 'Luci, impianto elettrico', '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>'],
+  ['sponda', 'Sponda o gru', '<path d="M4 20h16M6 20V10l6-6 6 6v10M9 14h6"/>'],
+  ['frigo', 'Gruppo frigo', '<path d="M12 2v20M4.9 6l14.2 12M19.1 6L4.9 18"/>'],
+  ['urto', 'Incidente o urto', '<path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/>'],
+  ['altro', 'Altro', '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>']
+];
+const ICON = {
+  viaggio: '<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/>',
+  guasto: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+  pos: '<path d="M12 22s7-6.4 7-12a7 7 0 0 0-14 0c0 5.6 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/>',
+  doc: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.6-1.4 1.7-2 3-2s2.4.6 3 2M14 10h4M14 13h3"/>',
+  avviso: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+  tel: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>',
+  nav: '<path d="M3 11l18-8-8 18-2-8z"/>',
+  foto: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+  esci: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'
+};
+const svg = (p, s = 24) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const $ = s => document.querySelector(s);
+const esc = x => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const iso = d => new Date(Date.now() + d * 864e5).toISOString().slice(0, 10);
+const giorni = s => Math.round((new Date(s + 'T12:00:00') - new Date(new Date().toISOString().slice(0, 10) + 'T12:00:00')) / 864e5);
+const data = s => new Date(s + 'T12:00:00').toLocaleDateString('it-IT', {weekday: 'short', day: 'numeric', month: 'short'});
+const ora = t => new Date(t).toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'});
+const fa = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'adesso' : m < 60 ? m + ' min fa' : Math.round(m / 60) + ' h fa'; };
+
+// ---------------- dati di esempio ----------------
+function seme() {
+  const autisti = [
+    {id: 'a1', nome: 'Marco B.', pin: '1234', patCat: 'CE', patente: iso(820), cqc: iso(20), carta: iso(410), adr: iso(600), visita: iso(140)},
+    {id: 'a2', nome: 'Luca T.', pin: '1234', patCat: 'CE', patente: iso(1500), cqc: iso(300), carta: iso(5), adr: '', visita: iso(60)},
+    {id: 'a3', nome: 'Giovanni P.', pin: '1234', patCat: 'CE', patente: iso(950), cqc: iso(610), carta: iso(700), adr: iso(380), visita: iso(-4)},
+    {id: 'a4', nome: 'Paolo M.', pin: '1234', patCat: 'C', patente: iso(400), cqc: iso(180), carta: iso(260), adr: iso(90), visita: iso(300)}
+  ];
+  const v = (id, aut, giorno, x) => Object.assign({id, autista: aut, giorno, stato: 'da_partire', passi: {}}, x);
+  const viaggi = [
+    v('v1', 'a1', iso(0), {committente: 'Chimica Adda (esempio)', mezzo: 'DEMO-T02', trainato: 'DEMO-S04', tipo: 'Semirimorchio cisterna', adr: {un: '1202', classe: '3', merce: 'Gasolio', kemler: '30'}, peso: '24.500 kg',
+      carico: {luogo: 'Rho (MI), deposito del cliente', ora: '07:30'}, scarico: {luogo: 'Interporto Quadrante Europa, Verona', ora: 'entro le 13:30', nota: 'Ingresso cancello 3, chiedere del ricevimento merci'}, ddt: 'DDT 2026/1184'}),
+    v('v2', 'a1', iso(1), {committente: 'Ecologia Lombarda (esempio)', mezzo: 'DEMO-T02', trainato: 'DEMO-S11', tipo: 'Semirimorchio centinato', adr: null, peso: '18.000 kg',
+      carico: {luogo: 'Sede Panaspeed, Melzo', ora: '06:00'}, scarico: {luogo: 'Parma, zona industriale', ora: 'entro le 10:00'}, ddt: 'DDT 2026/1191'}),
+    v('v3', 'a2', iso(0), {committente: 'Edil Casseforme (esempio)', mezzo: 'DEMO-T07', trainato: 'DEMO-S14', tipo: 'Semirimorchio pianale', adr: null, peso: '21.300 kg',
+      carico: {luogo: 'Sede Panaspeed, Melzo', ora: '08:00'}, scarico: {luogo: 'A1, Piacenza, cantiere', ora: 'entro le 11:00'}, ddt: 'DDT 2026/1187'}),
+    v('v4', 'a3', iso(0), {committente: 'Logistica Brianza (esempio)', mezzo: 'DEMO-T12', trainato: 'DEMO-S28', tipo: 'Semirimorchio frigo', adr: null, peso: '16.800 kg',
+      carico: {luogo: 'Milano, mercato ortofrutticolo', ora: '05:00'}, scarico: {luogo: 'A4, Bergamo, piattaforma GDO', ora: 'entro le 08:00'}, ddt: 'DDT 2026/1179'}),
+    v('v5', 'a4', iso(0), {committente: 'Ferramenta Nord (esempio)', mezzo: 'DEMO-M05', trainato: '', tipo: 'Motrice con sponda', adr: null, peso: '7.200 kg',
+      carico: {luogo: 'Sede Panaspeed, Melzo', ora: '09:00'}, scarico: {luogo: 'Milano, tangenziale Est, cantiere', ora: 'entro le 12:00'}, ddt: 'DDT 2026/1190'})
+  ];
+  const messaggi = [{id: 'm1', autista: 'a1', t: Date.now() - 50 * 60000, testo: 'Al rientro lascia il semirimorchio S04 allo stallo 3 del piazzale principale.'}];
+  return {v: 1, autisti, viaggi, messaggi, utente: '', inviati: [], coda: [], posizioni: [], simOffline: false};
+}
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+if (!S || S.v !== 1) S = seme();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Memoria del telefono piena: elimina qualche foto'); } }
+const io = () => S.autisti.find(a => a.id === S.utente);
+const viaggiMiei = () => S.viaggi.filter(v => v.autista === S.utente).sort((a, b) => a.giorno < b.giorno ? -1 : 1);
+const viaggioOggi = () => viaggiMiei().find(v => v.giorno === iso(0) && v.stato !== 'chiuso') || null;
+
+// ---------------- rete e invii ----------------
+const online = () => navigator.onLine && !S.simOffline;
+function aggiornaRete() {
+  const r = $('#rete'); if (!r) return;
+  r.classList.toggle('off', !online());
+  r.querySelector('span').textContent = online() ? 'Online' : 'Senza rete';
+}
+// ogni cosa che l'autista manda passa da qui: se non c'è campo resta in coda e parte da sola dopo
+function invia(tipo, dati, descr) {
+  const item = {id: 'x' + Date.now().toString(36), tipo, dati, descr, t: Date.now(), autista: S.utente};
+  if (online()) { item.inviato = Date.now(); S.inviati.unshift(item); }
+  else S.coda.push(item);
+  save(); return !!item.inviato;
+}
+function svuotaCoda() {
+  if (!online() || !S.coda.length) return;
+  const n = S.coda.length;
+  S.coda.forEach(i => { i.inviato = Date.now(); S.inviati.unshift(i); }); S.coda = [];
+  save(); toast(n === 1 ? 'Tornata la rete: inviato 1 messaggio in attesa' : 'Tornata la rete: inviati ' + n + ' messaggi in attesa'); render();
+}
+window.addEventListener('online', () => { aggiornaRete(); svuotaCoda(); });
+window.addEventListener('offline', aggiornaRete);
+
+// ---------------- posizione ----------------
+function luogoVicino(lat, lng) {
+  let best = null, d0 = 1e9;
+  LUOGHI.forEach(([n, a, b]) => { const d = Math.hypot(a - lat, (b - lng) * Math.cos(lat * Math.PI / 180)); if (d < d0) { d0 = d; best = n; } });
+  return d0 < 0.12 ? best : 'Vicino a ' + best;
+}
+function prendiPosizione() {
+  return new Promise(res => {
+    let fatto = false;
+    const finta = () => {                                   // qui il GPS non c'è: posizione d'esempio lungo il viaggio di oggi
+      if (fatto) return; fatto = true;
+      const v = viaggioOggi(), passi = v ? Object.keys(v.passi).length : 0;
+      const p = [LUOGHI[0], LUOGHI[1], LUOGHI[3], LUOGHI[4], LUOGHI[6]][Math.min(4, passi + 1)] || LUOGHI[0];
+      res({lat: p[1] + (Math.random() - .5) * .01, lng: p[2] + (Math.random() - .5) * .01, luogo: p[0], fonte: 'esempio'});
+    };
+    if (!navigator.geolocation) return finta();
+    const t = setTimeout(finta, 7000);
+    try {
+      navigator.geolocation.getCurrentPosition(
+        p => { if (fatto) return; fatto = true; clearTimeout(t); const lat = +p.coords.latitude.toFixed(5), lng = +p.coords.longitude.toFixed(5); res({lat, lng, luogo: luogoVicino(lat, lng), fonte: 'gps', prec: Math.round(p.coords.accuracy)}); },
+        () => { clearTimeout(t); finta(); }, {enableHighAccuracy: true, timeout: 6500, maximumAge: 30000});
+    } catch (e) { clearTimeout(t); finta(); }
+  });
+}
+
+// ---------------- foto ----------------
+function riduci(file) {
+  return new Promise(res => {
+    const r = new FileReader();
+    r.onload = () => { const img = new Image(); img.onload = () => {
+      const w = Math.min(900, img.width), h = Math.round(img.height * w / img.width);
+      const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h);
+      res(c.toDataURL('image/jpeg', .68)); }; img.onerror = () => res(''); img.src = r.result; };
+    r.onerror = () => res(''); r.readAsDataURL(file);
+  });
+}
+
+// ---------------- interfaccia ----------------
+let vista = 'home', bozza = null, pinBuf = '', scelto = '';
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(window.__t); window.__t = setTimeout(() => t.classList.remove('show'), 2800); }
+function conferma(titolo, sotto, attesa) {
+  const o = $('#okOv'); o.classList.toggle('wait', !!attesa);
+  $('#okTick').innerHTML = attesa ? svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', 52) : svg('<path d="M5 12l5 5L20 7"/>', 52);
+  $('#okT').textContent = titolo; $('#okS').textContent = sotto || ''; o.classList.add('show'); $('#okClose').focus();
+}
+$('#okClose').addEventListener('click', () => $('#okOv').classList.remove('show'));
+
+function scadenzeMie(a) {
+  return [['Patente ' + a.patCat, a.patente], ['CQC merci', a.cqc], ['Carta tachigrafica', a.carta], ['ADR', a.adr], ['Visita medica', a.visita]]
+    .filter(x => x[1]).map(([n, d]) => ({n, d, g: giorni(d)}));
+}
+function avvisiMiei() {
+  const a = io(); if (!a) return [];
+  return scadenzeMie(a).filter(x => x.g <= 30).sort((x, y) => x.g - y.g);
+}
+function statoViaggio(v) {
+  return v.stato === 'chiuso' ? ['Consegnato', 'p-ok'] : v.stato === 'viaggio' ? ['In viaggio', 'p-info'] : v.stato === 'arrivato' ? ['Allo scarico', 'p-warn'] : ['Da partire', 'p-warn'];
+}
+
+const VISTE = {
+  login() {
+    const lista = S.autisti.map(a => `<button data-act="scegli" data-id="${a.id}" class="${scelto === a.id ? 'on' : ''}"><span>${esc(a.nome)}</span><span class="mut" style="font-size:13px;">Patente ${esc(a.patCat)}${a.adr ? ', ADR' : ''}</span></button>`).join('');
+    return `<div class="login">
+      <div><div class="logo">Pana<b>speed</b></div><p class="mut" style="margin-top:6px;">App autisti</p></div>
+      ${scelto ? `
+        <div><h1>Ciao ${esc(S.autisti.find(a => a.id === scelto).nome.split(' ')[0])}</h1><p class="mut" style="margin-top:4px;">Inserisci il tuo PIN</p></div>
+        <div class="pin" aria-label="PIN, ${pinBuf.length} cifre su 4">${[0, 1, 2, 3].map(i => `<i class="${i < pinBuf.length ? 'on' : ''}"></i>`).join('')}</div>
+        <div class="err" id="pinErr"></div>
+        <div class="tastiera">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button data-act="pin" data-n="${n}">${n}</button>`).join('')}<button data-act="pinCanc" aria-label="Cambia autista" style="font-size:14px; font-family:var(--f-body);">Indietro</button><button data-act="pin" data-n="0">0</button><button data-act="pinDel" aria-label="Cancella cifra">⌫</button></div>
+        <p class="mut" style="text-align:center; font-size:13.5px;">Demo: il PIN è <b class="mono">1234</b>. Nella versione vera si entra col numero di telefono e un codice via SMS.</p>`
+      : `<div><h1>Chi sei?</h1><p class="mut" style="margin-top:4px;">Scegli il tuo nome. Lo chiede solo la prima volta.</p></div><div class="chi-sono">${lista}</div>`}
+    </div>`;
+  },
+
+  home() {
+    const a = io(), v = viaggioOggi(), av = avvisiMiei(), msg = S.messaggi.filter(m => m.autista === a.id);
+    const st = v ? statoViaggio(v) : null;
+    const prossimo = viaggiMiei().find(x => x.giorno > iso(0));
+    return `<div class="stack">
+      <div><p class="mut">${new Date().toLocaleDateString('it-IT', {weekday: 'long', day: 'numeric', month: 'long'})}</p><h1>Buongiorno ${esc(a.nome.split(' ')[0])}</h1></div>
+      ${S.coda.length ? `<div class="coda">${svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', 20)} ${S.coda.length === 1 ? '1 invio in attesa di rete' : S.coda.length + ' invii in attesa di rete'}: partono da soli quando torna il campo</div>` : ''}
+      ${av.map(x => `<div class="avviso${x.g < 0 ? ' bad' : ''}">${svg(ICON.avviso, 22)}<div><b>${esc(x.n)} ${x.g < 0 ? 'scaduta da ' + (-x.g) + ' giorni' : x.g === 0 ? 'scade oggi' : 'scade tra ' + x.g + ' giorni'}</b><span class="mut" style="font-size:14px;">${x.g < 0 ? 'Non puoi essere assegnato a nuovi viaggi finché non è rinnovata.' : 'Avvisa l\'ufficio quando l\'hai rinnovata.'}</span></div></div>`).join('')}
+      <div class="grid4">
+        <button class="blk big" data-go="viaggio" style="--c:var(--info);">
+          <span class="ic">${svg(ICON.viaggio, 26)}</span>
+          <span class="txt">${v ? `<b>${esc(v.scarico.luogo)}</b><small>${esc(v.mezzo)}${v.trainato ? ' + ' + esc(v.trainato) : ''} · ${esc(v.scarico.ora)}</small>` : `<b>Nessun viaggio oggi</b><small>${prossimo ? 'Prossimo: ' + data(prossimo.giorno) + ', ' + esc(prossimo.scarico.luogo) : 'L\'ufficio ti avviserà'}</small>`}</span>
+          ${st ? `<span class="pill ${st[1]}">${st[0]}</span>` : ''}
+        </button>
+        <button class="blk" data-go="guasto" style="--c:var(--bad);"><span class="ic">${svg(ICON.guasto, 26)}</span><span><b>Segnala guasto</b><small>Foto e posizione</small></span></button>
+        <button class="blk" data-go="posizione" style="--c:var(--ok);"><span class="ic">${svg(ICON.pos, 26)}</span><span><b>Invia posizione</b><small>${S.posizioni.length ? 'Ultima: ' + fa(S.posizioni[0].t) : 'Un tocco'}</small></span></button>
+        <button class="blk" data-go="documenti" style="--c:var(--warn);">${av.length ? `<span class="dot">${av.length}</span>` : ''}<span class="ic">${svg(ICON.doc, 26)}</span><span><b>I miei documenti</b><small>Patente, CQC, ADR</small></span></button>
+        <button class="blk" data-go="profilo" style="--c:var(--tx2);"><span class="ic">${svg('<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>', 26)}</span><span><b>Profilo</b><small>Ufficio e impostazioni</small></span></button>
+      </div>
+      ${msg.length ? `<h2>Dall'ufficio</h2>${msg.map(m => `<div class="card"><p>${esc(m.testo)}</p><p class="mut" style="font-size:13px; margin-top:6px;">${esc(UFFICIO.nome)}, ore ${ora(m.t)}</p></div>`).join('')}` : ''}
+      ${bannerInstalla()}
+    </div>`;
+  },
+
+  viaggio() {
+    const v = viaggioOggi();
+    const altri = viaggiMiei().filter(x => x !== v && x.stato !== 'chiuso');
+    if (!v) return `<div class="stack"><h1>Il mio viaggio</h1><div class="card"><b>Oggi non hai viaggi assegnati.</b><p class="mut" style="margin-top:6px;">Quando l'ufficio ti assegna un viaggio lo trovi qui e ti arriva una notifica.</p></div>${altri.length ? '<h2>Prossimi</h2>' + altri.map(cardBreve).join('') : ''}</div>`;
+    const p = v.passi, st = statoViaggio(v);
+    const passo = !p.partito ? ['partito', 'Sono partito', ''] : !p.arrivato ? ['arrivato', 'Sono arrivato allo scarico', ''] : !p.consegnato ? ['consegnato', 'Consegna fatta', 'ok'] : null;
+    const navUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(v.scarico.luogo.replace(/\(.*?\)/g, ''));
+    return `<div class="stack">
+      <div class="row"><div class="grow"><p class="mut">${esc(data(v.giorno))} · ${esc(v.ddt)}</p><h1>${esc(v.committente)}</h1></div><span class="pill ${st[1]}">${st[0]}</span></div>
+      ${v.adr ? `<div class="adrbox"><div class="row"><span class="adr-plate" aria-label="Pannello arancio ${esc(v.adr.kemler)} su ${esc(v.adr.un)}"><span>${esc(v.adr.kemler)}</span><span>${esc(v.adr.un)}</span></span><div class="grow"><b style="display:block; font-size:17px;">Trasporto ADR</b><span class="mut" style="font-size:14px;">${esc(v.adr.merce)}, UN ${esc(v.adr.un)}, classe ${esc(v.adr.classe)}</span></div></div></div>` : ''}
+      <div class="card"><div class="tratta">
+        <div class="linea"><i class="${p.partito ? 'fatto' : 'ora'}"></i><span></span></div>
+        <div class="tappa"><small>Carico, ${esc(v.carico.ora)}</small><b>${esc(v.carico.luogo)}</b>${p.partito ? `<small>Partito alle ${ora(p.partito)}</small>` : ''}</div>
+        <div class="linea"><i class="${p.consegnato ? 'fatto' : p.partito ? 'ora' : ''}"></i></div>
+        <div class="tappa" style="padding-bottom:0;"><small>Scarico, ${esc(v.scarico.ora)}</small><b>${esc(v.scarico.luogo)}</b>${v.scarico.nota ? `<small>${esc(v.scarico.nota)}</small>` : ''}${p.arrivato ? `<small>Arrivato alle ${ora(p.arrivato)}</small>` : ''}${p.consegnato ? `<small>Consegnato alle ${ora(p.consegnato)}</small>` : ''}</div>
+      </div></div>
+      <a class="btn sec sm" href="${navUrl}" target="_blank" rel="noopener">${svg(ICON.nav, 20)} Apri il navigatore</a>
+      ${v.adr && !p.partito ? `<div class="card"><h2 style="margin:0 0 6px;">Prima di partire, controlla</h2>
+        ${[['pann', 'Pannelli arancio esposti e puliti'], ['istr', 'Istruzioni scritte ADR in cabina'], ['kit', 'Kit ADR completo (estintori, ceppi, torcia, occhiali, guanti)'], ['doc', 'Documento di trasporto con numero UN']].map(([k, t]) => `<label class="check"><input type="checkbox" data-chk="${k}" ${v.chk && v.chk[k] ? 'checked' : ''}> ${t}</label>`).join('')}</div>` : ''}
+      ${passo ? (passo[0] === 'consegnato' ? `
+        <div class="card stack" style="gap:12px;"><b>Foto del documento firmato</b><p class="mut" style="font-size:14px;">Fotografa il DDT con la firma del destinatario: l'ufficio lo riceve subito.</p>
+          <div class="foto-row">${(bozza && bozza.pod ? [bozza.pod] : []).map(f => `<div class="foto"><img src="${f}" alt="DDT firmato"><button data-act="togliPod" aria-label="Togli foto">×</button></div>`).join('')}
+          ${bozza && bozza.pod ? '' : `<label class="addfoto">${svg(ICON.foto, 26)}<span>Fotografa</span><input type="file" accept="image/*" capture="environment" data-file="pod"></label>`}</div></div>` : '')
+        + `<button class="btn ${passo[2]}" data-act="passo" data-p="${passo[0]}" ${v.adr && passo[0] === 'partito' && !(v.chk && ['pann', 'istr', 'kit', 'doc'].every(k => v.chk[k])) ? 'disabled' : ''}>${passo[1]}</button>
+        ${v.adr && passo[0] === 'partito' && !(v.chk && ['pann', 'istr', 'kit', 'doc'].every(k => v.chk[k])) ? '<p class="mut" style="text-align:center; font-size:13.5px; margin-top:-6px;">Spunta i 4 controlli ADR per partire</p>' : ''}`
+      : `<div class="card"><b>Viaggio completato.</b><p class="mut" style="margin-top:6px;">Rientra in sede: ti diciamo noi in che stallo lasciare il mezzo.</p></div>`}
+      <div class="card"><dl class="kv">
+        <dt>Mezzo</dt><dd class="mono">${esc(v.mezzo)}${v.trainato ? ' + ' + esc(v.trainato) : ''}</dd>
+        <dt>Tipo</dt><dd>${esc(v.tipo)}</dd><dt>Peso</dt><dd class="mono">${esc(v.peso)}</dd>
+        <dt>Ufficio</dt><dd><span class="mono" style="user-select:all;">${esc(UFFICIO.tel)}</span><br><a class="lnk" href="tel:${UFFICIO.tel.replace(/\s/g, '')}">Chiama</a></dd>
+      </dl></div>
+      ${altri.length ? '<h2>Prossimi viaggi</h2>' + altri.map(cardBreve).join('') : ''}
+    </div>`;
+  },
+
+  guasto() {
+    const b = bozza && bozza.tipo === 'guasto' ? bozza : (bozza = {tipo: 'guasto', cat: '', prosegue: null, foto: [], nota: ''});
+    const v = viaggioOggi();
+    const pronto = b.cat && b.prosegue !== null;
+    return `<div class="stack">
+      <div><h1>Segnala un guasto</h1><p class="mut" style="margin-top:4px;">${v ? 'Mezzo ' + esc(v.mezzo) + (v.trainato ? ' + ' + esc(v.trainato) : '') : 'Mezzo che stai usando'}. La posizione la prendiamo noi.</p></div>
+      <h2>1. Cosa non va</h2>
+      <div class="scelte">${GUASTI.map(([k, t, p]) => `<button class="scelta${b.cat === k ? ' on' : ''}" data-act="cat" data-k="${k}" aria-pressed="${b.cat === k}">${svg(p, 26)}<span>${t}</span></button>`).join('')}</div>
+      <h2>2. Il mezzo può proseguire?</h2>
+      <div class="sino"><button class="si${b.prosegue === true ? ' on' : ''}" data-act="prosegue" data-v="1">Sì, piano</button><button class="no${b.prosegue === false ? ' on' : ''}" data-act="prosegue" data-v="0">No, sono fermo</button></div>
+      <h2>3. Foto <span style="text-transform:none; letter-spacing:0; font-weight:600;">(facoltative, fino a 3)</span></h2>
+      <div class="foto-row">${b.foto.map((f, i) => `<div class="foto"><img src="${f}" alt="Foto ${i + 1} del guasto"><button data-act="togliFoto" data-i="${i}" aria-label="Togli foto ${i + 1}">×</button></div>`).join('')}
+        ${b.foto.length < 3 ? `<label class="addfoto">${svg(ICON.foto, 26)}<span>Aggiungi</span><input type="file" accept="image/*" capture="environment" data-file="guasto"></label>` : ''}</div>
+      <h2>4. Note</h2>
+      <textarea id="nota" placeholder="Es. spia rossa freni accesa, pedale lungo" aria-label="Note sul guasto">${esc(b.nota)}</textarea>
+      <button class="btn" data-act="inviaGuasto" ${pronto ? '' : 'disabled'}>Invia all'ufficio</button>
+      ${pronto ? '' : '<p class="mut" style="text-align:center; font-size:13.5px; margin-top:-6px;">Scegli cosa non va e se il mezzo può proseguire</p>'}
+      ${b.prosegue === false ? `<div class="avviso bad">${svg(ICON.avviso, 22)}<div><b>Se sei in carreggiata</b><span class="mut" style="font-size:14px;">Gilet, triangolo e quattro frecce prima di tutto. Se c'è pericolo per le persone chiama il 112.</span></div></div>` : ''}
+    </div>`;
+  },
+
+  posizione() {
+    const l = S.posizioni.slice(0, 8);
+    return `<div class="stack">
+      <button class="back" data-go="home">‹ Home</button>
+      <h1>Invia la posizione</h1>
+      <p class="mut">L'ufficio la vede sulla mappa. Usala quando sei fermo a lungo o se te la chiedono.</p>
+      <button class="btn ok" data-act="inviaPos">${svg(ICON.pos, 22)} Invia la mia posizione</button>
+      <div class="card">${l.length ? l.map(p => `<div class="pos"><span><b>${esc(p.luogo)}</b><br><span class="mut mono" style="font-size:12.5px;">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}${p.fonte === 'esempio' ? ' · esempio' : p.prec ? ' · ±' + p.prec + ' m' : ''}</span></span><span class="mut" style="text-align:right;">${ora(p.t)}<br><span style="font-size:12.5px;">${p.inviato ? 'Inviata' : 'In attesa'}</span></span></div>`).join('') : '<p class="mut">Nessuna posizione inviata oggi.</p>'}</div>
+      <p class="mut" style="font-size:13.5px;">Il telefono non manda la posizione da solo mentre guidi: per quello usiamo il GPS già montato sul camion.</p>
+    </div>`;
+  },
+
+  documenti() {
+    const a = io(), l = scadenzeMie(a);
+    return `<div class="stack">
+      <h1>I miei documenti</h1>
+      <p class="mut">Ti avvisiamo 30 e 7 giorni prima di ogni scadenza.</p>
+      <div class="card">${l.map(x => { const col = x.g < 0 ? 'var(--bad)' : x.g <= 7 ? 'var(--bad)' : x.g <= 30 ? 'var(--warn)' : 'var(--ok)'; const pct = Math.max(4, Math.min(100, x.g / 365 * 100));
+        return `<div class="doc"><div class="grow"><b>${esc(x.n)}</b><span class="mut" style="font-size:13.5px;">${x.g < 0 ? 'Scaduta il ' : 'Scade il '}${new Date(x.d + 'T12:00:00').toLocaleDateString('it-IT')}</span><div class="barra"><i style="width:${x.g < 0 ? 100 : pct}%; background:${col};"></i></div></div><div class="giorni" style="color:${col};">${x.g < 0 ? 'Scaduta' : x.g}<small>${x.g < 0 ? 'da ' + (-x.g) + ' gg' : 'giorni'}</small></div></div>`; }).join('')}</div>
+      <p class="mut" style="font-size:13.5px;">Hai rinnovato un documento? Porta la copia in ufficio: aggiornano loro la data e sparisce l'avviso.</p>
+    </div>`;
+  },
+
+  profilo() {
+    const a = io(), inv = S.inviati.filter(i => i.autista === a.id).slice(0, 6);
+    return `<div class="stack">
+      <button class="back" data-go="home">‹ Home</button>
+      <h1>${esc(a.nome)}</h1>
+      <div class="card"><dl class="kv"><dt>${esc(UFFICIO.nome)}</dt><dd><span class="mono" style="user-select:all;">${esc(UFFICIO.tel)}</span><br><a class="lnk" href="tel:${UFFICIO.tel.replace(/\s/g, '')}">Chiama</a></dd></dl></div>
+      <div class="card">
+        <div class="sw-row"><div><b>Prova senza campo</b><p class="mut" style="font-size:13.5px;">Per la demo: fa finta che manchi la rete. Gli invii restano in coda e partono quando lo spegni.</p></div><input type="checkbox" class="sw" id="simOff" data-act="simOff" ${S.simOffline ? 'checked' : ''} aria-label="Prova senza campo"></div>
+      </div>
+      ${inv.length ? `<h2>Ultimi invii</h2><div class="card">${inv.map(i => `<div class="pos"><span>${esc(i.descr)}</span><span class="mut">${ora(i.inviato)}</span></div>`).join('')}</div>` : ''}
+      ${bannerInstalla(true)}
+      <button class="btn sec sm" data-act="esci">${svg(ICON.esci, 20)} Cambia autista</button>
+      <button class="lnk" data-act="reset" style="align-self:center;">Riparti con i dati di esempio</button>
+    </div>`;
+  }
+};
+function cardBreve(v) {
+  return `<div class="card row"><div class="grow"><b style="display:block;">${esc(v.scarico.luogo)}</b><span class="mut" style="font-size:14px;">${esc(data(v.giorno))}, carico ${esc(v.carico.ora)} · ${esc(v.mezzo)}${v.trainato ? ' + ' + esc(v.trainato) : ''}</span></div>${v.adr ? '<span class="pill p-adr">ADR</span>' : ''}</div>`;
+}
+
+// ---------------- installazione sul telefono ----------------
+let promptInstall = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); promptInstall = e; if (vista === 'home' || vista === 'profilo') render(); });
+const installata = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const inCornice = () => { try { return window.self !== window.top; } catch (e) { return true; } };
+function bannerInstalla(sempre) {
+  if (installata()) return sempre ? '<p class="mut" style="font-size:13.5px;">App installata su questo telefono.</p>' : '';
+  if (inCornice()) return sempre ? `<div class="install"><b>Anteprima</b><p class="mut" style="margin-top:4px;">Qui la vedi come anteprima. Per installarla sul telefono, con icona e funzionamento senza campo, apri la versione pubblicata sul sito dell'app.</p></div>` : '';
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (promptInstall) return `<div class="install row"><div class="grow"><b>Installa l'app</b><p class="mut" style="font-size:13.5px;">Icona sul telefono, si apre a tutto schermo.</p></div><button class="btn sm" data-act="installa" style="width:auto;">Installa</button></div>`;
+  if (ios) return `<div class="install"><b>Mettila sulla schermata Home</b><p class="mut" style="margin-top:4px;">In Safari tocca il tasto Condividi, poi <b>Aggiungi alla schermata Home</b>.</p></div>`;
+  return sempre ? `<div class="install"><b>Installa l'app</b><p class="mut" style="margin-top:4px;">Dal menu del browser scegli <b>Installa app</b> o <b>Aggiungi a schermata Home</b>.</p></div>` : '';
+}
+
+// ---------------- disegno ----------------
+function render() {
+  const log = !!io();
+  if (!log && vista !== 'login') vista = 'login';
+  $('#top').hidden = !log; $('#tabbar').hidden = !log;
+  $('#main').classList.toggle('nolog', !log);
+  if (log) { const a = io(); $('#chi').innerHTML = `<b>${esc(a.nome)}</b><span class="mut">${viaggioOggi() ? esc(viaggioOggi().mezzo) : 'Nessun mezzo oggi'}</span>`; }
+  $('#view').innerHTML = VISTE[vista]();
+  document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('on', b.dataset.go === vista || (vista === 'posizione' || vista === 'profilo') && b.dataset.go === 'home'));
+  aggiornaRete();
+}
+function vai(v) { if (v !== 'guasto' && bozza && bozza.tipo === 'guasto' && !bozza.cat && !bozza.foto.length) bozza = null; vista = v; render(); window.scrollTo(0, 0); }
+
+const AZ = {
+  scegli: el => { scelto = el.dataset.id; pinBuf = ''; render(); },
+  pinCanc: () => { scelto = ''; pinBuf = ''; render(); },
+  pinDel: () => { pinBuf = pinBuf.slice(0, -1); render(); },
+  pin: el => {
+    if (pinBuf.length >= 4) return; pinBuf += el.dataset.n; render();
+    if (pinBuf.length === 4) setTimeout(() => {
+      const a = S.autisti.find(x => x.id === scelto);
+      if (a && a.pin === pinBuf) { S.utente = a.id; scelto = ''; pinBuf = ''; save(); vai('home'); }
+      else { pinBuf = ''; render(); $('#pinErr').textContent = 'PIN sbagliato, riprova'; if (navigator.vibrate) navigator.vibrate(120); }
+    }, 150);
+  },
+  passo: async el => {
+    const v = viaggioOggi(); if (!v) return;
+    const k = el.dataset.p;
+    if (k === 'consegnato' && !(bozza && bozza.pod)) { toast('Fotografa prima il documento firmato'); return; }
+    el.disabled = true;
+    const pos = await prendiPosizione();
+    v.passi[k] = Date.now();
+    v.stato = k === 'partito' ? 'viaggio' : k === 'arrivato' ? 'arrivato' : 'chiuso';
+    if (k === 'consegnato') { v.pod = bozza.pod; bozza = null; }
+    const testi = {partito: 'Partenza da ' + v.carico.luogo, arrivato: 'Arrivo a ' + v.scarico.luogo, consegnato: 'Consegna fatta, DDT firmato'};
+    const ok = invia('passo', {viaggio: v.id, passo: k, pos}, testi[k]);
+    S.posizioni.unshift(Object.assign({t: Date.now(), inviato: ok}, pos));
+    save(); render();
+    if (k === 'consegnato') conferma(ok ? 'Consegna registrata' : 'Consegna salvata', ok ? 'L\'ufficio ha ricevuto la foto del DDT firmato.' : 'Partirà appena torna il campo.', !ok);
+    else toast(ok ? (k === 'partito' ? 'Buon viaggio! L\'ufficio sa che sei partito' : 'Arrivo segnalato all\'ufficio') : 'Salvato: partirà appena torna il campo');
+  },
+  cat: el => { bozza.cat = el.dataset.k; render(); },
+  prosegue: el => { bozza.prosegue = el.dataset.v === '1'; bozza.nota = ($('#nota') || {}).value || bozza.nota; render(); },
+  togliFoto: el => { bozza.foto.splice(Number(el.dataset.i), 1); render(); },
+  togliPod: () => { if (bozza) bozza.pod = ''; render(); },
+  inviaGuasto: async el => {
+    const b = bozza; b.nota = ($('#nota') || {}).value || '';
+    el.disabled = true; el.textContent = 'Prendo la posizione…';
+    const pos = await prendiPosizione(), v = viaggioOggi();
+    const cat = GUASTI.find(g => g[0] === b.cat)[1];
+    const ok = invia('guasto', {cat, prosegue: b.prosegue, foto: b.foto, nota: b.nota, mezzo: v ? v.mezzo : '', pos}, 'Guasto: ' + cat);
+    S.posizioni.unshift(Object.assign({t: Date.now(), inviato: ok}, pos));
+    bozza = null; save(); vai('home');
+    conferma(ok ? 'Guasto inviato' : 'Guasto salvato', ok ? (b.prosegue ? 'L\'ufficio ti dirà se proseguire o dove fermarti.' : 'Resta in sicurezza: l\'ufficio ti chiama e ti dice quale officina arriva.') : 'Non c\'è campo: partirà da solo appena torna la rete. Se è urgente chiama ' + UFFICIO.tel + '.', !ok);
+  },
+  inviaPos: async el => {
+    el.disabled = true; el.textContent = 'Cerco la posizione…';
+    const pos = await prendiPosizione();
+    const ok = invia('posizione', pos, 'Posizione: ' + pos.luogo);
+    S.posizioni.unshift(Object.assign({t: Date.now(), inviato: ok}, pos)); save(); render();
+    toast(ok ? 'Posizione inviata: ' + pos.luogo : 'Salvata: partirà appena torna il campo');
+  },
+  simOff: el => { S.simOffline = el.checked; save(); aggiornaRete(); if (!S.simOffline) svuotaCoda(); else toast('Senza campo: gli invii restano in coda'); },
+  installa: async () => { if (!promptInstall) return; promptInstall.prompt(); try { await promptInstall.userChoice; } catch (e) {} promptInstall = null; render(); },
+  esci: () => { S.utente = ''; save(); vista = 'login'; render(); },
+  reset: el => {
+    if (el.dataset.sure !== '1') { el.dataset.sure = '1'; el.textContent = 'Tocca di nuovo per confermare'; setTimeout(() => { el.dataset.sure = ''; el.textContent = 'Riparti con i dati di esempio'; }, 4000); return; }
+    const u = S.utente; S = seme(); S.utente = u; save(); vai('home'); toast('Dati di esempio ripristinati');
+  }
+};
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-go]'); if (g) { vai(g.dataset.go); return; }
+  const a = e.target.closest('[data-act]'); if (a && AZ[a.dataset.act] && a.tagName !== 'INPUT') AZ[a.dataset.act](a, e);
+});
+document.addEventListener('change', async e => {
+  const t = e.target;
+  if (t.dataset.act === 'simOff') { AZ.simOff(t); return; }
+  if (t.dataset.chk) { const v = viaggioOggi(); v.chk = v.chk || {}; v.chk[t.dataset.chk] = t.checked; save(); render(); return; }
+  if (t.dataset.file && t.files && t.files[0]) {
+    const u = await riduci(t.files[0]); if (!u) { toast('Non riesco a leggere la foto'); return; }
+    if (t.dataset.file === 'guasto') { bozza.nota = ($('#nota') || {}).value || bozza.nota; bozza.foto.push(u); }
+    else { bozza = bozza && bozza.tipo === 'pod' ? bozza : {tipo: 'pod'}; bozza.pod = u; }
+    render();
+  }
+});
+document.addEventListener('input', e => { if (e.target.id === 'nota' && bozza) bozza.nota = e.target.value; });
+
+// funziona senza rete e si aggiorna da sola (solo quando è aperta dal suo sito, non in anteprima)
+if ('serviceWorker' in navigator && !inCornice() && (location.protocol === 'https:' || location.hostname === 'localhost')) { navigator.serviceWorker.register('sw.js').catch(() => {}); }
+vista = io() ? 'home' : 'login';
+render();
+</script>
+</body>
+</html>
