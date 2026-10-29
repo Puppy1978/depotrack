@@ -1,6 +1,6 @@
 // Panaspeed Autista: l'app funziona anche senza rete.
 // Cambia VERSIONE a ogni aggiornamento: i telefoni scaricano la nuova versione da soli.
-const VERSIONE = 'autista-v1';
+const VERSIONE = 'autista-v2';
 const FILE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

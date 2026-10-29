@@ -23,7 +23,7 @@
    Un solo aspetto scuro, scelto apposta: si legge di notte e col sole, e non abbaglia in cabina. */
 :root{
   --bg:#0A0F18; --pan:#121A28; --pan2:#1A2436; --line:rgba(226,234,245,.10); --line2:rgba(226,234,245,.18);
-  --tx:#EEF2F8; --tx2:#93A0B6; --acc:#FF3B4A; --acc-tx:#fff;
+  --tx:#EEF2F8; --tx2:#93A0B6; --acc:#3B6CFF; --acc-tx:#fff; --gold:#F2B53A;
   --ok:#2EE88A; --warn:#FFAA2B; --bad:#FF4D5E; --info:#4DA3FF; --adr:#FF8A1E;
   --f-disp:'Chakra Petch', 'Arial Narrow', system-ui, sans-serif;
   --f-body:'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -47,7 +47,7 @@ button{cursor:pointer;}
 .top{position:sticky; top:env(safe-area-inset-top, 0px); z-index:5; background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-bottom:1px solid var(--line);}
 .top .wrap{display:flex; align-items:center; gap:12px; padding-block:10px;}
 .brand{font:700 18px/1 var(--f-disp); letter-spacing:.14em; text-transform:uppercase;}
-.brand b{color:var(--acc);}
+.brand b{color:var(--gold);}
 .top .chi{margin-left:auto; text-align:right; font-size:13px; line-height:1.25;}
 .top .chi b{display:block; font-size:14px;}
 .rete{display:inline-flex; align-items:center; gap:6px; font:700 11.5px var(--f-mono); padding:4px 9px; border-radius:999px; border:1px solid var(--line2); white-space:nowrap;}
@@ -155,7 +155,7 @@ textarea{width:100%; min-height:90px; padding:12px 14px; border-radius:14px; bor
 /* accesso */
 .login{display:flex; flex-direction:column; gap:18px; padding-top:20px;}
 .login .logo{font:700 34px/1 var(--f-disp); letter-spacing:.16em; text-transform:uppercase;}
-.login .logo b{color:var(--acc);}
+.login .logo b{color:var(--gold);}
 .chi-sono{display:flex; flex-direction:column; gap:8px;}
 .chi-sono button{display:flex; justify-content:space-between; align-items:center; min-height:58px; padding:12px 16px; border-radius:14px; border:1px solid var(--line2); background:var(--pan); font-weight:700; font-size:17px; text-align:left;}
 .chi-sono button.on{border-color:var(--acc); background:color-mix(in srgb, var(--acc) 14%, var(--pan));}
