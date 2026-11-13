@@ -521,20 +521,24 @@ grab.addEventListener('click', e => e.preventDefault());
 let autoPull = 0;  // animazione di tirata per tap / tastiera (0 = ferma)
 
 /* ---------- sensori del telefono: inclinazione + scossoni ---------- */
+// regolazioni sensori: tilt = quanto conta l'inclinazione, shake = scossoni, deadzone = vibrazioni ignorate (m/s²)
+const MOTION = { tilt: .5, shake: .45, deadzone: 1.2, smooth: 3 };
 let tilt = 0, tiltSm = 0, accX = 0, accY = 0, motionAsked = false;
 function screenAngle(){ return (screen.orientation && screen.orientation.angle) || window.orientation || 0; }
 function onOrient(e){
   if(e.gamma == null) return;
   const a = ((screenAngle() % 360) + 360) % 360;
   let t = a === 90 ? -e.beta : a === 270 ? e.beta : a === 180 ? -e.gamma : e.gamma;
-  tilt = THREE.MathUtils.degToRad(THREE.MathUtils.clamp(t, -45, 45)); gotMotion();
+  // verso invertito + metà sensibilità (tarato sul telefono di Mauro)
+  tilt = -THREE.MathUtils.degToRad(THREE.MathUtils.clamp(t, -45, 45)) * MOTION.tilt; gotMotion();
 }
 function onMotion(e){
   const m = e.acceleration; if(!m || m.x == null) return;
   const a = ((screenAngle() % 360) + 360) % 360;
   let x = m.x, y = m.y;
   if(a === 90){ [x, y] = [-m.y, m.x]; } else if(a === 270){ [x, y] = [m.y, -m.x]; } else if(a === 180){ x = -m.x; y = -m.y; }
-  accX = THREE.MathUtils.clamp(x, -25, 25); accY = THREE.MathUtils.clamp(y, -25, 25); gotMotion();
+  const dz = v => Math.abs(v) < MOTION.deadzone ? 0 : v - Math.sign(v) * MOTION.deadzone;
+  accX = THREE.MathUtils.clamp(dz(x), -15, 15) * MOTION.shake; accY = THREE.MathUtils.clamp(dz(y), -15, 15) * MOTION.shake; gotMotion();
 }
 function listenMotion(){ addEventListener('deviceorientation', onOrient); addEventListener('devicemotion', onMotion); }
 let motionLive = false;
@@ -644,7 +648,7 @@ function step(dt){
   // --- pendolo ---
   const air = Math.sin(clockT * .7) * .012 + Math.sin(clockT * 1.9 + 1) * .006;
   // la lampada pende sempre verso il basso "vero": se inclini il telefono si riallinea
-  tiltSm += (tilt - tiltSm) * Math.min(1, dt * 8);
+  tiltSm += (tilt - tiltSm) * Math.min(1, dt * MOTION.smooth);
   omegaZ += (-G_L * Math.sin(thZ - THREE.MathUtils.clamp(tiltSm * .45, -.28, .28)) - DAMP * omegaZ + air - accX * .05) * dt;
   omegaX += (accY * .03) * dt;
   omegaX += (-G_L * Math.sin(thX) - DAMP * omegaX) * dt;
