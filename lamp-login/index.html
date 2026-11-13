@@ -41,8 +41,8 @@
 
   /* ---------- FORM ---------- */
   .card{
-    position:fixed;left:50%;top:clamp(230px, 36vh, 380px);z-index:3;
-    width:min(360px, calc(100% - 32px));padding:24px 24px 20px;border-radius:20px;
+    position:fixed;left:50%;bottom:calc(36px + env(safe-area-inset-bottom));z-index:3;
+    width:min(320px, calc(100% - 56px));padding:18px 18px 14px;border-radius:18px;
     transform:translateX(-50%) translateY(calc((1 - var(--on)) * 14px));
     background:
       radial-gradient(120% 90% at var(--lx) var(--ly), rgba(var(--light), calc(var(--on) * .20)), transparent 62%),
@@ -54,41 +54,42 @@
     opacity:calc(.10 + var(--on) * .90);
     filter:blur(calc((1 - var(--on)) * 3px));
   }
+  @media (max-height:620px){ .card{bottom:auto;top:190px} }
   body.dark .card{pointer-events:none}
   .brand{display:flex;align-items:center;gap:10px;margin-bottom:4px}
   .logo{width:30px;height:30px;border-radius:8px;overflow:hidden;display:grid;place-items:center}
-  h1{font-size:20px;font-weight:700;letter-spacing:-.01em}
-  .sub{color:var(--muted);font-size:13px;margin-bottom:18px}
-  label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin:0 0 6px 2px}
-  .field{position:relative;margin-bottom:12px}
+  h1{font-size:18px;font-weight:700;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:12px;margin-bottom:12px}
+  label{display:block;font-size:11px;font-weight:500;color:var(--muted);margin:0 0 4px 2px}
+  .field{position:relative;margin-bottom:9px}
   input{
-    width:100%;padding:12px 14px;border-radius:12px;font:inherit;font-size:15px;color:var(--text);
+    width:100%;padding:9px 12px;border-radius:10px;font:inherit;font-size:16px;color:var(--text);
     background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);outline:none;
     transition:border-color .25s, box-shadow .25s, background .25s;
   }
   input:focus{border-color:rgba(var(--light),.7);background:rgba(var(--light),.05);
     box-shadow:0 0 0 4px rgba(var(--light),.12), 0 0 22px rgba(var(--light),.18)}
-  .eye{position:absolute;right:8px;bottom:7px;border:0;background:none;color:var(--muted);
+  .eye{position:absolute;right:6px;bottom:5px;border:0;background:none;color:var(--muted);
     padding:6px 8px;border-radius:8px;cursor:pointer;font-size:12px}
   .eye:hover{color:var(--text)}
-  .row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);margin:2px 0 16px}
+  .row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);margin:2px 0 12px}
   .row a{color:rgb(var(--light));text-decoration:none}
   .chk{display:flex;align-items:center;gap:6px;cursor:pointer;margin:0}
   .chk input{width:14px;height:14px;accent-color:rgb(var(--light))}
   button.go{
-    width:100%;padding:13px;border:0;border-radius:12px;cursor:pointer;
+    width:100%;padding:11px;border:0;border-radius:10px;cursor:pointer;
     font:inherit;font-weight:600;font-size:15px;color:#14100a;background:rgb(var(--light));
     box-shadow:0 8px 30px rgba(var(--light),.35);transition:transform .15s, box-shadow .25s, filter .25s;
   }
   button.go:hover{transform:translateY(-1px);box-shadow:0 12px 36px rgba(var(--light),.5)}
   button.go:active{transform:translateY(1px)}
   button.go[disabled]{filter:saturate(.4) brightness(.8);cursor:default}
-  .msg{min-height:18px;margin-top:10px;font-size:13px;text-align:center}
+  .msg{min-height:16px;margin-top:6px;font-size:13px;text-align:center}
   .msg.err{color:#ff8a8a}.msg.ok{color:#8affb4}
   .shake{animation:shake .4s}
   @keyframes shake{20%,60%{translate:-7px 0}40%,80%{translate:7px 0}}
-  .temps{display:flex;justify-content:center;flex-wrap:wrap;gap:9px;margin-top:14px}
-  .temps button{width:18px;height:18px;border-radius:50%;border:2px solid transparent;cursor:pointer;
+  .temps{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .temps button{width:17px;height:17px;border-radius:50%;border:2px solid transparent;cursor:pointer;
     background:var(--c);box-shadow:0 0 10px var(--c);transition:transform .2s,border-color .2s}
   .temps button.sel{border-color:#fff;transform:scale(1.15)}
   .foot{position:fixed;bottom:12px;left:0;right:0;text-align:center;font-size:11px;color:#3a3f4c;z-index:2}
@@ -641,7 +642,7 @@ function askMotion(){
       const p2 = DME && typeof DME.requestPermission === 'function' ? DME.requestPermission() : Promise.resolve('granted');
       Promise.all([p1, p2]).then(r => {
         if(r.includes('granted')){ listenMotion(); setChip('📱 Muovi il telefono…', 'ok'); }
-        else if(navigator.maxTouchPoints > 0) setChip('Sensori negati: Impostazioni › Safari › Movimento e orientamento', 'err');
+        else if(navigator.maxTouchPoints > 0){ setChip('Sensori negati: ricarica la pagina e premi Consenti', 'err'); setTimeout(() => chip.classList.add('hide'), 6000); }
         else chip.classList.add('hide');
       }).catch(() => { motionAsked = false; setChip('📱 Tocca qui per attivare i sensori', ''); });
     }else listenMotion();
