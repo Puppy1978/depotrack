@@ -88,7 +88,7 @@
   .msg.err{color:#ff8a8a}.msg.ok{color:#8affb4}
   .shake{animation:shake .4s}
   @keyframes shake{20%,60%{translate:-7px 0}40%,80%{translate:7px 0}}
-  .temps{display:flex;justify-content:center;gap:10px;margin-top:14px}
+  .temps{display:flex;justify-content:center;flex-wrap:wrap;gap:9px;margin-top:14px}
   .temps button{width:18px;height:18px;border-radius:50%;border:2px solid transparent;cursor:pointer;
     background:var(--c);box-shadow:0 0 10px var(--c);transition:transform .2s,border-color .2s}
   .temps button.sel{border-color:#fff;transform:scale(1.15)}
@@ -130,10 +130,16 @@
   <button class="go" type="submit" id="go">Entra</button>
   <div class="msg" id="msg" aria-live="polite"></div>
   <div class="temps" id="temps" aria-label="Colore luce">
-    <button type="button" class="sel" style="--c:rgb(255,190,110)" data-rgb="255, 190, 110" title="Calda"></button>
-    <button type="button" style="--c:rgb(170,210,255)" data-rgb="170, 210, 255" title="Fredda"></button>
-    <button type="button" style="--c:rgb(130,255,175)" data-rgb="130, 255, 175" title="Verde"></button>
-    <button type="button" style="--c:rgb(255,125,155)" data-rgb="255, 125, 155" title="Rosa"></button>
+    <button type="button" class="sel" style="--c:rgb(255,190,110)" data-rgb="255, 190, 110" title="Calda" aria-label="Luce calda"></button>
+    <button type="button" style="--c:rgb(255,240,220)" data-rgb="255, 240, 220" title="Neutra" aria-label="Luce neutra"></button>
+    <button type="button" style="--c:rgb(253,128,46)" data-rgb="253, 128, 46" title="Zucca" aria-label="Luce zucca"></button>
+    <button type="button" style="--c:rgb(255,69,0)" data-rgb="255, 69, 0" title="Cremisi" aria-label="Luce cremisi"></button>
+    <button type="button" style="--c:rgb(255,47,163)" data-rgb="255, 47, 163" title="Magenta" aria-label="Luce magenta"></button>
+    <button type="button" style="--c:rgb(167,139,250)" data-rgb="167, 139, 250" title="Viola" aria-label="Luce viola"></button>
+    <button type="button" style="--c:rgb(170,210,255)" data-rgb="170, 210, 255" title="Fredda" aria-label="Luce fredda"></button>
+    <button type="button" style="--c:rgb(76,201,240)" data-rgb="76, 201, 240" title="Ciano" aria-label="Luce ciano"></button>
+    <button type="button" style="--c:rgb(52,211,153)" data-rgb="52, 211, 153" title="Smeraldo" aria-label="Luce smeraldo"></button>
+    <button type="button" style="--c:rgb(196,227,38)" data-rgb="196, 227, 38" title="Lime" aria-label="Luce lime"></button>
   </div>
 </form>
 <div class="foot">DepoTrack Solutions · demo login</div>
@@ -560,19 +566,20 @@ function askMotion(){
       const p2 = DME && typeof DME.requestPermission === 'function' ? DME.requestPermission() : Promise.resolve('granted');
       Promise.all([p1, p2]).then(r => {
         if(r.includes('granted')){ listenMotion(); setChip('📱 Muovi il telefono…', 'ok'); }
-        else setChip('Sensori negati: Impostazioni › Safari › Movimento e orientamento', 'err');
+        else if(navigator.maxTouchPoints > 0) setChip('Sensori negati: Impostazioni › Safari › Movimento e orientamento', 'err');
+        else chip.classList.add('hide');
       }).catch(() => { motionAsked = false; setChip('📱 Tocca qui per attivare i sensori', ''); });
     }else listenMotion();
   }catch(_){ motionAsked = false; }
 }
 // in ascolto da subito (Android); su iOS gli eventi arrivano solo dopo il permesso
 listenMotion();
-if(needsPerm) setChip('📱 Tocca qui per attivare i sensori', '');
+if(needsPerm && navigator.maxTouchPoints > 0) setChip('📱 Tocca qui per attivare i sensori', '');
 chip.addEventListener('click', e => { e.stopPropagation(); askMotion(); });
 addEventListener('touchend', askMotion, { passive:true });
 addEventListener('click', askMotion);
 // nessun dato dopo 4 s su un dispositivo senza permessi da chiedere → lo dico
-setTimeout(() => { if(!motionLive && !needsPerm) setChip('Sensori di movimento non disponibili su questo dispositivo', 'err'); }, 4000);
+setTimeout(() => { if(!motionLive && !needsPerm && navigator.maxTouchPoints > 0) setChip('Sensori di movimento non disponibili su questo dispositivo', 'err'); }, 4000);
 
 // parallasse leggera
 let px = 0, py = 0;
