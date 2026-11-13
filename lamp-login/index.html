@@ -94,6 +94,12 @@
   .temps button.sel{border-color:#fff;transform:scale(1.15)}
   .foot{position:fixed;bottom:12px;left:0;right:0;text-align:center;font-size:11px;color:#3a3f4c;z-index:2}
 
+  #motionChip{position:fixed;left:50%;top:max(14px, env(safe-area-inset-top));transform:translateX(-50%);z-index:6;
+    font:500 12px Inter,system-ui,sans-serif;color:#e9ecf3;background:rgba(20,22,30,.85);border:1px solid rgba(var(--light),.45);
+    padding:8px 14px;border-radius:999px;cursor:pointer;max-width:92vw;transition:opacity .5s}
+  #motionChip.ok{border-color:rgba(138,255,180,.5)}
+  #motionChip.err{border-color:rgba(255,138,138,.5);color:#ffb3b3}
+  #motionChip.hide{opacity:0;pointer-events:none}
   /* fallback senza WebGL */
   body.nogl{background:radial-gradient(ellipse 70% 50% at 50% 30%, rgba(var(--light),.18), #040506 70%)}
   body.nogl #grab, body.nogl #hint{display:none}
@@ -103,6 +109,7 @@
 <canvas id="gl"></canvas>
 <button id="grab" aria-label="Tira la cordicella per accendere la luce"></button>
 <div id="hint">← tira la cordicella</div>
+<button id="motionChip" class="hide" type="button"></button>
 
 <form class="card" id="card" novalidate autocomplete="on">
   <div class="brand"><div class="logo">DT</div><h1>DepoTrack</h1></div>
@@ -520,29 +527,48 @@ function onOrient(e){
   if(e.gamma == null) return;
   const a = ((screenAngle() % 360) + 360) % 360;
   let t = a === 90 ? -e.beta : a === 270 ? e.beta : a === 180 ? -e.gamma : e.gamma;
-  tilt = THREE.MathUtils.degToRad(THREE.MathUtils.clamp(t, -45, 45));
+  tilt = THREE.MathUtils.degToRad(THREE.MathUtils.clamp(t, -45, 45)); gotMotion();
 }
 function onMotion(e){
   const m = e.acceleration; if(!m || m.x == null) return;
   const a = ((screenAngle() % 360) + 360) % 360;
   let x = m.x, y = m.y;
   if(a === 90){ [x, y] = [-m.y, m.x]; } else if(a === 270){ [x, y] = [m.y, -m.x]; } else if(a === 180){ x = -m.x; y = -m.y; }
-  accX = THREE.MathUtils.clamp(x, -25, 25); accY = THREE.MathUtils.clamp(y, -25, 25);
+  accX = THREE.MathUtils.clamp(x, -25, 25); accY = THREE.MathUtils.clamp(y, -25, 25); gotMotion();
 }
 function listenMotion(){ addEventListener('deviceorientation', onOrient); addEventListener('devicemotion', onMotion); }
+let motionLive = false;
+const chip = document.getElementById('motionChip');
+function setChip(txt, cls){ chip.textContent = txt; chip.className = cls || ''; }
+function gotMotion(){
+  if(motionLive) return; motionLive = true;
+  setChip('📱 Sensori attivi', 'ok'); setTimeout(() => chip.classList.add('hide'), 1800);
+}
+const needsPerm = !!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function');
 function askMotion(){
-  if(motionAsked) return; motionAsked = true;
+  if(motionLive || motionAsked) return;
   try{
     const DOE = window.DeviceOrientationEvent, DME = window.DeviceMotionEvent;
-    if(DOE && typeof DOE.requestPermission === 'function'){        // iOS: serve un tocco dell'utente
-      Promise.all([DOE.requestPermission(), DME && DME.requestPermission ? DME.requestPermission() : 'granted'])
-        .then(r => { if(r.includes('granted')) listenMotion(); }).catch(() => {});
+    if(needsPerm){
+      motionAsked = true;
+      // iOS vuole la richiesta dentro un "click"/"touchend": chiamate dirette, nessun await prima
+      const p1 = DOE.requestPermission();
+      const p2 = DME && typeof DME.requestPermission === 'function' ? DME.requestPermission() : Promise.resolve('granted');
+      Promise.all([p1, p2]).then(r => {
+        if(r.includes('granted')){ listenMotion(); setChip('📱 Muovi il telefono…', 'ok'); }
+        else setChip('Sensori negati: Impostazioni › Safari › Movimento e orientamento', 'err');
+      }).catch(() => { motionAsked = false; setChip('📱 Tocca qui per attivare i sensori', ''); });
     }else listenMotion();
-  }catch(_){}
+  }catch(_){ motionAsked = false; }
 }
-// in ascolto da subito (Android); su iOS gli eventi arrivano solo dopo il permesso, chiesto al primo tocco
+// in ascolto da subito (Android); su iOS gli eventi arrivano solo dopo il permesso
 listenMotion();
-addEventListener('pointerdown', askMotion, { once:true });
+if(needsPerm) setChip('📱 Tocca qui per attivare i sensori', '');
+chip.addEventListener('click', e => { e.stopPropagation(); askMotion(); });
+addEventListener('touchend', askMotion, { passive:true });
+addEventListener('click', askMotion);
+// nessun dato dopo 4 s su un dispositivo senza permessi da chiedere → lo dico
+setTimeout(() => { if(!motionLive && !needsPerm) setChip('Sensori di movimento non disponibili su questo dispositivo', 'err'); }, 4000);
 
 // parallasse leggera
 let px = 0, py = 0;
