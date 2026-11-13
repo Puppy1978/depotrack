@@ -56,8 +56,7 @@
   }
   body.dark .card{pointer-events:none}
   .brand{display:flex;align-items:center;gap:10px;margin-bottom:4px}
-  .logo{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
-    background:rgba(var(--light),.18);color:rgb(var(--light));font-weight:700;font-size:14px}
+  .logo{width:30px;height:30px;border-radius:8px;overflow:hidden;display:grid;place-items:center}
   h1{font-size:20px;font-weight:700;letter-spacing:-.01em}
   .sub{color:var(--muted);font-size:13px;margin-bottom:18px}
   label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin:0 0 6px 2px}
@@ -112,7 +111,7 @@
 <button id="motionChip" class="hide" type="button"></button>
 
 <form class="card" id="card" novalidate autocomplete="on">
-  <div class="brand"><div class="logo">DT</div><h1>DepoTrack</h1></div>
+  <div class="brand"><div class="logo"><svg viewBox="0 0 96 96" width="30" height="30" aria-hidden="true"><rect width="96" height="96" rx="10" fill="#2B5C86"/><circle cx="72" cy="24" r="7" fill="#C9821E"/><line x1="18" y1="78" x2="56" y2="40" stroke="#FBFCF8" stroke-width="8" stroke-linecap="round"/><polyline points="18,40 56,40 56,78" fill="none" stroke="#FBFCF8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h1>DepoTrack</h1></div>
   <p class="sub">Accedi al gestionale del deposito</p>
   <div class="field">
     <label for="email">Email</label>
@@ -222,6 +221,10 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const root = document.documentElement, body = document.body;
 const canvas = document.getElementById('gl');
@@ -277,6 +280,69 @@ wall.position.set(0, 2, WALL_Z); wall.receiveShadow = true; scene.add(wall);
   tl.load('wall_bump.jpg', t => { wall.material.bumpMap = prep(t, false); wall.material.bumpScale = .045; wall.material.needsUpdate = true; });
 }
 
+/* ---------- riflessi per i metalli (attivi solo con la luce accesa) ---------- */
+const envTex = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), .04).texture;
+const envMats = [];   // materiali che riflettono l'ambiente, intensità legata alla luce
+/* ---------- insegna DepoTrack Solutions in 3D sul muro ---------- */
+const LOGO_LIGHT = 16;           // intensità della luce larga che illumina l'insegna
+const logo = new THREE.Group(); scene.add(logo);
+let logoW = 1, logoH = 1, logoReady = false;
+function layoutLogo(){
+  if(!logoReady) return;
+  // inquadratura di riposo per calcolare dove cade l'insegna tra paralume e card
+  camera.position.set(0, baseCamY, baseCamZ); camera.lookAt(0, baseCamY, WALL_Z); camera.updateMatrixWorld();
+  const rc = new THREE.Raycaster(), n = new THREE.Vector2(), pl = new THREE.Plane(new THREE.Vector3(0,0,1), -(WALL_Z + .05));
+  const toWall = (sx, sy) => { n.set(sx / W * 2 - 1, -(sy / H) * 2 + 1); rc.setFromCamera(n, camera);
+    const v = new THREE.Vector3(); rc.ray.intersectPlane(pl, v); return v; };
+  const r = document.getElementById('card').getBoundingClientRect();
+  const bottomY = toWall(W/2, r.top).y + .05;
+  const rim = new THREE.Vector3(0, PIVOT_Y - CABLE - .5, 0).project(camera);
+  const topY = toWall(W/2, (1 - rim.y) / 2 * H).y - .24;
+  const halfW = Math.abs(toWall(0, H/2).x);
+  const k = Math.max(.25, Math.min((topY - bottomY) / logoH, (halfW * 2 * .8) / logoW, .7));
+  logo.scale.setScalar(k);
+  logo.position.set(0, (topY + bottomY) / 2, WALL_Z + .04);
+}
+new FontLoader().load('helvetiker_bold.typeface.json', font => {
+  const S = 1;                                       // lato dell'icona
+  const blue = new THREE.MeshPhysicalMaterial({ color:0x2B5C86, metalness:.1, roughness:.35, clearcoat:1, clearcoatRoughness:.12 });
+  const white = new THREE.MeshPhysicalMaterial({ color:0xFBFCF8, metalness:.05, roughness:.35, clearcoat:.8 });
+  const amber = new THREE.MeshStandardMaterial({ color:0xC9821E, metalness:.85, roughness:.28 });
+  const graphite = new THREE.MeshPhysicalMaterial({ color:0x2a2e35, metalness:.55, roughness:.28, clearcoat:.8 });
+  [blue, white, amber, graphite].forEach(m => { m.envMap = envTex; m.envMapIntensity = 0; envMats.push(m); });
+  const content = new THREE.Group(); logo.add(content);
+
+  // icona: piastra smaltata con freccia in rilievo e pallino in ottone
+  const plate = new THREE.Mesh(new RoundedBoxGeometry(S, S, .1, 4, .035), blue);
+  plate.position.z = .05; content.add(plate);
+  const P = (x, y) => new THREE.Vector3((x/96 - .5) * S, (.5 - y/96) * S, .115);
+  const rr = 4/96 * S;
+  const stroke = (a, b) => {
+    const m = new THREE.Mesh(new THREE.CapsuleGeometry(rr, a.distanceTo(b), 6, 18), white);
+    m.position.copy(a).add(b).multiplyScalar(.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), b.clone().sub(a).normalize());
+    content.add(m);
+  };
+  stroke(P(18,78), P(56,40)); stroke(P(18,40), P(56,40)); stroke(P(56,40), P(56,78));
+  const dot = new THREE.Mesh(new THREE.CylinderGeometry(7/96*S, 7/96*S, .05, 40), amber);
+  dot.rotation.x = Math.PI/2; dot.position.copy(P(72,24)); dot.position.z = .12; content.add(dot);
+
+  // scritta su due righe, lettere scatolate staccate dal muro
+  const mk = (txt, mat) => {
+    const g = new TextGeometry(txt, { font, size:.36, height:.08, curveSegments:8,
+      bevelEnabled:true, bevelThickness:.012, bevelSize:.008, bevelSegments:3 });
+    g.computeBoundingBox(); const m = new THREE.Mesh(g, mat); content.add(m); return m;
+  };
+  const t1 = mk('DEPOTRACK', graphite), t2 = mk('SOLUTIONS', blue);
+  const xs = S/2 + .2;
+  t1.position.set(xs, .09, 0); t2.position.set(xs, -.09 - .36 * .74, 0);
+  const tw = Math.max(t1.geometry.boundingBox.max.x, t2.geometry.boundingBox.max.x);
+  logoW = S + .2 + tw; logoH = S;
+  content.position.x = -logoW / 2 + S / 2;
+  logo.traverse(o => { if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+  logoReady = true; layoutLogo();
+});
+
 const floorMap = noiseTex('#4a4844', 30, 400); floorMap.repeat.set(4,2);
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 10),
   new THREE.MeshStandardMaterial({ map:floorMap, bumpMap:floorMap, bumpScale:.015, roughness:.82, metalness:0 }));
@@ -300,6 +366,8 @@ const lamp = new THREE.Group(); lamp.position.y = -CABLE; pivot.add(lamp);
 
 const rubber = new THREE.MeshStandardMaterial({ color:0x111111, roughness:.55 });
 const brass = new THREE.MeshStandardMaterial({ color:0xb08a4e, metalness:1, roughness:.32 });
+const lampEnvMats = [brass];
+lampEnvMats.forEach(m => { m.envMap = envTex; m.envMapIntensity = 0; });
 const enamel = new THREE.MeshPhysicalMaterial({ color:0x1e2b25, metalness:.25, roughness:.28, clearcoat:1, clearcoatRoughness:.18 });
 const inner = new THREE.MeshStandardMaterial({ color:0xf1ece2, roughness:.45, metalness:0, side:THREE.BackSide, emissive:0x000000 });
 
@@ -337,6 +405,12 @@ spot.shadow.mapSize.set(1024, 1024); spot.shadow.bias = -.0004; spot.shadow.radi
 spot.shadow.camera.near = .1; spot.shadow.camera.far = 12;
 lamp.add(spot);
 const spotTarget = new THREE.Object3D(); spotTarget.position.y = -6; lamp.add(spotTarget); spot.target = spotTarget;
+// luce larga: quella che esce di sbieco dalla bocca del paralume e prende il muro (e l'insegna)
+const wide = new THREE.SpotLight(0xffc27a, 0, 0, 1.2, .5, 2);
+wide.position.y = BULB_Y; wide.castShadow = true;
+wide.shadow.mapSize.set(1024, 1024); wide.shadow.bias = -.0006; wide.shadow.radius = 4;
+wide.shadow.camera.near = .05; wide.shadow.camera.far = 8;
+lamp.add(wide); wide.target = spotTarget;
 const glow = new THREE.PointLight(0xffc27a, 0, 1.6, 2); glow.position.y = BULB_Y + .02; lamp.add(glow);
 
 // cono volumetrico
@@ -448,6 +522,7 @@ function resize(){
   baseCamY = shadeY - halfH * .62;          // paralume a ~19% dall'alto
   camera.updateProjectionMatrix();
   dustMat.uniforms.uPx.value = renderer.getPixelRatio() * (H / 800) * 1.6;
+  layoutLogo();
 }
 addEventListener('resize', resize); resize();
 
@@ -612,6 +687,9 @@ function step(dt){
   spot.color.copy(col); glow.color.copy(col);
   spot.intensity = lvl * 95 * (.55 + .45 * fila);
   glow.intensity = lvl * 1.4;
+  wide.color.copy(col); wide.intensity = lvl * LOGO_LIGHT * (.55 + .45 * fila);
+  for(const m of envMats) m.envMapIntensity = lvl * .32;
+  for(const m of lampEnvMats) m.envMapIntensity = lvl * .35;
   bounce.color.copy(col); bounce.intensity = lvl * .12;
   glass.emissive.copy(col); glass.emissiveIntensity = Math.max(lvl, fila * .35) * 9;
   fil.material.color.copy(col).multiplyScalar(Math.max(lvl, fila * .6) * 6);
