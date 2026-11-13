@@ -296,13 +296,16 @@ function layoutLogo(){
   const toWall = (sx, sy) => { n.set(sx / W * 2 - 1, -(sy / H) * 2 + 1); rc.setFromCamera(n, camera);
     const v = new THREE.Vector3(); rc.ray.intersectPlane(pl, v); return v; };
   const r = document.getElementById('card').getBoundingClientRect();
-  const bottomY = toWall(W/2, r.top).y + .05;
+  // posizione della card a luce accesa (da spenta è abbassata di 14px)
+  const onTop = r.top - 14 * (1 - parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--on') || 0));
+  const bottomY = toWall(W/2, onTop).y + .04;   // insegna appoggiata appena sopra la card
   const rim = new THREE.Vector3(0, PIVOT_Y - CABLE - .5, 0).project(camera);
   const topY = toWall(W/2, (1 - rim.y) / 2 * H).y - .24;
   const halfW = Math.abs(toWall(0, H/2).x);
   const k = Math.max(.25, Math.min((topY - bottomY) / logoH, (halfW * 2 * .8) / logoW, .7));
   logo.scale.setScalar(k);
-  logo.position.set(0, (topY + bottomY) / 2, WALL_Z + .04);
+  // ancorata in basso: la base della scritta sta subito sopra la card, nella parte più illuminata del muro
+  logo.position.set(0, bottomY + logoH * k / 2 + .02, WALL_Z + .04);
 }
 new FontLoader().load('helvetiker_bold.typeface.json', font => {
   const S = 1;                                       // lato dell'icona
