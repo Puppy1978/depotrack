@@ -285,7 +285,7 @@ wall.position.set(0, 2, WALL_Z); wall.receiveShadow = true; scene.add(wall);
 const envTex = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), .04).texture;
 const envMats = [];   // materiali che riflettono l'ambiente, intensità legata alla luce
 /* ---------- insegna DepoTrack Solutions in 3D sul muro ---------- */
-const LOGO_LIGHT = 16;           // intensità della luce larga che illumina l'insegna
+const LOGO_LIGHT = 20;           // intensità della luce larga che illumina l'insegna
 const logo = new THREE.Group(); scene.add(logo);
 let logoW = 1, logoH = 1, logoReady = false;
 function layoutLogo(){
@@ -309,7 +309,7 @@ new FontLoader().load('helvetiker_bold.typeface.json', font => {
   const blue = new THREE.MeshPhysicalMaterial({ color:0x2B5C86, metalness:.1, roughness:.35, clearcoat:1, clearcoatRoughness:.12 });
   const white = new THREE.MeshPhysicalMaterial({ color:0xFBFCF8, metalness:.05, roughness:.35, clearcoat:.8 });
   const amber = new THREE.MeshStandardMaterial({ color:0xC9821E, metalness:.85, roughness:.28 });
-  const graphite = new THREE.MeshPhysicalMaterial({ color:0x2a2e35, metalness:.55, roughness:.28, clearcoat:.8 });
+  const graphite = new THREE.MeshPhysicalMaterial({ color:0x6b727d, metalness:.5, roughness:.3, clearcoat:.8 });
   [blue, white, amber, graphite].forEach(m => { m.envMap = envTex; m.envMapIntensity = 0; envMats.push(m); });
   const content = new THREE.Group(); logo.add(content);
 
@@ -407,7 +407,8 @@ spot.shadow.camera.near = .1; spot.shadow.camera.far = 12;
 lamp.add(spot);
 const spotTarget = new THREE.Object3D(); spotTarget.position.y = -6; lamp.add(spotTarget); spot.target = spotTarget;
 // luce larga: quella che esce di sbieco dalla bocca del paralume e prende il muro (e l'insegna)
-const wide = new THREE.SpotLight(0xffc27a, 0, 0, 1.2, .5, 2);
+// apertura 77° = bordo reale del paralume; pieno fino a ~54°, così la fascia dell'insegna è in piena luce
+const wide = new THREE.SpotLight(0xffc27a, 0, 0, 1.35, .3, 2);
 wide.position.y = BULB_Y; wide.castShadow = true;
 wide.shadow.mapSize.set(1024, 1024); wide.shadow.bias = -.0006; wide.shadow.radius = 4;
 wide.shadow.camera.near = .05; wide.shadow.camera.far = 8;
