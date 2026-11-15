@@ -832,6 +832,14 @@ body.ui-tramonto .clk #clkT .fp>span{background:linear-gradient(180deg,#343a6b,#
 @keyframes fpTop{to{transform:rotateX(-90deg)}}
 @keyframes fpBot{to{transform:rotateX(0)}}
 @media (max-width:640px){.clk #clkT .fp{--h:30px;--w:21px;font-size:21px;line-height:30px}.clk #clkT .fp.s{--h:24px;--w:16px;font-size:17px;line-height:24px}}
+
+/* ---- prova Anime.js: trascinamento con mouse e dito ---- */
+.st{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.st.dsrc{opacity:.28!important;transition:opacity .15s}
+.dgh{position:fixed!important;margin:0!important;pointer-events:none!important;z-index:400;animation:none!important;transform-origin:50% 50%;
+  box-shadow:0 22px 50px rgba(0,0,0,.55),0 0 0 2px var(--acc),0 0 26px color-mix(in srgb,var(--acc) 55%,transparent)!important;opacity:.96}
+body.dragging,body.dragging *{cursor:grabbing!important}
+body.dragging .st.free{border-color:var(--acc)}
 </style>
 </head>
 <body class="v3d s-solid">
@@ -1113,7 +1121,7 @@ function paintStall(sid){
     el.classList.toggle('tmp',!!(v.prop&&v.prop!==sid));el.classList.toggle('fer',v.s==='ferma'||v.s==='fermat');el.classList.toggle('call',stOf(v.s)[0].toUpperCase().indexOf('CHIAMAT')>-1);el.classList.toggle('inoff',!!offOf(v.id));
     el.innerHTML=ISO+'<span class="sid'+(shortSid(sid).length>=8?' l8':'')+'">'+esc(shortSid(sid))+(v.prop===sid?' ⌂':'')+'</span><span class="dot"></span><span class="num">'+esc(v.n)+'</span><span class="meta">'+(offOf(v.id)?'🔧 '+offOf(v.id)+' · ':'')+esc(v.model||tipoOf(v).code)+(v.s===dispId()?'':' · '+esc(shortSt(v.s)))+(v.x?' · '+esc(shortSt(v.x)):'')+'</span>'+(function(){var rs=revStatus(v.n);return rs&&rs.cls!=='ok'?'<span class="rvi" title="Revisione: '+esc(rs.data)+'">'+rs.icon+'</span>':''})()+'<span class="tb'+(tb?'':' add')+'" data-t="'+esc(tb)+'">'+(tb?esc(tb):'+')+'</span>';
     el.setAttribute('aria-label','Stallo '+sid+', mezzo '+v.n+', '+stOf(v.s)[0]+(v.x?' + '+stOf(v.x)[0]:'')+(offOf(v.id)?', in officina '+offOf(v.id):''));
-    el.draggable=true;
+    el.draggable=!window.ANIME_DRAG;
   }else{
     el.classList.add('free');el.classList.remove('low','bob','tmp','call','fer','x2','inoff');el.style.removeProperty('--c');
     el.innerHTML=ISO+'<span class="sid'+(shortSid(sid).length>=8?' l8':'')+'">'+esc(shortSid(sid))+'</span><span class="plus">+</span><span class="ft">libero</span>';
@@ -3349,8 +3357,175 @@ moveInd();
 window.addEventListener('resize',function(){layoutFit();moveInd();fitStage()});
 if(window.ResizeObserver)new ResizeObserver(fitStage).observe(board);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){moveInd();fitStage()});
+/* ponte per la prova Anime.js */
+window.AUR={get S(){return S},atStall:atStall,placeAt:function(v,sid){placeAt(v,sid)},gate:gate,repaintAll:repaintAll,board:board,
+  canMove:function(){return !!(DB&&S.live&&ME.role&&(ME.role==='superuser'||ME.role==='piazzale'))}};
 startLive();
 })();
 </script>
+<script type="module">
+/* =====================================================================
+   PROVA ANIME.JS — trascinamento mezzi sul piazzale (mouse e dito)
+   e numeri di KPI FLEET che contano.
+   Se la libreria non si carica, Aurora resta com'era (drag col mouse).
+   ===================================================================== */
+import { animate, utils } from 'https://cdn.jsdelivr.net/npm/animejs@4/+esm';
+
+const A = window.AUR;
+window.ANIME_DRAG = true;
+A.repaintAll();
+
+const dur = ms => (A.S.motion ? ms : 0);
+let P = null;               // trascinamento in corso
+let noClick = null;         // stallo il cui click va ignorato dopo un drag
+
+const canMove = () => A.canMove();
+function stallAt(x, y){
+  const els = document.elementsFromPoint(x, y);
+  for (const el of els){
+    const st = el.closest && el.closest('#board .st');
+    if (st) return st;
+  }
+  return null;
+}
+
+A.board.addEventListener('pointerdown', e => {
+  if (e.button > 0 || P) return;
+  const st = e.target.closest('.st');
+  if (!st || st.classList.contains('free') || e.target.closest('.tb')) return;
+  if (A.S.placing) return;
+  const sid = st.dataset.sid, v = A.atStall(sid);
+  if (!v) return;
+  P = { sid, vid: v.id, n: v.n, st, x0: e.clientX, y0: e.clientY, id: e.pointerId, type: e.pointerType, started: false, hover: null };
+  // col dito si trascina dopo una pressione lunga, così la pagina continua a scorrere
+  if (e.pointerType !== 'mouse') P.timer = setTimeout(() => { if (P && !P.started) start(); }, 300);
+});
+
+window.addEventListener('pointermove', e => {
+  if (!P || e.pointerId !== P.id) return;
+  const d = Math.hypot(e.clientX - P.x0, e.clientY - P.y0);
+  if (!P.started){
+    if (P.type === 'mouse'){ if (d > 6) start(); else return; }
+    else { if (d > 10){ clearTimeout(P.timer); P = null; } return; }
+  }
+  e.preventDefault();
+  move(e.clientX, e.clientY);
+}, { passive: false });
+
+// mentre si trascina col dito la pagina non deve scorrere
+window.addEventListener('touchmove', e => { if (P && P.started) e.preventDefault(); }, { passive: false });
+window.addEventListener('contextmenu', e => { if (P) e.preventDefault(); });
+window.addEventListener('pointerup', e => { if (P && e.pointerId === P.id) end(e.clientX, e.clientY, false); });
+window.addEventListener('pointercancel', e => { if (P && e.pointerId === P.id) end(0, 0, true); });
+window.addEventListener('keydown', e => { if (e.key === 'Escape' && P && P.started) end(0, 0, true); });
+// dopo un trascinamento il click non deve aprire la scheda del mezzo
+A.board.addEventListener('click', e => {
+  if (noClick && e.target.closest('.st')){ e.stopPropagation(); e.preventDefault(); }
+  noClick = null;
+}, true);
+
+function start(){
+  P.started = true;
+  clearTimeout(P.timer);
+  const r = P.st.getBoundingClientRect();
+  P.rect = r;
+  const g = P.st.cloneNode(true);
+  g.classList.remove('sel', 'flash', 'in', 'drop');
+  g.classList.add('dgh');
+  g.removeAttribute('data-sid');
+  Object.assign(g.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+  document.body.appendChild(g);
+  P.g = g;
+  P.st.classList.add('dsrc');
+  document.body.classList.add('dragging');
+  if (navigator.vibrate) try { navigator.vibrate(12); } catch (_) {}
+  animate(g, { scale: [1, 1.08], rotate: [0, -2], duration: dur(220), ease: 'outQuad' });
+}
+
+function move(x, y){
+  utils.set(P.g, { x: x - P.x0, y: y - P.y0 });
+  let t = stallAt(x, y);
+  if (t === P.st) t = null;
+  if (t !== P.hover){
+    P.hover && P.hover.classList.remove('drop');
+    P.hover = t;
+    if (t) t.classList.add('drop');
+  }
+  // scorrimento automatico vicino ai bordi dello schermo
+  const edge = 70;
+  if (y < edge) window.scrollBy(0, -12);
+  else if (y > innerHeight - edge) window.scrollBy(0, 12);
+}
+
+function cleanup(){
+  if (!P) return;
+  P.g && P.g.remove();
+  P.st.classList.remove('dsrc');
+  P.hover && P.hover.classList.remove('drop');
+  document.body.classList.remove('dragging');
+  P = null;
+}
+
+function end(x, y, cancel){
+  clearTimeout(P.timer);
+  if (!P.started){ P = null; return; }
+  noClick = P.st;
+  setTimeout(() => { noClick = null; }, 400);
+  if (!cancel) move(x, y);
+  const target = cancel ? null : P.hover;
+  const cur = P;
+  if (target && canMove()){
+    const tr = target.getBoundingClientRect();
+    target.classList.remove('drop');
+    animate(cur.g, {
+      x: tr.left - cur.rect.left, y: tr.top - cur.rect.top,
+      scale: 1, rotate: 0, opacity: [0.96, 0.4],
+      duration: dur(360), ease: 'outBack(1.2)',
+      onComplete: () => { if (P === cur) cleanup(); }
+    });
+    A.placeAt(cur.vid, target.dataset.sid);
+    if (!A.S.motion && P === cur) cleanup();
+    return;
+  }
+  // nessuno stallo valido, oppure manca il permesso: torna al suo posto
+  if (target) A.gate('move');
+  animate(cur.g, {
+    x: 0, y: 0, scale: 1, rotate: 0,
+    duration: dur(520), ease: 'outElastic(1,.6)',
+    onComplete: () => { if (P === cur) cleanup(); }
+  });
+  if (!A.S.motion && P === cur) cleanup();
+}
+
+/* ---------- KPI FLEET: i numeri partono da zero all'apertura ---------- */
+const seen = new WeakSet();
+function countText(el){
+  const t = el.textContent;
+  const m = t.match(/-?\d[\d.]*(?:,\d+)?/);
+  if (!m) return;
+  const raw = m[0];
+  const dec = (raw.split(',')[1] || '').length;
+  const group = raw.indexOf('.') > -1;
+  const val = parseFloat(raw.replace(/\./g, '').replace(',', '.'));
+  if (!isFinite(val) || val === 0) return;
+  const pre = t.slice(0, m.index), post = t.slice(m.index + raw.length);
+  const fmt = v => pre + v.toLocaleString('it-IT', { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: group }) + post;
+  const o = { v: 0 };
+  el.textContent = fmt(0);
+  animate(o, { v: val, duration: 900, ease: 'outExpo', onUpdate: () => { el.textContent = fmt(o.v); }, onComplete: () => { el.textContent = t; } });
+}
+new MutationObserver(() => {
+  if (!A.S.motion) return;
+  document.querySelectorAll('.mscrim').forEach(sc => {
+    if (seen.has(sc)) return;
+    const ks = sc.querySelector('.ksum');
+    if (!ks) return;
+    seen.add(sc);
+    sc.querySelectorAll('.ksum b, td.n > b').forEach(countText);
+    animate(sc.querySelectorAll('.ksum > div'), { y: [12, 0], opacity: [0, 1], duration: 500, delay: (_, i) => i * 70, ease: 'outQuad' });
+  });
+}).observe(document.body, { childList: true, subtree: true });
+</script>
+
 </body>
 </html>
