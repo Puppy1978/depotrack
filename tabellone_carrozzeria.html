@@ -109,6 +109,13 @@ label.f input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
 label.f input[type=date]::-webkit-datetime-edit{padding:0}
 label.f{white-space:nowrap}
 label.f input,label.f select,label.f textarea{white-space:normal}
+
+/* sfondo foto a piastrelle mandala (file sfondo_mandala.jpg nella stessa cartella) */
+html:has(body.bgfoto){background:#0d0f1a!important}
+body.bgfoto{background:transparent!important}
+body.bgfoto::before{content:'';position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(8,10,18,.25),rgba(8,10,18,.45)),url('sfondo_mandala.jpg') center/cover no-repeat}
+body.bgfoto.glass .card,body.bgfoto.glass .filters{background:rgba(18,20,30,.42)}
+body.bgfoto.glass header{background:rgba(16,18,28,.55)}
 /* ================= STILE LIQUID GLASS ================= */
 body.glass{--g1:#22d3ee;--g2:#a855f7;--g1rgb:34,211,238;--g2rgb:168,85,247;--gbase:#14161b;--gbg:rgba(255,255,255,.055);--gbd:rgba(160,210,255,.18);--gtx:#e8ecf4;--gmut:#9aa3b5;
  font-family:'Inter',system-ui,Arial,sans-serif;color:var(--gtx);background:var(--gbase);
@@ -328,7 +335,7 @@ let LOG=[];
 let DB=null,ME={name:''},LOADED=false;
 let tab='attive', statFilter='';
 
-function loadPref(){const dv=(window.innerWidth>=900?'tabella':'schede');try{return Object.assign({palette:'navy',palG:'glass',pattern:true,view:dv,style:'glass'},JSON.parse(localStorage.getItem(PREF)||'{}'))}catch(e){return{palette:'navy',palG:'glass',pattern:true,view:dv,style:'glass'}}}
+function loadPref(){const dv=(window.innerWidth>=900?'tabella':'schede');try{return Object.assign({palette:'navy',palG:'glass',pattern:true,bg:'foto',view:dv,style:'glass'},JSON.parse(localStorage.getItem(PREF)||'{}'))}catch(e){return{palette:'navy',palG:'glass',pattern:true,bg:'foto',view:dv,style:'glass'}}}
 function savePref(){try{localStorage.setItem(PREF,JSON.stringify(P))}catch(e){}}
 function cacheSave(){try{localStorage.setItem(CACHE,JSON.stringify({rows:S.rows,lists:S.lists}))}catch(e){}}
 function cacheLoad(){try{const d=JSON.parse(localStorage.getItem(CACHE)||'null');if(d&&d.rows){S.rows=d.rows;if(d.lists)S.lists=d.lists}}catch(e){}}
@@ -369,7 +376,8 @@ function applyPalette(){
   bs.setProperty('--g1',p[2]);bs.setProperty('--g2',p[3]);bs.setProperty('--g1rgb',hexRgb(p[2]).join(','));bs.setProperty('--g2rgb',hexRgb(p[3]).join(','));
   bs.setProperty('--gbase',mixDark(p[0],.55));
  }
- if(P.pattern){
+ const bgm=P.bg||(P.pattern?'mandala':'nessuno');document.body.classList.toggle('bgfoto',bgm==='foto');
+ if(bgm==='mandala'){
   const c=p[2];
   const svg=`<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><g fill='none' stroke='${c}' stroke-opacity='.13' stroke-width='1.2'><circle cx='60' cy='60' r='44'/><circle cx='60' cy='60' r='30'/><circle cx='60' cy='60' r='14'/>${Array.from({length:12},(_,i)=>`<ellipse cx='60' cy='30' rx='7' ry='16' transform='rotate(${i*30} 60 60)'/>`).join('')}<circle cx='0' cy='0' r='16'/><circle cx='120' cy='0' r='16'/><circle cx='0' cy='120' r='16'/><circle cx='120' cy='120' r='16'/></g></svg>`;
   r.setProperty('--pattern',`url("data:image/svg+xml,${svg.replace(/#/g,'%23').replace(/</g,'%3C').replace(/>/g,'%3E')}")`);
@@ -592,7 +600,8 @@ function openTools(){
  <div class="vbtn" style="width:max-content;margin-bottom:10px"><button class="${P.style!=='classico'?'on':''}" onclick="P.style='glass';savePref();applyPalette();render();openTools()">${ic('sparkles')}Liquid Glass</button><button class="${P.style==='classico'?'on':''}" onclick="P.style='classico';savePref();applyPalette();render();openTools()">${ic('palette')}Classico</button></div>
  <div style="font-size:12px;color:var(--mut);margin-bottom:6px">Ogni stile si ricorda la sua palette.</div>
  <div class="pal">${Object.entries(PALETTES).map(([k,p])=>`<button class="${curPal()===k?'on':''}" onclick="if(document.body.classList.contains('glass'))P.palG='${k}';else P.palette='${k}';savePref();applyPalette();render();openTools()"><span class="sw">${p.c.slice(0,4).map(c=>`<i style="background:${c}"></i>`).join('')}</span>${p.n}</button>`).join('')}</div>
- <label class="chk" style="margin-top:10px"><input type="checkbox" ${P.pattern?'checked':''} onchange="P.pattern=this.checked;savePref();applyPalette()"> Sfondo mandala</label>`;
+ <div class="sec-t">Sfondo</div>
+ <div class="vbtn" style="width:max-content">${[['foto','Piastrelle mandala'],['mandala','Mandala disegnato'],['nessuno','Nessuno']].map(([k,l])=>`<button class="${(P.bg||'foto')===k?'on':''}" onclick="P.bg='${k}';savePref();applyPalette();openTools()">${l}</button>`).join('')}</div>`;
  document.getElementById('mTools').classList.add('on');
 }
 function saveLists(){
