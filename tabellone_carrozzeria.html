@@ -484,13 +484,24 @@ function importXlsx(inp){
     for(const r of aoa.slice(hi+1)){const vet=String(get(r,'Vettura')).trim();if(!vet)continue;
      rows.push({vettura:vet,fermo:String(get(r,'Fermo (F)')).trim().toUpperCase()==='F',stato:String(get(r,'Stato attuale')),dove:String(get(r,'Dove si trova')),danno:String(get(r,'Lavorazione / danno')).trim(),data:toISO(get(r,'Data stato')),pratica:String(get(r,'Pratica')),prioritaConc:String(get(r,'Priorità concordata')),azione:String(get(r,'Azione concordata')),dataChiamata:toISO(get(r,'Data chiamata / spostamento')),rientro:String(get(r,'Rientro previsto')),referente:String(get(r,'Referente carrozzeria')),noteRiunione:String(get(r,'Note riunione')),noteLavagna:String(get(r,'Note lavagna')),sollecitare:String(get(r,'Da sollecitare')).toUpperCase()==='SI',chiusaIl:toISO(get(r,'Chiusa il')),prevAz:''})}
    });
-   if(!rows.length){alert('Nessuna vettura trovata nel file.');return}
-   const repl=confirm('Trovate '+rows.length+' vetture nel file.\n\nOK = SOSTITUISCI tutto il tabellone su Firebase (vale per tutti)\nAnnulla = AGGIUNGI solo le vetture che non ci sono già');
+   /* liste dei menu dal foglio "Liste" (colonne Dove si trova / Priorità / Azione) */
+   let L=null;
+   if(wb.Sheets['Liste']){
+    const la=XLSX.utils.sheet_to_json(wb.Sheets['Liste'],{header:1,raw:false,defval:''});
+    const hr=la.findIndex(r=>r.some(c=>/dove si trova/i.test(String(c))));
+    if(hr>=0){const H=la[hr].map(c=>String(c).trim().toLowerCase());
+     const col=n=>{const i=H.findIndex(h=>h.startsWith(n));return i<0?[]:la.slice(hr+1).map(r=>String(r[i]||'').trim()).filter(Boolean).filter((x,j,a)=>a.indexOf(x)===j)};
+     const d=col('dove'),pr=col('priorit'),az=col('azion');
+     if(d.length||pr.length||az.length){L={dove:d.length?d:S.lists.dove,priorita:pr.length?pr:S.lists.priorita,azione:az.length?az:S.lists.azione};if(!L.azione.includes(CLOSED))L.azione.push(CLOSED)}}
+   }
+   if(!rows.length&&!L){alert('Nessuna vettura trovata nel file.');return}
+   const repl=rows.length?confirm('Trovate '+rows.length+' vetture nel file.\n\nOK = SOSTITUISCI tutto il tabellone su Firebase (vale per tutti)\nAnnulla = AGGIUNGI solo le vetture che non ci sono già'+(L?'\n\nI menu a scelta del foglio Liste vengono aggiornati in ogni caso.':'')):false;
    const have=new Set(S.rows.filter(r=>!isClosed(r)).map(r=>String(r.vettura)));
    const up={};let n=0;
    if(repl)S.rows.forEach(r=>{up['rows/'+r.id]=null});
    rows.forEach(r=>{if(repl||!have.has(r.vettura)){up['rows/'+uid()+Math.random().toString(36).slice(2,4)]=clean(r);n++}});
-   DB.ref(ROOT).update(up).then(()=>{log('',(repl?'tabellone sostituito da Excel: ':'aggiunte da Excel: ')+n+' vetture');closeM('mTools');toast(n+' vetture importate')}).catch(werr);
+   if(L)up['lists']=L;
+   DB.ref(ROOT).update(up).then(()=>{log('',(repl?'tabellone sostituito da Excel: ':'aggiunte da Excel: ')+n+' vetture'+(L?' + menu aggiornati':''));closeM('mTools');toast(n+' vetture importate'+(L?' · menu aggiornati':''))}).catch(werr);
   }catch(err){alert('Errore lettura file: '+err.message)}
  };
  rd.readAsArrayBuffer(f);
