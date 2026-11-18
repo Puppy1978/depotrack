@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tabellone Carrozzeria SD</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<style>
+:root{--bg:#0B2545;--bg2:#13315C;--card:#ffffff;--ink:#14213d;--mut:#6b7280;--acc:#F28705;--acc2:#035AA6;--line:#e5e7eb;--hi:#FFFFFF;
+--alta:#fde2e1;--altaT:#9f1239;--media:#ffedd5;--mediaT:#9a3412;--bassa:#dcfce7;--bassaT:#166534;--mol:#dbeafe;--molT:#1e40af;--urg:#7f1d1d}
+*{box-sizing:border-box}
+html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg)}
+body{min-height:100vh;background-color:var(--bg);background-image:var(--pattern,none);background-size:120px 120px;background-attachment:fixed}
+header{position:sticky;top:0;z-index:20;background:var(--bg2);color:var(--hi);padding:10px 14px calc(8px) 14px;box-shadow:0 2px 10px rgba(0,0,0,.25);border-bottom:3px solid var(--acc)}
+.hrow{display:flex;align-items:center;gap:10px;justify-content:space-between}
+h1{font-size:17px;margin:0;letter-spacing:.3px}
+h1 small{display:block;font-size:11px;opacity:.75;font-weight:normal;margin-top:2px}
+.btn{border:0;border-radius:10px;padding:9px 12px;font-size:14px;font-weight:bold;cursor:pointer;background:var(--acc);color:#111;white-space:nowrap}
+.btn.ghost{background:rgba(255,255,255,.14);color:var(--hi)}
+.btn.sec{background:#eef2f7;color:var(--ink)}
+.btn.red{background:#dc2626;color:#fff}
+.btn.green{background:#16a34a;color:#fff}
+.btn:active{transform:scale(.97)}
+.stats{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
+.stats::-webkit-scrollbar{display:none}
+.st{flex:0 0 auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:5px 10px;text-align:center;cursor:pointer;min-width:74px}
+.st b{display:block;font-size:19px;color:var(--acc)}
+.st span{font-size:10.5px;opacity:.9}
+.st.on{background:var(--acc);color:#111}.st.on b{color:#111}
+.tabs{display:flex;gap:6px;margin-top:8px;overflow-x:auto;scrollbar-width:none}
+.tab{flex:0 0 auto;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.1);color:var(--hi);font-size:13px;cursor:pointer;border:1px solid rgba(255,255,255,.15)}
+.tab.on{background:var(--hi);color:var(--bg2);font-weight:bold}
+main{max-width:1100px;margin:0 auto;padding:12px 12px 90px}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;background:rgba(255,255,255,.95);padding:10px;border-radius:12px}
+.filters input[type=search]{flex:1 1 100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-size:14px}
+.filters select{flex:1 1 30%;min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-size:14px;background:#fff;color:var(--ink)}
+.chk{display:flex;align-items:center;gap:5px;font-size:13px;flex:0 0 auto;white-space:nowrap}
+.chk input{width:18px;height:18px;margin:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:10px}
+.card{background:var(--card);border-radius:14px;padding:12px 12px 10px;box-shadow:0 3px 10px rgba(0,0,0,.18);border-left:6px solid var(--acc2);position:relative;cursor:pointer}
+.card.closed{opacity:.55}
+.card.closed .num{text-decoration:line-through}
+.ctop{display:flex;align-items:center;gap:8px}
+.num{font-size:26px;font-weight:bold;letter-spacing:1px}
+.badge{font-size:11px;font-weight:bold;padding:3px 7px;border-radius:6px;white-space:nowrap}
+.bF{background:#dc2626;color:#fff}
+.bS{background:#facc15;color:#111}
+.days{margin-left:auto;text-align:right;font-size:11px;color:var(--mut)}
+.days b{display:block;font-size:20px;color:var(--ink)}
+.days.hot b{color:#dc2626}
+.line{font-size:13.5px;margin:6px 0 0;line-height:1.35}
+.line .k{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.3px;margin-right:4px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.chip{font-size:11.5px;padding:3px 8px;border-radius:999px;background:#eef2f7;color:#334155;font-weight:bold}
+.p-ALTA{background:var(--alta);color:var(--altaT)}.p-MEDIA{background:var(--media);color:var(--mediaT)}.p-BASSA{background:var(--bassa);color:var(--bassaT)}.p-MOL{background:var(--mol);color:var(--molT)}
+.pc1{background:var(--urg);color:#fff}.pc2{background:#dc2626;color:#fff}.pc3{background:#f59e0b;color:#111}.pc4{background:#22c55e;color:#062}
+.qa{display:flex;gap:6px;margin-top:9px;border-top:1px dashed var(--line);padding-top:8px}
+.qa button{flex:1;font-size:12px;padding:7px 4px;border-radius:8px;border:1px solid var(--line);background:#f8fafc;cursor:pointer;color:var(--ink)}
+.empty{color:#fff;text-align:center;padding:40px 10px;opacity:.85}
+.fab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:30;width:58px;height:58px;border-radius:50%;font-size:30px;line-height:58px;padding:0;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.modal.on{display:flex}
+.sheet{background:#fff;width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+@media(min-width:700px){.modal{align-items:center}.sheet{border-radius:18px}}
+.sheet h2{margin:0 0 10px;font-size:18px;display:flex;align-items:center;gap:8px}
+.sheet h2 .x{margin-left:auto;background:none;border:0;font-size:26px;cursor:pointer;color:var(--mut)}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg .full{grid-column:1/-1}
+label.f{min-width:0;display:flex;flex-direction:column;font-size:11.5px;color:var(--mut);gap:4px;text-transform:uppercase;letter-spacing:.3px}
+label.f input,label.f select,label.f textarea{width:100%;min-width:0;font-size:15px;padding:9px 10px;border:1px solid #d1d5db;border-radius:9px;font-family:inherit;color:var(--ink);background:#fff;text-transform:none;letter-spacing:0}
+label.f textarea{min-height:64px;resize:vertical}
+.sugg{font-size:13px;padding:8px 10px;border-radius:9px;background:#f1f5f9}
+.acts{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.acts .btn{flex:1}
+.sec-t{font-size:13px;font-weight:bold;margin:14px 0 6px;color:var(--bg2);border-left:4px solid var(--acc);padding-left:8px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:60;opacity:0;transition:.25s;pointer-events:none}
+.toast.on{opacity:1}
+.pal{display:flex;flex-wrap:wrap;gap:6px}
+.pal button{border:2px solid transparent;border-radius:10px;padding:6px 8px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:6px;background:#f8fafc}
+.pal button.on{border-color:var(--ink)}
+.sw{display:inline-flex}.sw i{width:12px;height:18px;display:block}
+.printarea{display:none}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;margin-right:5px;vertical-align:middle}
+.dot.live{background:#22c55e;box-shadow:0 0 6px #22c55e}.dot.off{background:#f59e0b}.dot.err{background:#ef4444}
+.ro{background:#fef3c7;color:#78350f;border-radius:10px;padding:8px 12px;font-size:13px;margin-bottom:10px;display:none}
+.err{color:#dc2626;font-size:13px;min-height:16px}
+.log{font-size:12.5px;max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:9px;padding:6px 8px}
+.log div{padding:3px 0;border-bottom:1px dashed #eee}
+@media print{
+ header,main,.fab,.modal,.toast{display:none!important}
+ body{background:#fff!important}
+ .printarea{display:block;font-size:11px;color:#000}
+ .printarea table{width:100%;border-collapse:collapse}
+ .printarea th,.printarea td{border:1px solid #999;padding:4px 5px;text-align:left;vertical-align:top}
+ .printarea th{background:#ddd}
+}
+</style>
+</head>
+<body>
+<header>
+ <div class="hrow">
+  <h1>🚌 Tabellone Carrozzeria<small><span id="dot" class="dot"></span><span id="sub">Deposito ATM San Donato</span></small></h1>
+  <div style="display:flex;gap:6px">
+   <button class="btn ghost" id="bUser" onclick="userBtn()">🔒 Sblocca</button>
+   <button class="btn ghost" onclick="openTools()" title="Strumenti">⚙️</button>
+  </div>
+ </div>
+ <div class="stats" id="stats"></div>
+ <div class="tabs" id="tabs"></div>
+</header>
+<main>
+ <div class="ro" id="ro">👀 Sola lettura. Premi <b>🔒 Sblocca</b> e scrivi la password per modificare.</div>
+ <div class="filters">
+  <input id="q" type="search" placeholder="🔍 Cerca vettura, danno, note…" oninput="render()">
+  <select id="fDove" onchange="render()"></select>
+  <select id="fPrio" onchange="render()"></select>
+  <select id="fSort" onchange="render()">
+   <option value="prio">↕ Priorità</option>
+   <option value="giorni">↕ Giorni</option>
+   <option value="vettura">↕ N° vettura</option>
+  </select>
+  <label class="chk"><input type="checkbox" id="fF" onchange="render()"> Solo ferme</label>
+  <label class="chk"><input type="checkbox" id="fS" onchange="render()"> 🔔 Da sollecitare</label>
+ </div>
+ <div class="grid" id="list"></div>
+</main>
+<button class="btn fab" id="fab" onclick="openEdit()">+</button>
+<div class="modal" id="mLogin"><div class="sheet" id="loginBody"></div></div>
+
+<div class="modal" id="mEdit"><div class="sheet" id="editBody"></div></div>
+<div class="modal" id="mTools"><div class="sheet" id="toolsBody"></div></div>
+<div class="toast" id="toast"></div>
+<div class="printarea" id="printarea"></div>
+<input type="file" id="fileXlsx" accept=".xlsx,.xls" style="display:none" onchange="importXlsx(this)">
+
+<script>
+/* ===== Tabellone Carrozzeria SD — Firebase (progetto depotrack-d1d28), modifiche sbloccate da password ===== */
+const CFG={apiKey:"AIzaSyB6iU__138sUB4Tw_9DKWeat4WkN2RkVng",authDomain:"depotrack-d1d28.firebaseapp.com",databaseURL:"https://depotrack-d1d28-default-rtdb.europe-west1.firebasedatabase.app",projectId:"depotrack-d1d28",appId:"1:967480447300:web:7e79395a45964cdf348711"};
+const ROOT='depotrack_carrozzeria';
+const SEED = {"rows": [{"vettura": "2016", "fermo": true, "stato": "Richiesta Solaris / Interservice", "dove": "Deposito SD", "danno": "Montante laterale dx", "data": "2026-11-17", "pratica": "Richiesta capienza economica MOLISE", "prioritaConc": "2 - ALTA", "azione": "Preventivo approvato", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6710", "fermo": true, "stato": "In carrozzeria Molise", "dove": "Molise", "danno": "Porte+ fiancata", "data": "2026-11-18", "pratica": "Vttura in lavorazione MOLISE", "prioritaConc": "3 - MEDIA", "azione": "Già a Molise", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "2023", "fermo": true, "stato": "In STL", "dove": "STL", "danno": "Cantonale + montante DX", "data": "2026-11-09", "pratica": "In lavorazione STL Aggiornato preventivo", "prioritaConc": "2 - ALTA", "azione": "STL", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "2453", "fermo": false, "stato": "Avviso girato in OG-IP", "dove": "Deposito SD", "danno": "Urto laterale", "data": "2026-10-12", "pratica": "Da chiamare per lavorazione Molise", "prioritaConc": "4 - BASSA", "azione": "Chiamare a Molise", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "1247", "fermo": false, "stato": "In SMAV", "dove": "SMAV", "danno": "Riordino carrozzeria+telaio", "data": "2026-11-05", "pratica": "Vettura in lavorazione SMAV", "prioritaConc": "2 - ALTA", "azione": "SMAV", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "3156", "fermo": true, "stato": "Richiesta Molise", "dove": "Deposito SD", "danno": "Parabrezza", "data": "2026-10-26", "pratica": "Richiesto preventivo MOLISE 26/10/2026", "prioritaConc": "2 - ALTA", "azione": "Chiamare a Molise", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "3158", "fermo": true, "stato": "Richiesta preventivo Molise", "dove": "Deposito SD", "danno": "Lunotto posteriore", "data": "2026-11-11", "pratica": "Richiesto preventivo MOLISE 11/11/2026", "prioritaConc": "2 - ALTA", "azione": "Chiamare a Molise", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6625", "fermo": true, "stato": "Lavorazione interna SD", "dove": "Deposito SD", "danno": "Sinistro vetro posteriore", "data": "2026-11-12", "pratica": "In lavorazione 19/11/2026", "prioritaConc": "2 - ALTA", "azione": "Lavorazione interna SD", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6677", "fermo": true, "stato": "In STL", "dove": "STL", "danno": "Urto veletta piu montante DX", "data": "2026-10-26", "pratica": "Ricambio disponibile 2W Dicembre", "prioritaConc": "1 - URGENTE", "azione": "STL", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6700", "fermo": true, "stato": "Richiesta preventivo Molise", "dove": "Deposito SD", "danno": "Pedana disabile", "data": "2026-10-25", "pratica": "Richiesto preventivo MOLISE 25/10/2026", "prioritaConc": "2 - ALTA", "azione": "Attesa preventivo", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "1965", "fermo": true, "stato": "In INCO", "dove": "Deposito SD", "danno": "Ripristino sistema PIRO'", "data": "2026-10-23", "pratica": "In lavorazione presso Pagliani", "prioritaConc": "2 - ALTA", "azione": "Altro fornitore", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "3003", "fermo": true, "stato": "Richiesta preventivo Molise", "dove": "Deposito SD", "danno": "Vetro posteriore", "data": "2026-10-06", "pratica": "Questa lavorazione la gestisce SD", "prioritaConc": "3 - MEDIA", "azione": "Lavorazione interna SD", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6705", "fermo": true, "stato": "Richiesta preventivo Interservice", "dove": "Deposito SD", "danno": "Urto posteriore", "data": "2026-10-20", "pratica": "Richiesto preventivo INTERSERVICE 20/10/2026", "prioritaConc": "2 - ALTA", "azione": "Attesa preventivo", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "3177", "fermo": false, "stato": "Avviso sinistro", "dove": "Molise", "danno": "Anta porta centrale", "data": "2026-11-18", "pratica": "Solo anta in lavorazione Molise", "prioritaConc": "4 - BASSA", "azione": "Già a Molise", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6679", "fermo": true, "stato": "Da mandare a Molise", "dove": "Deposito SD", "danno": "Lunotto posteriore", "data": "2026-10-22", "pratica": "Da portare a Molise 19/11/2026", "prioritaConc": "2 - ALTA", "azione": "Chiamare a Molise", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6690", "fermo": true, "stato": "In carrozzeria Molise", "dove": "Molise", "danno": "Parabrezza", "data": "2026-11-16", "pratica": "Da ritirare 19/11/2026", "prioritaConc": "4 - BASSA", "azione": "Già a Molise", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6711", "fermo": false, "stato": "Lavorazione interna SD", "dove": "Deposito SD", "danno": "Vetro autista", "data": "2026-10-21", "pratica": "Questa lavorazione la gestisce SD", "prioritaConc": "3 - MEDIA", "azione": "Lavorazione interna SD", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}], "lists": {"dove": ["Deposito SD", "Molise", "STL", "SMAV", "INCO", "Solaris / Interservice", "Interservice", "Altro"], "priorita": ["1 - URGENTE", "2 - ALTA", "3 - MEDIA", "4 - BASSA"], "azione": ["Chiamare a Molise", "Già a Molise", "Attesa preventivo", "Preventivo approvato", "Lavorazione interna SD", "Altro fornitore", "In attesa ricambi", "Rientrata / chiusa", "SMAV", "STL"]}};
+const CLOSED='Rientrata / chiusa';
+const PREF='tabelloneCarrSD_pref', CACHE='tabelloneCarrSD_cache';
+const PALETTES={
+ navy:{n:'Blu Navy',c:['#0B2545','#13315C','#F28705','#035AA6','#FFFFFF']},
+ halloween:{n:'Halloween',c:['#021F59','#035AA6','#F28705','#F25C05','#FFFFFF']},
+ turmeric:{n:'Turmeric',c:['#2A2312','#3a311a','#FFBE0B','#8a6d12','#FFF6D6']},
+ lagoon:{n:'Lagoon',c:['#0F2C33','#21616A','#EFA00F','#2E9CA0','#E6D1B4']},
+ pumpkin:{n:'Pumpkin',c:['#233D4C','#2e4f62','#FD802E','#4a7186','#FFFFFF']},
+ popular:{n:'Popular',c:['#003049','#0A9396','#FFB703','#D62828','#FFFFFF']},
+ rosso:{n:'Rosso Grafite',c:['#222B31','#440101','#E22227','#55666E','#FFFFFF']},
+ synth:{n:'Synth',c:['#06070A','#14162a','#FF8A1E','#3D5AFE','#F5F7FF']},
+ moderna:{n:'Moderna',c:['#051A2D','#068187','#FEA24F','#A60E35','#FFFFFF']},
+ saffron:{n:'Saffron',c:['#2C263F','#595082','#F8C662','#41644A','#FFFFFF']}
+};
+let P=loadPref();
+let S={rows:[],lists:JSON.parse(JSON.stringify(SEED.lists))};
+let LOG=[];
+let DB=null,ME={name:''},LOADED=false;
+let tab='attive', statFilter='';
+
+function loadPref(){try{return Object.assign({palette:'navy',pattern:true},JSON.parse(localStorage.getItem(PREF)||'{}'))}catch(e){return{palette:'navy',pattern:true}}}
+function savePref(){try{localStorage.setItem(PREF,JSON.stringify(P))}catch(e){}}
+function cacheSave(){try{localStorage.setItem(CACHE,JSON.stringify({rows:S.rows,lists:S.lists}))}catch(e){}}
+function cacheLoad(){try{const d=JSON.parse(localStorage.getItem(CACHE)||'null');if(d&&d.rows){S.rows=d.rows;if(d.lists)S.lists=d.lists}}catch(e){}}
+function uid(){return 'c_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function fmt(s){if(!s)return'';const[a,m,g]=s.split('-');return g+'/'+m+'/'+a}
+function fmtTs(t){const d=new Date(t);return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function giorni(r){if(!r.data)return null;const t=new Date(today()+'T00:00:00'),d=new Date(r.data+'T00:00:00');return Math.round((t-d)/864e5)}
+function isClosed(r){return r.azione===CLOSED}
+function sugg(r){if(r.dove==='Molise')return'A MOLISE';if(!r.fermo)return'BASSA';const g=giorni(r);if(g===null||g>=21)return'ALTA';return g>=7?'MEDIA':'BASSA'}
+function prioN(r){const m=(r.prioritaConc||'').match(/^(\d)/);return m?+m[1]:9}
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2400)}
+function canEdit(){return UNLOCK}
+function setStatus(s){const d=document.getElementById('dot');d.className='dot '+s;d.title={live:'Collegato a Firebase',off:'Offline: le modifiche partono appena torna la rete',err:'Firebase non raggiungibile',conn:'Connessione…'}[s]||''}
+function werr(e){toast('⚠️ Non salvato: '+(e&&(e.code==='PERMISSION_DENIED'||/permission/i.test(e.message||''))?'Firebase rifiuta la scrittura (permesso negato)':(e&&e.message||e)))}
+function needEdit(){if(canEdit())return true;openLogin();return false}
+
+/* ---------- scritture su Firebase ---------- */
+function clean(r){const o={};['vettura','fermo','stato','dove','danno','data','pratica','prioritaConc','azione','dataChiamata','rientro','referente','noteRiunione','noteLavagna','sollecitare','chiusaIl','prevAz'].forEach(k=>{o[k]=r[k]===undefined?'':r[k]});o.fermo=!!o.fermo;o.sollecitare=!!o.sollecitare;o.updated=Date.now();o.updatedBy=ME.name||'';return o}
+function writeRow(r,what){
+ if(!needEdit())return Promise.reject('ro');
+ const o=clean(r);
+ return DB.ref(ROOT+'/rows/'+r.id).set(o).then(()=>{log(r.vettura,what)}).catch(e=>{werr(e);throw e});
+}
+function log(vet,what){if(!DB)return;DB.ref(ROOT+'/log').push({ts:Date.now(),by:ME.name||'',vet:String(vet||''),what:String(what||'')}).catch(()=>{})}
+
+function applyPalette(){
+ const p=(PALETTES[P.palette]||PALETTES.navy).c,r=document.documentElement.style;
+ r.setProperty('--bg',p[0]);r.setProperty('--bg2',p[1]);r.setProperty('--acc',p[2]);r.setProperty('--acc2',p[3]);r.setProperty('--hi',p[4]);
+ if(P.pattern){
+  const c=p[2];
+  const svg=`<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><g fill='none' stroke='${c}' stroke-opacity='.13' stroke-width='1.2'><circle cx='60' cy='60' r='44'/><circle cx='60' cy='60' r='30'/><circle cx='60' cy='60' r='14'/>${Array.from({length:12},(_,i)=>`<ellipse cx='60' cy='30' rx='7' ry='16' transform='rotate(${i*30} 60 60)'/>`).join('')}<circle cx='0' cy='0' r='16'/><circle cx='120' cy='0' r='16'/><circle cx='0' cy='120' r='16'/><circle cx='120' cy='120' r='16'/></g></svg>`;
+  r.setProperty('--pattern',`url("data:image/svg+xml,${svg.replace(/#/g,'%23').replace(/</g,'%3C').replace(/>/g,'%3E')}")`);
+ }else r.setProperty('--pattern','none');
+}
+
+const TABS=[
+ ['attive','Attive',r=>!isClosed(r)],
+ ['chiamare','📞 Da chiamare a Molise',r=>!isClosed(r)&&r.azione==='Chiamare a Molise'],
+ ['molise','🏭 A Molise',r=>!isClosed(r)&&(r.dove==='Molise'||r.azione==='Già a Molise')],
+ ['prev','📄 Preventivi',r=>!isClosed(r)&&/preventivo/i.test(r.azione||'')],
+ ['esterni','🔧 Altri fornitori',r=>!isClosed(r)&&r.dove!=='Molise'&&r.dove!=='Deposito SD'],
+ ['storico','🗂️ Storico',r=>isClosed(r)]
+];
+function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(([k,l,f])=>`<div class="tab ${tab===k?'on':''}" onclick="tab='${k}';statFilter='';render()">${l} (${S.rows.filter(f).length})</div>`).join('')}
+function renderStats(){
+ const a=S.rows.filter(r=>!isClosed(r));
+ const items=[['','Attive',a.length],['F','Ferme',a.filter(r=>r.fermo).length],['ALTA','Suggerita ALTA',a.filter(r=>sugg(r)==='ALTA').length],['30','Ferme 30+ gg',a.filter(r=>r.fermo&&(giorni(r)??0)>=30).length],['SOL','🔔 Sollecitare',a.filter(r=>r.sollecitare).length]];
+ document.getElementById('stats').innerHTML=items.map(([k,l,n])=>`<div class="st ${statFilter===k&&k?'on':''}" onclick="statFilter=(statFilter==='${k}'?'':'${k}');render()"><b>${n}</b><span>${l}</span></div>`).join('');
+ document.getElementById('sub').textContent='Deposito ATM San Donato · '+fmt(today());
+}
+function fillFilters(){
+ const fd=document.getElementById('fDove'),fp=document.getElementById('fPrio');const vd=fd.value,vp=fp.value;
+ fd.innerHTML='<option value="">📍 Luogo</option>'+S.lists.dove.map(x=>`<option>${esc(x)}</option>`).join('');
+ fp.innerHTML='<option value="">⭐ Priorità</option><option value="__none">Non concordata</option>'+S.lists.priorita.map(x=>`<option>${esc(x)}</option>`).join('');
+ fd.value=vd;fp.value=vp;
+}
+function filtered(){
+ const q=document.getElementById('q').value.trim().toLowerCase();
+ const fd=document.getElementById('fDove').value,fp=document.getElementById('fPrio').value;
+ const fF=document.getElementById('fF').checked,fS=document.getElementById('fS').checked;
+ const tf=TABS.find(t=>t[0]===tab)[2];
+ let rows=S.rows.filter(tf).filter(r=>{
+  if(fd&&r.dove!==fd)return false;
+  if(fp==='__none'&&r.prioritaConc)return false;
+  if(fp&&fp!=='__none'&&r.prioritaConc!==fp)return false;
+  if(fF&&!r.fermo)return false;
+  if(fS&&!r.sollecitare)return false;
+  if(statFilter==='F'&&!r.fermo)return false;
+  if(statFilter==='ALTA'&&sugg(r)!=='ALTA')return false;
+  if(statFilter==='30'&&!(r.fermo&&(giorni(r)??0)>=30))return false;
+  if(statFilter==='SOL'&&!r.sollecitare)return false;
+  if(q){const t=[r.vettura,r.stato,r.dove,r.danno,r.pratica,r.azione,r.noteRiunione,r.noteLavagna,r.referente,r.rientro].join(' ').toLowerCase();if(!t.includes(q))return false}
+  return true;
+ });
+ const so=document.getElementById('fSort').value;
+ rows.sort((a,b)=>{
+  if(so==='vettura')return String(a.vettura).localeCompare(String(b.vettura),undefined,{numeric:true});
+  if(so==='giorni')return (giorni(b)??-1)-(giorni(a)??-1);
+  return prioN(a)-prioN(b)||(giorni(b)??999)-(giorni(a)??999);
+ });
+ return rows;
+}
+function render(){
+ renderStats();renderTabs();
+ document.getElementById('ro').style.display=canEdit()?'none':'block';
+ document.getElementById('fab').style.display=canEdit()?'block':'none';
+ const el=document.getElementById('list');
+ if(LOADED&&!S.rows.length){
+  el.innerHTML=`<div class="empty">Il tabellone su Firebase è vuoto.<br><br>${canEdit()?`<button class="btn" onclick="seedDB()">⬆️ Carica le ${SEED.rows.length} vetture del file del 18/11</button>`:'Sblocca con la password per caricare i dati.'}</div>`;return;
+ }
+ if(!LOADED&&!S.rows.length){el.innerHTML='<div class="empty">'+(typeof firebase==='undefined'?'⚠️ Firebase non raggiungibile: controlla la connessione e ricarica la pagina.':'Collegamento a Firebase…')+'</div>';return}
+ const rows=filtered();
+ if(!rows.length){el.innerHTML='<div class="empty">Nessuna vettura con questi filtri.</div>';return}
+ const ed=canEdit();
+ el.innerHTML=rows.map(r=>{
+  const g=giorni(r),sg=sugg(r),pn=prioN(r),cl=isClosed(r);
+  const sgc=sg==='A MOLISE'?'MOL':sg;
+  const border=pn===1?'#7f1d1d':pn===2?'#dc2626':pn===3?'#f59e0b':pn===4?'#22c55e':'var(--acc2)';
+  return `<div class="card ${cl?'closed':''}" style="border-left-color:${border}" onclick="openEdit('${r.id}')">
+   <div class="ctop"><span class="num">${esc(r.vettura)}</span>
+    ${r.fermo?'<span class="badge bF">FERMA</span>':''}${r.sollecitare?'<span class="badge bS">🔔 SOLLECITARE</span>':''}
+    <div class="days ${g!==null&&g>=30?'hot':''}">${g===null?'<b>—</b>senza data':`<b>${g}</b>gg dal ${fmt(r.data)}`}</div></div>
+   ${r.danno?`<div class="line"><span class="k">Danno</span><b>${esc(r.danno)}</b></div>`:''}
+   <div class="line"><span class="k">Stato</span>${esc(r.stato)||'—'} · 📍 ${esc(r.dove)||'—'}</div>
+   ${r.pratica?`<div class="line"><span class="k">Aggiorn.</span>${esc(r.pratica)}</div>`:''}
+   ${r.noteRiunione?`<div class="line"><span class="k">Riunione</span>${esc(r.noteRiunione)}</div>`:''}
+   <div class="chips">
+    ${r.prioritaConc?`<span class="chip pc${pn}">${esc(r.prioritaConc)}</span>`:'<span class="chip">Priorità da concordare</span>'}
+    <span class="chip p-${sgc}">Sugg.: ${sg}</span>
+    ${r.azione?`<span class="chip">➜ ${esc(r.azione)}</span>`:''}
+    ${r.dataChiamata?`<span class="chip">📅 ${fmt(r.dataChiamata)}</span>`:''}
+    ${r.rientro?`<span class="chip">↩ ${esc(r.rientro)}</span>`:''}
+    ${cl&&r.chiusaIl?`<span class="chip">Chiusa il ${fmt(r.chiusaIl)}</span>`:''}
+   </div>
+   ${r.updated?`<div style="font-size:10.5px;color:var(--mut);margin-top:6px">Modificata ${fmtTs(r.updated)}${r.updatedBy?' da '+esc(r.updatedBy):''}</div>`:''}
+   ${ed?`<div class="qa" onclick="event.stopPropagation()">
+    ${cl?`<button onclick="riapri('${r.id}')">↺ Riapri</button>`:`
+    <button onclick="toggleSol('${r.id}')">${r.sollecitare?'🔕 Sollecitata':'🔔 Sollecita'}</button>
+    <button onclick="quickAz('${r.id}','Chiamare a Molise')">📞 Chiama Molise</button>
+    <button onclick="chiudi('${r.id}')">✅ Rientrata</button>`}
+   </div>`:''}</div>`;
+ }).join('');
+}
+function find(id){return S.rows.find(r=>r.id===id)}
+function toggleSol(id){const r={...find(id)};r.sollecitare=!r.sollecitare;writeRow(r,r.sollecitare?'da sollecitare':'sollecito tolto')}
+function quickAz(id,a){const r={...find(id)};r.azione=a;writeRow(r,'azione → '+a).then(()=>toast(r.vettura+' → '+a),()=>{})}
+function chiudi(id){const r={...find(id)};r.prevAz=r.azione;r.azione=CLOSED;r.chiusaIl=today();r.sollecitare=false;writeRow(r,'rientrata / chiusa').then(()=>toast(r.vettura+' spostata nello Storico'),()=>{})}
+function riapri(id){const r={...find(id)};r.azione=r.prevAz&&r.prevAz!==CLOSED?r.prevAz:'';r.chiusaIl='';writeRow(r,'riaperta').then(()=>toast(r.vettura+' riaperta'),()=>{})}
+
+function opts(list,v){const l=[...list];if(v&&!l.includes(v))l.push(v);return '<option value=""></option>'+l.map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('')}
+function openEdit(id){
+ if(!id&&!needEdit())return;
+ const ed=canEdit(),dis=ed?'':'disabled';
+ const r=id?find(id):{id:'',vettura:'',fermo:true,stato:'',dove:'Deposito SD',danno:'',data:today(),pratica:'',prioritaConc:'',azione:'',dataChiamata:'',rientro:'',referente:'',noteRiunione:'',noteLavagna:'',sollecitare:false};
+ const g=id?giorni(r):null;
+ document.getElementById('editBody').innerHTML=`
+ <h2>${id?'Vettura '+esc(r.vettura):'Nuova vettura'}<button class="x" onclick="closeM('mEdit')">×</button></h2>
+ <fieldset ${dis} style="border:0;padding:0;margin:0">
+ <div class="fg">
+  <label class="f">N° vettura<input id="e_vettura" inputmode="numeric" value="${esc(r.vettura)}"></label>
+  <label class="f">Data stato<input id="e_data" type="date" value="${esc(r.data)}"></label>
+  <label class="chk"><input type="checkbox" id="e_fermo" ${r.fermo?'checked':''}> <b>Ferma (F)</b></label>
+  <label class="chk"><input type="checkbox" id="e_sol" ${r.sollecitare?'checked':''}> 🔔 Da sollecitare</label>
+  <label class="f full">Lavorazione / danno<input id="e_danno" value="${esc(r.danno)}"></label>
+  <label class="f">Stato attuale<input id="e_stato" value="${esc(r.stato)}"></label>
+  <label class="f">Dove si trova<select id="e_dove">${opts(S.lists.dove,r.dove)}</select></label>
+  <label class="f full">Pratica / aggiornamento<input id="e_pratica" value="${esc(r.pratica)}"></label>
+ </div>
+ ${id?`<div class="sugg" style="margin-top:10px">⏱ ${g===null?'Senza data':g+' giorni dal '+fmt(r.data)} · Priorità suggerita: <b>${sugg(r)}</b></div>`:''}
+ <div class="sec-t">Riunione con la carrozzeria</div>
+ <div class="fg">
+  <label class="f">Priorità concordata<select id="e_prio">${opts(S.lists.priorita,r.prioritaConc)}</select></label>
+  <label class="f">Azione concordata<select id="e_azione">${opts(S.lists.azione,r.azione)}</select></label>
+  <label class="f">Data chiamata / spostamento<input id="e_dch" type="date" value="${esc(r.dataChiamata)}"></label>
+  <label class="f">Rientro previsto<input id="e_rientro" value="${esc(r.rientro)}" placeholder="es. 2ª sett. dicembre"></label>
+  <label class="f full">Referente carrozzeria<input id="e_ref" value="${esc(r.referente)}"></label>
+  <label class="f full">Note riunione<textarea id="e_nr">${esc(r.noteRiunione)}</textarea></label>
+  <label class="f full">Note lavagna<input id="e_nl" value="${esc(r.noteLavagna)}"></label>
+ </div></fieldset>
+ <div class="acts">
+  ${ed&&id?`<button class="btn red" onclick="delRow('${r.id}')">🗑 Elimina</button>`:''}
+  <button class="btn sec" onclick="closeM('mEdit')">${ed?'Annulla':'Chiudi'}</button>
+  ${ed?`<button class="btn green" onclick="saveRow('${r.id}')">💾 Salva</button>`:''}
+ </div>
+ ${id&&r.updated?`<div style="font-size:11px;color:var(--mut);margin-top:8px">Ultima modifica: ${fmtTs(r.updated)}${r.updatedBy?' · '+esc(r.updatedBy):''}</div>`:''}`;
+ document.getElementById('mEdit').classList.add('on');
+ if(!id)setTimeout(()=>document.getElementById('e_vettura').focus(),50);
+}
+function v(id){return document.getElementById(id).value.trim()}
+function saveRow(id){
+ const vet=v('e_vettura');if(!vet){toast('Scrivi il numero vettura');return}
+ const dup=S.rows.find(x=>String(x.vettura)===vet&&x.id!==id&&!isClosed(x));
+ if(dup&&!confirm('La vettura '+vet+' è già nella lista attiva. Salvo lo stesso?'))return;
+ const old=id?find(id):null;
+ const r=old?{...old}:{id:uid(),chiusaIl:'',prevAz:''};
+ Object.assign(r,{vettura:vet,data:v('e_data'),fermo:document.getElementById('e_fermo').checked,sollecitare:document.getElementById('e_sol').checked,danno:v('e_danno'),stato:v('e_stato'),dove:v('e_dove'),pratica:v('e_pratica'),prioritaConc:v('e_prio'),azione:v('e_azione'),dataChiamata:v('e_dch'),rientro:v('e_rientro'),referente:v('e_ref'),noteRiunione:v('e_nr'),noteLavagna:v('e_nl')});
+ if(r.azione===CLOSED&&(!old||old.azione!==CLOSED)){r.chiusaIl=today();r.prevAz=old?old.azione:''}
+ if(r.azione!==CLOSED)r.chiusaIl='';
+ writeRow(r,old?'modificata':'inserita').then(()=>{closeM('mEdit');toast('Salvata '+vet)},()=>{});
+}
+function delRow(id){const r=find(id);if(!needEdit())return;if(!confirm('Eliminare definitivamente la vettura '+r.vettura+'?\nSe è solo rientrata usa "Rientrata": resta nello Storico.'))return;
+ DB.ref(ROOT+'/rows/'+id).remove().then(()=>{log(r.vettura,'eliminata');closeM('mEdit');toast('Eliminata')}).catch(werr)}
+function closeM(id){document.getElementById(id).classList.remove('on')}
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('on')}));
+
+function seedDB(){
+ if(!needEdit())return;
+ if(S.rows.length&&!confirm('Su Firebase ci sono già '+S.rows.length+' vetture. Aggiungo comunque quelle del file?'))return;
+ const up={};SEED.rows.forEach(r=>{const id=uid()+Math.random().toString(36).slice(2,4);up['rows/'+id]=clean({...r,sollecitare:false,chiusaIl:'',prevAz:''})});
+ up['lists']=SEED.lists;
+ DB.ref(ROOT).update(up).then(()=>{log('','caricate '+SEED.rows.length+' vetture dal file del 18/11');toast('Caricate '+SEED.rows.length+' vetture')}).catch(werr);
+}
+
+/* ---------- strumenti ---------- */
+function openTools(){
+ const ed=canEdit();
+ document.getElementById('toolsBody').innerHTML=`
+ <h2>⚙️ Strumenti<button class="x" onclick="closeM('mTools')">×</button></h2>
+ <div class="sec-t">Per la riunione</div>
+ <div class="acts" style="margin-top:0">
+  <button class="btn sec" onclick="copyList()">📋 Copia lista per WhatsApp</button>
+  <button class="btn sec" onclick="printList()">🖨 Stampa / PDF</button>
+ </div>
+ <div style="font-size:12px;color:var(--mut);margin-top:6px">Copiano e stampano le vetture che stai vedendo ora (scheda e filtri attivi).</div>
+ <div class="sec-t">Excel</div>
+ <div class="acts" style="margin-top:0">
+  <button class="btn sec" onclick="exportXlsx()">⬇️ Esporta Excel</button>
+  ${ed?`<button class="btn sec" onclick="document.getElementById('fileXlsx').click()">⬆️ Importa Excel</button>`:''}
+ </div>
+ ${ed?`<div class="sec-t">Liste dei menu (una voce per riga) — valgono per tutti</div>
+ <div class="fg">
+  <label class="f">Dove si trova<textarea id="l_dove" rows="6">${esc(S.lists.dove.join('\n'))}</textarea></label>
+  <label class="f">Azioni<textarea id="l_az" rows="6">${esc(S.lists.azione.join('\n'))}</textarea></label>
+  <label class="f full">Priorità (inizia col numero: 1 = più urgente)<textarea id="l_pr" rows="4">${esc(S.lists.priorita.join('\n'))}</textarea></label>
+ </div>
+ <div class="acts"><button class="btn green" onclick="saveLists()">Salva liste</button></div>
+ <div class="sec-t">Ultime modifiche</div>
+ <div class="log" id="logBox">${LOG.length?LOG.map(l=>`<div><b>${fmtTs(l.ts)}</b> · ${esc(l.by)} · ${l.vet?'<b>'+esc(l.vet)+'</b> ':''}${esc(l.what)}</div>`).join(''):'Nessuna modifica registrata.'}</div>`:''}
+ <div class="sec-t">Aspetto (solo su questo dispositivo)</div>
+ <div class="pal">${Object.entries(PALETTES).map(([k,p])=>`<button class="${P.palette===k?'on':''}" onclick="P.palette='${k}';savePref();applyPalette();openTools()"><span class="sw">${p.c.slice(0,4).map(c=>`<i style="background:${c}"></i>`).join('')}</span>${p.n}</button>`).join('')}</div>
+ <label class="chk" style="margin-top:10px"><input type="checkbox" ${P.pattern?'checked':''} onchange="P.pattern=this.checked;savePref();applyPalette()"> Sfondo mandala</label>`;
+ document.getElementById('mTools').classList.add('on');
+}
+function saveLists(){
+ if(!needEdit())return;
+ const sp=id=>document.getElementById(id).value.split('\n').map(s=>s.trim()).filter(Boolean);
+ const L={dove:sp('l_dove'),azione:sp('l_az'),priorita:sp('l_pr')};
+ if(!L.azione.includes(CLOSED))L.azione.push(CLOSED);
+ DB.ref(ROOT+'/lists').set(L).then(()=>{log('','liste dei menu aggiornate');toast('Liste salvate')}).catch(werr);
+}
+function rowsForExport(rows){
+ return rows.map(r=>({'Vettura':isNaN(+r.vettura)?r.vettura:+r.vettura,'Fermo (F)':r.fermo?'F':'','Stato attuale':r.stato,'Dove si trova':r.dove,'Lavorazione / danno':r.danno,'Data stato':r.data?fmt(r.data):'','Giorni trascorsi':giorni(r)??'','Pratica':r.pratica,'Priorità suggerita (auto)':sugg(r),'Priorità concordata':r.prioritaConc,'Azione concordata':r.azione,'Data chiamata / spostamento':r.dataChiamata?fmt(r.dataChiamata):'','Rientro previsto':r.rientro,'Referente carrozzeria':r.referente,'Note riunione':r.noteRiunione,'Note lavagna':r.noteLavagna,'Da sollecitare':r.sollecitare?'SI':'','Chiusa il':r.chiusaIl?fmt(r.chiusaIl):''}));
+}
+function exportXlsx(){
+ if(typeof XLSX==='undefined'){toast('Serve internet per esportare in Excel');return}
+ const wb=XLSX.utils.book_new();
+ const sort=(a,b)=>prioN(a)-prioN(b)||(giorni(b)??999)-(giorni(a)??999);
+ const a=S.rows.filter(r=>!isClosed(r)).sort(sort),st=S.rows.filter(isClosed);
+ const ws=XLSX.utils.json_to_sheet(rowsForExport(a));ws['!cols']=[8,7,28,18,26,11,8,34,12,13,22,13,16,16,30,20,10,10].map(w=>({wch:w}));
+ XLSX.utils.book_append_sheet(wb,ws,'Vetture');
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rowsForExport(st)),'Storico');
+ const rie=[['RIEPILOGO CARROZZERIA',fmt(today())],[],['Vetture attive',a.length],['Ferme (F)',a.filter(r=>r.fermo).length],['A Molise',a.filter(r=>r.dove==='Molise').length],['Da chiamare a Molise',a.filter(r=>r.azione==='Chiamare a Molise').length],['In attesa preventivo',a.filter(r=>r.azione==='Attesa preventivo').length],['Priorità suggerita ALTA',a.filter(r=>sugg(r)==='ALTA').length],['Ferme da 30+ giorni',a.filter(r=>r.fermo&&(giorni(r)??0)>=30).length],['Da sollecitare',a.filter(r=>r.sollecitare).length],[],['Per luogo'],...S.lists.dove.map(d=>[d,a.filter(r=>r.dove===d).length])];
+ const ws3=XLSX.utils.aoa_to_sheet(rie);ws3['!cols']=[{wch:30},{wch:12}];XLSX.utils.book_append_sheet(wb,ws3,'Riepilogo');
+ XLSX.writeFile(wb,'Tabellone_Carrozzeria_SD_'+today()+'.xlsx');
+}
+function toISO(x){
+ if(!x)return'';
+ if(x instanceof Date)return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+ const m=String(x).match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+ if(m)return (m[3].length===2?'20'+m[3]:m[3])+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+ return /^\d{4}-\d{2}-\d{2}/.test(x)?String(x).slice(0,10):'';
+}
+function importXlsx(inp){
+ const f=inp.files[0];inp.value='';if(!f||!needEdit())return;
+ if(typeof XLSX==='undefined'){toast('Serve internet per leggere Excel');return}
+ const rd=new FileReader();
+ rd.onload=e=>{
+  try{
+   const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+   const rows=[];
+   ['Vetture','Storico'].concat(wb.SheetNames.slice(0,1)).filter((n,i,a)=>wb.Sheets[n]&&a.indexOf(n)===i).forEach(n=>{
+    const aoa=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:''});
+    const hi=aoa.findIndex(r=>r.some(c=>String(c).trim()==='Vettura'));if(hi<0)return;
+    const H=aoa[hi].map(c=>String(c).trim());const get=(r,k)=>{const i=H.indexOf(k);return i<0?'':r[i]};
+    for(const r of aoa.slice(hi+1)){const vet=String(get(r,'Vettura')).trim();if(!vet)continue;
+     rows.push({vettura:vet,fermo:String(get(r,'Fermo (F)')).trim().toUpperCase()==='F',stato:String(get(r,'Stato attuale')),dove:String(get(r,'Dove si trova')),danno:String(get(r,'Lavorazione / danno')).trim(),data:toISO(get(r,'Data stato')),pratica:String(get(r,'Pratica')),prioritaConc:String(get(r,'Priorità concordata')),azione:String(get(r,'Azione concordata')),dataChiamata:toISO(get(r,'Data chiamata / spostamento')),rientro:String(get(r,'Rientro previsto')),referente:String(get(r,'Referente carrozzeria')),noteRiunione:String(get(r,'Note riunione')),noteLavagna:String(get(r,'Note lavagna')),sollecitare:String(get(r,'Da sollecitare')).toUpperCase()==='SI',chiusaIl:toISO(get(r,'Chiusa il')),prevAz:''})}
+   });
+   if(!rows.length){alert('Nessuna vettura trovata nel file.');return}
+   const repl=confirm('Trovate '+rows.length+' vetture nel file.\n\nOK = SOSTITUISCI tutto il tabellone su Firebase (vale per tutti)\nAnnulla = AGGIUNGI solo le vetture che non ci sono già');
+   const have=new Set(S.rows.filter(r=>!isClosed(r)).map(r=>String(r.vettura)));
+   const up={};let n=0;
+   if(repl)S.rows.forEach(r=>{up['rows/'+r.id]=null});
+   rows.forEach(r=>{if(repl||!have.has(r.vettura)){up['rows/'+uid()+Math.random().toString(36).slice(2,4)]=clean(r);n++}});
+   DB.ref(ROOT).update(up).then(()=>{log('',(repl?'tabellone sostituito da Excel: ':'aggiunte da Excel: ')+n+' vetture');closeM('mTools');toast(n+' vetture importate')}).catch(werr);
+  }catch(err){alert('Errore lettura file: '+err.message)}
+ };
+ rd.readAsArrayBuffer(f);
+}
+function copyList(){
+ const rows=filtered();if(!rows.length){toast('Nessuna vettura da copiare');return}
+ const t=TABS.find(x=>x[0]===tab)[1].replace(/^[^\wÀ-ÿ]+/,'');
+ let s='*Carrozzeria SD – '+t+'* ('+fmt(today())+')\n';
+ rows.forEach(r=>{const g=giorni(r);s+='\n• *'+r.vettura+'*'+(r.fermo?' (ferma)':'')+' – '+(r.danno||r.stato||'')+(g!==null?' – '+g+' gg':'')+(r.prioritaConc?' – '+r.prioritaConc:'')+(r.azione?' – '+r.azione:'')});
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(s).then(()=>toast('Lista copiata ✔'),()=>fallbackCopy(s));else fallbackCopy(s);
+}
+function fallbackCopy(s){const ta=document.createElement('textarea');ta.value=s;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Lista copiata ✔')}catch(e){prompt('Copia il testo:',s)}ta.remove()}
+function printList(){
+ const rows=filtered(),t=TABS.find(x=>x[0]===tab)[1];
+ document.getElementById('printarea').innerHTML=`<h2 style="margin:0 0 4px">Tabellone Carrozzeria SD – ${esc(t)}</h2><div style="margin-bottom:8px">Stampato il ${fmt(today())} · ${rows.length} vetture</div>
+ <table><tr><th>Vett.</th><th>F</th><th>Danno</th><th>Stato / dove</th><th>Gg</th><th>Aggiornamento</th><th>Sugg.</th><th>Priorità</th><th>Azione</th><th>Note riunione</th></tr>
+ ${rows.map(r=>`<tr><td><b>${esc(r.vettura)}</b></td><td>${r.fermo?'F':''}</td><td>${esc(r.danno)}</td><td>${esc(r.stato)} · ${esc(r.dove)}</td><td>${giorni(r)??''}</td><td>${esc(r.pratica)}</td><td>${sugg(r)}</td><td>${esc(r.prioritaConc)}</td><td>${esc(r.azione)}</td><td style="min-width:120px">${esc(r.noteRiunione)}</td></tr>`).join('')}</table>`;
+ closeM('mTools');setTimeout(()=>window.print(),100);
+}
+
+/* ---------- sblocco con password ----------
+   La password viene controllata da Firebase: il tabellone usa un utente Firebase dedicato
+   (TAB_EMAIL) che il programma crea da solo al primo sblocco. Le regole del database
+   non vanno toccate (scrivere richiede già un utente collegato). */
+const PIN_HASH='7c3e285b5b18d5202a87cdd614b089b5eb764f1a84795891697b39bda7af2aa7';
+const TAB_EMAIL='tabellone.carrozzeria.sd@depotrack-d1d28.app';
+let AUTH=null,UNLOCK=false,MYNAME='';
+try{MYNAME=localStorage.getItem('tabCarrSD_nome')||''}catch(e){}
+async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}
+function paintUser(){const b=document.getElementById('bUser');b.textContent=UNLOCK?('🔓 '+(MYNAME||'Blocca')):'🔒 Sblocca';ME.name=MYNAME}
+function userBtn(){if(!UNLOCK){openLogin();return}lock('Tabellone bloccato')}
+function lock(msg){if(AUTH&&AUTH.currentUser)AUTH.signOut();UNLOCK=false;paintUser();render();if(msg)toast(msg)}
+function openLogin(){
+ if(!AUTH){toast('Firebase non raggiungibile: controlla la connessione');return}
+ document.getElementById('loginBody').innerHTML=`<h2>🔒 Sblocca il tabellone<button class="x" onclick="closeM('mLogin')">×</button></h2>
+ <div class="fg"><label class="f full">Password<input id="lp" type="password" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()"></label>
+ <label class="f full">Il tuo nome (compare nel registro modifiche)<input id="ln" value="${esc(MYNAME)}" placeholder="es. Mauro"></label></div>
+ <div class="err" id="lerr"></div>
+ <div class="acts"><button class="btn sec" onclick="closeM('mLogin')">Annulla</button><button class="btn green" id="lgo" onclick="doLogin()">Sblocca</button></div>`;
+ document.getElementById('mLogin').classList.add('on');setTimeout(()=>document.getElementById('lp').focus(),60);
+}
+async function doLogin(){
+ const p=document.getElementById('lp').value.trim(),er=document.getElementById('lerr');er.textContent='';
+ if(!p){er.textContent='Scrivi la password.';return}
+ let h='';try{h=await sha('tabSD|'+p)}catch(e){er.textContent='Apri la pagina da https:// (GitHub Pages) per usare la password.';return}
+ if(h!==PIN_HASH){er.textContent='Password errata.';document.getElementById('lp').value='';return}
+ MYNAME=v('ln');try{localStorage.setItem('tabCarrSD_nome',MYNAME)}catch(e){}
+ const pw='tabSD-'+p, btn=document.getElementById('lgo');btn.disabled=true;er.textContent='Sblocco in corso…';
+ try{
+  try{await AUTH.signInWithEmailAndPassword(TAB_EMAIL,pw)}
+  catch(e1){
+   if(e1.code==='auth/too-many-requests')throw e1;
+   try{await AUTH.createUserWithEmailAndPassword(TAB_EMAIL,pw)}   // primo sblocco in assoluto: crea l'utente del tabellone
+   catch(e2){throw e2.code==='auth/email-already-in-use'?e1:e2}
+  }
+  closeM('mLogin');
+ }catch(err){
+  btn.disabled=false;
+  const map={'auth/too-many-requests':'Troppi tentativi, riprova tra qualche minuto.','auth/network-request-failed':'Niente rete, riprova.','auth/operation-not-allowed':'Su Firebase è disattivato l\'accesso con email e password.'};
+  er.textContent=map[err.code]||('Errore Firebase: '+(err.code||err.message));
+ }
+}
+function onAuth(user){
+ const ok=!!(user&&user.email===TAB_EMAIL);
+ if(user&&!ok){AUTH.signOut();return}
+ const was=UNLOCK;UNLOCK=ok;paintUser();render();
+ if(ok&&!was){resetInact();toast('Sbloccato'+(MYNAME?' · '+MYNAME:''))}
+}
+/* 20 minuti senza toccare niente = si blocca di nuovo */
+let inact=null;
+function resetInact(){if(inact){clearTimeout(inact);inact=null}if(!UNLOCK)return;inact=setTimeout(()=>{if(UNLOCK)lock('Bloccato per inattività')},20*60*1000)}
+['mousedown','keydown','touchstart','click'].forEach(ev=>document.addEventListener(ev,resetInact,{passive:true}));
+
+/* ---------- avvio ---------- */
+applyPalette();cacheLoad();fillFilters();paintUser();render();resetInact();
+setInterval(render,10*60*1000); // i giorni si aggiornano anche se la pagina resta aperta
+if(typeof firebase==='undefined'){setStatus('err');toast('Firebase non raggiungibile: mostro l\'ultima copia salvata');LOADED=!!S.rows.length;render()}
+else{
+ try{firebase.initializeApp(CFG);DB=firebase.database()}catch(e){setStatus('err')}
+ try{AUTH=firebase.auth();AUTH.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{});AUTH.onAuthStateChanged(onAuth)}catch(e){AUTH=null}
+ if(DB){
+  setStatus('conn');
+  DB.ref(ROOT+'/rows').on('value',s=>{const o=s.val()||{};S.rows=Object.keys(o).map(k=>({...o[k],id:k,vettura:String(o[k].vettura??'')}));LOADED=true;cacheSave();setStatus('live');render()},()=>{setStatus('err');toast('Accesso al database negato')});
+  DB.ref(ROOT+'/lists').on('value',s=>{const l=s.val();if(l&&l.dove){S.lists={dove:l.dove||[],azione:l.azione||[],priorita:l.priorita||[]};cacheSave();fillFilters();render()}});
+  DB.ref(ROOT+'/log').orderByKey().limitToLast(60).on('value',s=>{const o=s.val()||{};LOG=Object.keys(o).map(k=>o[k]).sort((a,b)=>b.ts-a.ts);const lb=document.getElementById('logBox');if(lb)lb.innerHTML=LOG.length?LOG.map(l=>`<div><b>${fmtTs(l.ts)}</b> · ${esc(l.by)} · ${l.vet?'<b>'+esc(l.vet)+'</b> ':''}${esc(l.what)}</div>`).join(''):'Nessuna modifica registrata.'});
+  DB.ref('.info/connected').on('value',s=>{if(LOADED)setStatus(s.val()?'live':'off')});
+ }
+}
+</script>
+</body>
+</html>
