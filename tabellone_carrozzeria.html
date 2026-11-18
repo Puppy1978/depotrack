@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0B2545;--bg2:#13315C;--card:#ffffff;--ink:#14213d;--mut:#6b7280;--acc:#F28705;--acc2:#035AA6;--line:#e5e7eb;--hi:#FFFFFF;
 --alta:#fde2e1;--altaT:#9f1239;--media:#ffedd5;--mediaT:#9a3412;--bassa:#dcfce7;--bassaT:#166534;--mol:#dbeafe;--molT:#1e40af;--urg:#7f1d1d}
@@ -83,6 +84,115 @@ label.f textarea{min-height:64px;resize:vertical}
 .pal button.on{border-color:var(--ink)}
 .sw{display:inline-flex}.sw i{width:12px;height:18px;display:block}
 .printarea{display:none}
+
+.sheet .vbtn button{color:var(--ink);background:#eef2f7}.sheet .vbtn button.on{background:var(--acc);color:#111}
+/* ================= STILE LIQUID GLASS ================= */
+body.glass{--g1:#22d3ee;--g2:#a855f7;--gbg:rgba(255,255,255,.055);--gbd:rgba(160,210,255,.18);--gtx:#e8ecf4;--gmut:#9aa3b5;
+ font-family:'Inter',system-ui,Arial,sans-serif;color:var(--gtx);background:#14161b;
+ background-image:radial-gradient(600px 420px at 8% 12%,rgba(34,211,238,.16),transparent 70%),radial-gradient(700px 500px at 92% 20%,rgba(168,85,247,.16),transparent 70%),radial-gradient(600px 500px at 60% 100%,rgba(249,115,22,.10),transparent 70%),var(--pattern,none);
+ background-size:auto,auto,auto,120px 120px;background-attachment:fixed}
+body.glass .gl,body.glass header,body.glass .filters,body.glass .card,body.glass .sheet,body.glass .xwrap,body.glass .toast,body.glass .ro{
+ background:var(--gbg);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);
+ border:1px solid var(--gbd);box-shadow:0 0 0 1px rgba(168,85,247,.08),0 10px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.07)}
+body.glass header{background:rgba(22,25,32,.72);border-width:0 0 1px 0;border-bottom:1px solid var(--gbd);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+body.glass header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--g1),var(--g2));opacity:.8}
+body.glass h1{font-weight:700;letter-spacing:.2px}
+body.glass .st{background:rgba(255,255,255,.05);border:1px solid var(--gbd);border-radius:14px}
+body.glass .st b{background:linear-gradient(90deg,var(--g1),var(--g2));-webkit-background-clip:text;background-clip:text;color:transparent}
+body.glass .st.on{background:linear-gradient(135deg,rgba(34,211,238,.25),rgba(168,85,247,.25));box-shadow:0 0 18px rgba(34,211,238,.25);color:#fff}
+body.glass .st.on b{color:#fff;-webkit-text-fill-color:#fff}
+body.glass .tabs{background:rgba(255,255,255,.04);border:1px solid var(--gbd);border-radius:14px;padding:4px;width:max-content;max-width:100%}
+body.glass .tab{background:transparent;border:1px solid transparent;color:var(--gmut);border-radius:10px}
+body.glass .tab.on{background:rgba(34,211,238,.10);color:#fff;border:1px solid rgba(34,211,238,.55);box-shadow:0 0 14px rgba(34,211,238,.25),inset 0 0 10px rgba(168,85,247,.15);font-weight:600}
+body.glass .btn{background:linear-gradient(90deg,var(--g1),var(--g2));color:#fff;box-shadow:0 0 18px rgba(34,211,238,.35),0 0 26px rgba(168,85,247,.25);border:1px solid rgba(255,255,255,.25)}
+body.glass .btn.ghost,body.glass .btn.sec{background:rgba(255,255,255,.07);color:var(--gtx);box-shadow:inset 0 1px 0 rgba(255,255,255,.06);border:1px solid var(--gbd)}
+body.glass .btn.red{background:rgba(239,68,68,.18);color:#fecaca;border:1px solid rgba(239,68,68,.5);box-shadow:0 0 14px rgba(239,68,68,.2)}
+body.glass .btn.green{background:linear-gradient(90deg,var(--g1),var(--g2));color:#fff}
+body.glass .fab{border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.25),rgba(255,255,255,.04) 60%),rgba(30,34,44,.7);border:1px solid rgba(34,211,238,.6);color:#a5f3fc;box-shadow:0 0 22px rgba(34,211,238,.45),0 0 40px rgba(168,85,247,.25);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+body.glass .vbtn{border:1px solid var(--gbd);background:rgba(255,255,255,.04);border-radius:12px;padding:3px;gap:2px}
+body.glass .vbtn button{background:transparent;color:var(--gmut);border-radius:9px}
+body.glass .vbtn button.on{background:rgba(34,211,238,.12);color:#fff;box-shadow:inset 0 0 0 1px rgba(34,211,238,.55),0 0 12px rgba(34,211,238,.25)}
+body.glass .filters{border-radius:16px}
+body.glass .filters input[type=search],body.glass .filters select,body.glass label.f input,body.glass label.f select,body.glass label.f textarea,body.glass table.xl select{
+ background:rgba(10,12,18,.45);color:var(--gtx);border:1px solid rgba(34,211,238,.28);border-radius:11px;box-shadow:inset 0 1px 2px rgba(0,0,0,.4)}
+body.glass .filters input[type=search]:focus,body.glass .filters select:focus,body.glass label.f input:focus,body.glass label.f select:focus,body.glass label.f textarea:focus{outline:none;border-color:var(--g2);box-shadow:0 0 0 3px rgba(168,85,247,.18),0 0 14px rgba(34,211,238,.25)}
+body.glass select option{background:#1d2028;color:#e8ecf4}
+body.glass input::placeholder,body.glass textarea::placeholder{color:#6b7385}
+body.glass .chk{color:var(--gtx)}
+/* checkbox → switch */
+body.glass .chk input[type=checkbox]{-webkit-appearance:none;appearance:none;width:40px;height:22px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--gbd);position:relative;cursor:pointer;transition:.2s;flex:0 0 auto}
+body.glass .chk input[type=checkbox]::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#7b8394;transition:.2s}
+body.glass .chk input[type=checkbox]:checked{background:linear-gradient(90deg,rgba(34,211,238,.5),rgba(168,85,247,.5));border-color:rgba(34,211,238,.7);box-shadow:0 0 12px rgba(34,211,238,.4)}
+body.glass .chk input[type=checkbox]:checked::after{left:20px;background:#fff;box-shadow:0 0 8px #fff}
+body.glass .card{border-radius:18px;border-left-width:1px;color:var(--gtx);transition:transform .15s,box-shadow .15s;overflow:hidden}
+body.glass .card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pc,var(--g1));box-shadow:0 0 14px var(--pc,var(--g1))}
+body.glass .card::after{content:'';position:absolute;inset:0;background:linear-gradient(125deg,rgba(255,255,255,.07),transparent 40%);pointer-events:none}
+body.glass .card:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(34,211,238,.35),0 0 22px rgba(34,211,238,.18),0 14px 34px rgba(0,0,0,.5)}
+body.glass .num{color:#fff}
+body.glass .days{color:var(--gmut)}body.glass .days b{color:#fff}body.glass .days.hot b{color:#fb7185;text-shadow:0 0 10px rgba(251,113,133,.6)}
+body.glass .line{color:#cfd5e1}body.glass .line .k{color:var(--gmut)}
+body.glass .chip{background:rgba(255,255,255,.07);color:#cfd5e1;border:1px solid rgba(255,255,255,.1)}
+body.glass .p-ALTA{background:rgba(244,63,94,.16);color:#fda4af;border-color:rgba(244,63,94,.45)}
+body.glass .p-MEDIA{background:rgba(251,146,60,.16);color:#fdba74;border-color:rgba(251,146,60,.45)}
+body.glass .p-BASSA{background:rgba(34,197,94,.14);color:#86efac;border-color:rgba(34,197,94,.4)}
+body.glass .p-MOL{background:rgba(34,211,238,.14);color:#a5f3fc;border-color:rgba(34,211,238,.45)}
+body.glass .pc1{background:linear-gradient(90deg,#be123c,#f43f5e);color:#fff;box-shadow:0 0 12px rgba(244,63,94,.5);border:0}
+body.glass .pc2{background:linear-gradient(90deg,#f97316,#fb923c);color:#fff;box-shadow:0 0 10px rgba(249,115,22,.4);border:0}
+body.glass .pc3{background:linear-gradient(90deg,#eab308,#facc15);color:#1a1a1a;border:0}
+body.glass .pc4{background:linear-gradient(90deg,#16a34a,#22c55e);color:#fff;border:0}
+body.glass .bF{background:rgba(239,68,68,.2);color:#fecaca;border:1px solid rgba(239,68,68,.6);box-shadow:0 0 10px rgba(239,68,68,.35)}
+body.glass .bS{background:rgba(250,204,21,.18);color:#fde68a;border:1px solid rgba(250,204,21,.5)}
+body.glass .qa{border-top:1px solid rgba(255,255,255,.08)}
+body.glass .qa button{background:rgba(255,255,255,.05);color:var(--gtx);border:1px solid var(--gbd);border-radius:10px}
+body.glass .qa button:hover{border-color:rgba(34,211,238,.6);box-shadow:0 0 10px rgba(34,211,238,.25)}
+body.glass .modal{background:rgba(5,7,12,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+body.glass .sheet{background:rgba(26,29,38,.82);color:var(--gtx);border:1px solid rgba(34,211,238,.35);box-shadow:0 0 0 1px rgba(168,85,247,.25),0 0 40px rgba(34,211,238,.12),0 20px 50px rgba(0,0,0,.6)}
+body.glass .sheet h2 .x{color:var(--gmut)}
+body.glass label.f{color:var(--gmut)}
+body.glass .sugg{background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);color:#cfeffa}
+body.glass .sec-t{color:#fff;border-left:0;padding-left:0;display:flex;align-items:center;gap:8px}
+body.glass .sec-t::before{content:'';width:18px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--g1),var(--g2));box-shadow:0 0 8px var(--g1)}
+body.glass .log{border-color:var(--gbd);background:rgba(0,0,0,.2)}body.glass .log div{border-bottom-color:rgba(255,255,255,.06)}
+body.glass .pal button{background:rgba(255,255,255,.05);color:var(--gtx);border-color:transparent}body.glass .pal button.on{border-color:var(--g1)}
+body.glass .toast{background:rgba(26,29,38,.9);color:#fff;border:1px solid rgba(34,211,238,.5);box-shadow:0 0 0 1px rgba(168,85,247,.3),0 0 20px rgba(34,211,238,.25);border-radius:14px;padding:11px 16px 11px 42px}
+body.glass .toast::before{content:'✓';position:absolute;left:12px;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;border:2px solid var(--g1);color:var(--g1);font-size:12px;font-weight:bold;display:flex;align-items:center;justify-content:center;box-shadow:0 0 8px var(--g1)}
+body.glass .ro{color:#fde68a;border-color:rgba(250,204,21,.4);background:rgba(250,204,21,.08);border-radius:14px}
+body.glass .empty{color:var(--gmut)}
+body.glass .err{color:#fda4af}
+/* tabella in vetro */
+body.glass .xwrap{border-radius:16px;background:rgba(20,23,30,.6)}
+body.glass table.xl th{background:rgba(30,34,46,.92);color:#e8ecf4;border:0;border-bottom:1px solid rgba(34,211,238,.45);border-right:1px solid rgba(255,255,255,.06);font-weight:600}
+body.glass table.xl td{background:rgba(255,255,255,.015);color:#dde3ee;border:0;border-bottom:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.04)}
+body.glass table.xl td.v{background:rgba(26,30,40,.95);color:#fff}
+body.glass table.xl tbody tr:hover td{background:rgba(34,211,238,.07)}
+body.glass table.xl td.inp{background:rgba(250,204,21,.05)}
+body.glass table.xl tbody tr:hover td.inp{background:rgba(250,204,21,.10)}
+body.glass table.xl td.fF{color:#fb7185}
+body.glass table.xl td.hot{color:#fb7185}
+body.glass table.xl td.sA{background:rgba(244,63,94,.16);color:#fda4af}
+body.glass table.xl td.sM{background:rgba(251,146,60,.14);color:#fdba74}
+body.glass table.xl td.sB{background:rgba(34,197,94,.12);color:#86efac}
+body.glass table.xl td.sMo{background:rgba(34,211,238,.12);color:#a5f3fc}
+body.glass table.xl tr.cl td{color:#6b7385}
+body.glass .hint{color:var(--gmut)!important}
+body.glass{color-scheme:dark}
+@media(max-width:700px){.vbtn button span{display:none}h1{font-size:15px}#bUser{max-width:110px;overflow:hidden;text-overflow:ellipsis}.hrow>div{gap:5px!important}.btn.ghost{padding:8px 9px}}
+/* PC: barra laterale come NoteWise */
+@media(min-width:1100px){
+ body.glass header{position:fixed;top:14px;left:14px;bottom:14px;width:270px;border-radius:20px;border:1px solid var(--gbd);padding:18px 14px;display:flex;flex-direction:column;gap:6px;overflow:auto;background:rgba(28,31,40,.62)}
+ body.glass header::after{display:none}
+ body.glass header .hrow{flex-direction:column;align-items:stretch;gap:12px}
+ body.glass header .hrow>div{flex-wrap:wrap}
+ body.glass .stats{display:grid;grid-template-columns:1fr 1fr;overflow:visible;gap:8px;padding-top:14px}
+ body.glass .st{min-width:0}
+ body.glass .tabs{flex-direction:column;width:auto;overflow:visible;margin-top:14px;background:transparent;border:0;padding:0;gap:4px}
+ body.glass .tabs::before{content:'Navigazione';font-size:11.5px;color:var(--gmut);text-transform:uppercase;letter-spacing:.6px;margin:0 0 4px 4px}
+ body.glass .tab{text-align:left;padding:10px 12px;font-size:13.5px;position:relative}
+ body.glass .tab.on{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12);box-shadow:none}
+ body.glass .tab.on::before{content:'';position:absolute;left:-1px;top:8px;bottom:8px;width:3px;border-radius:2px;background:linear-gradient(var(--g1),var(--g2));box-shadow:0 0 8px var(--g1)}
+ body.glass main{margin-left:298px;max-width:none;padding:20px 22px 90px 8px}
+ body.glass .xwrap{max-height:calc(100vh - 170px)}
+}
 main.wide{max-width:none}
 .xwrap{background:#fff;border-radius:10px;overflow:auto;max-height:calc(100vh - 250px);box-shadow:0 3px 10px rgba(0,0,0,.18)}
 table.xl{border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:1500px;width:100%}
@@ -127,7 +237,7 @@ table.xl tr{cursor:pointer}
  <div class="hrow">
   <h1>🚌 Tabellone Carrozzeria<small><span id="dot" class="dot"></span><span id="sub">Deposito ATM San Donato</span></small></h1>
   <div style="display:flex;gap:6px">
-   <div class="vbtn"><button id="vC" onclick="setView('schede')" title="Vista schede">🗂 Schede</button><button id="vT" onclick="setView('tabella')" title="Vista come Excel">📊 Tabella</button></div>
+   <div class="vbtn"><button id="vC" onclick="setView('schede')" title="Vista schede">🗂<span> Schede</span></button><button id="vT" onclick="setView('tabella')" title="Vista come Excel">📊<span> Tabella</span></button></div>
    <button class="btn ghost" id="bUser" onclick="userBtn()">🔒 Sblocca</button>
    <button class="btn ghost" onclick="openTools()" title="Strumenti">⚙️</button>
   </div>
@@ -185,7 +295,7 @@ let LOG=[];
 let DB=null,ME={name:''},LOADED=false;
 let tab='attive', statFilter='';
 
-function loadPref(){const dv=(window.innerWidth>=900?'tabella':'schede');try{return Object.assign({palette:'navy',pattern:true,view:dv},JSON.parse(localStorage.getItem(PREF)||'{}'))}catch(e){return{palette:'navy',pattern:true,view:dv}}}
+function loadPref(){const dv=(window.innerWidth>=900?'tabella':'schede');try{return Object.assign({palette:'navy',pattern:true,view:dv,style:'glass'},JSON.parse(localStorage.getItem(PREF)||'{}'))}catch(e){return{palette:'navy',pattern:true,view:dv,style:'glass'}}}
 function savePref(){try{localStorage.setItem(PREF,JSON.stringify(P))}catch(e){}}
 function cacheSave(){try{localStorage.setItem(CACHE,JSON.stringify({rows:S.rows,lists:S.lists}))}catch(e){}}
 function cacheLoad(){try{const d=JSON.parse(localStorage.getItem(CACHE)||'null');if(d&&d.rows){S.rows=d.rows;if(d.lists)S.lists=d.lists}}catch(e){}}
@@ -214,6 +324,7 @@ function writeRow(r,what){
 function log(vet,what){if(!DB)return;DB.ref(ROOT+'/log').push({ts:Date.now(),by:ME.name||'',vet:String(vet||''),what:String(what||'')}).catch(()=>{})}
 
 function applyPalette(){
+ document.body.classList.toggle('glass',P.style!=='classico');
  const p=(PALETTES[P.palette]||PALETTES.navy).c,r=document.documentElement.style;
  r.setProperty('--bg',p[0]);r.setProperty('--bg2',p[1]);r.setProperty('--acc',p[2]);r.setProperty('--acc2',p[3]);r.setProperty('--hi',p[4]);
  if(P.pattern){
@@ -286,8 +397,8 @@ function render(){
  el.innerHTML=rows.map(r=>{
   const g=giorni(r),sg=sugg(r),pn=prioN(r),cl=isClosed(r);
   const sgc=sg==='A MOLISE'?'MOL':sg;
-  const border=pn===1?'#7f1d1d':pn===2?'#dc2626':pn===3?'#f59e0b':pn===4?'#22c55e':'var(--acc2)';
-  return `<div class="card ${cl?'closed':''}" style="border-left-color:${border}" onclick="openEdit('${r.id}')">
+  const border=pn===1?'#f43f5e':pn===2?'#f97316':pn===3?'#facc15':pn===4?'#22c55e':(document.body.classList.contains('glass')?'#22d3ee':'var(--acc2)');
+  return `<div class="card ${cl?'closed':''}" style="border-left-color:${border};--pc:${border}" onclick="openEdit('${r.id}')">
    <div class="ctop"><span class="num">${esc(r.vettura)}</span>
     ${r.fermo?'<span class="badge bF">FERMA</span>':''}${r.sollecitare?'<span class="badge bS">🔔 SOLLECITARE</span>':''}
     <div class="days ${g!==null&&g>=30?'hot':''}">${g===null?'<b>—</b>senza data':`<b>${g}</b>gg dal ${fmt(r.data)}`}</div></div>
@@ -338,7 +449,7 @@ function renderTable(el,rows,ed){
   <td class="inp c">${fmt(r.dataChiamata)}</td><td class="inp">${esc(r.rientro)}</td><td class="inp">${esc(r.referente)}</td><td class="inp">${esc(r.noteRiunione)}</td><td>${esc(r.noteLavagna)}</td>
   <td class="c">${r.sollecitare?'🔔':''}</td></tr>`}).join('')}
  </tbody></table></div>
- <div style="color:#fff;opacity:.8;font-size:12px;margin-top:6px">Clic su una riga per aprire la scheda completa${ed?' · Priorità e Azione si cambiano direttamente dalla tabella':''}.</div>`;
+ <div class="hint" style="color:#fff;opacity:.8;font-size:12px;margin-top:6px">Clic su una riga per aprire la scheda completa${ed?' · Priorità e Azione si cambiano direttamente dalla tabella':''}.</div>`;
 }
 function find(id){return S.rows.find(r=>r.id===id)}
 function toggleSol(id){const r={...find(id)};r.sollecitare=!r.sollecitare;writeRow(r,r.sollecitare?'da sollecitare':'sollecito tolto')}
@@ -436,6 +547,8 @@ function openTools(){
  <div class="sec-t">Ultime modifiche</div>
  <div class="log" id="logBox">${LOG.length?LOG.map(l=>`<div><b>${fmtTs(l.ts)}</b> · ${esc(l.by)} · ${l.vet?'<b>'+esc(l.vet)+'</b> ':''}${esc(l.what)}</div>`).join(''):'Nessuna modifica registrata.'}</div>`:''}
  <div class="sec-t">Aspetto (solo su questo dispositivo)</div>
+ <div class="vbtn" style="width:max-content;margin-bottom:10px"><button class="${P.style!=='classico'?'on':''}" onclick="P.style='glass';savePref();applyPalette();render();openTools()">✨ Liquid Glass</button><button class="${P.style==='classico'?'on':''}" onclick="P.style='classico';savePref();applyPalette();render();openTools()">🎨 Classico</button></div>
+ <div style="font-size:12px;color:var(--mut);margin-bottom:6px">Le palette qui sotto valgono per lo stile Classico.</div>
  <div class="pal">${Object.entries(PALETTES).map(([k,p])=>`<button class="${P.palette===k?'on':''}" onclick="P.palette='${k}';savePref();applyPalette();openTools()"><span class="sw">${p.c.slice(0,4).map(c=>`<i style="background:${c}"></i>`).join('')}</span>${p.n}</button>`).join('')}</div>
  <label class="chk" style="margin-top:10px"><input type="checkbox" ${P.pattern?'checked':''} onchange="P.pattern=this.checked;savePref();applyPalette()"> Sfondo mandala</label>`;
  document.getElementById('mTools').classList.add('on');
