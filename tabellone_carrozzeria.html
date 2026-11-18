@@ -86,6 +86,20 @@ label.f textarea{min-height:64px;resize:vertical}
 .printarea{display:none}
 
 .sheet .vbtn button{color:var(--ink);background:#eef2f7}.sheet .vbtn button.on{background:var(--acc);color:#111}
+.ic{width:1.05em;height:1.05em;vertical-align:-.17em;flex:0 0 auto;stroke-width:1.9}
+.btn .ic,.qa button .ic,.tab .ic,.vbtn .ic{margin-right:5px}
+.vbtn button .ic{margin-right:0}.vbtn button span{margin-left:5px}
+.qa button{display:inline-flex;align-items:center;justify-content:center;gap:5px}.qa button .ic{margin:0}
+.chip .ic{width:.95em;height:.95em;margin-right:3px}
+.sheet h2 .x .ic{width:22px;height:22px}
+h1 .ic.logo{width:22px;height:22px;margin-right:6px;vertical-align:-4px;color:var(--acc)}
+body.glass h1 .ic.logo{color:#67e8f9;filter:drop-shadow(0 0 6px rgba(34,211,238,.7))}
+.srch{position:relative;flex:1 1 260px;display:flex}.srch .ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#8b93a5;pointer-events:none}
+.filters .srch input[type=search]{flex:1;padding-left:34px!important}
+body.glass .tab .ic{opacity:.85}body.glass .tab.on .ic{color:#67e8f9;opacity:1}
+body.glass .qa button .ic{color:#67e8f9}
+body.glass .btn:not(.ghost):not(.sec):not(.red) .ic{color:#fff}
+.bS .ic{width:.95em;height:.95em;margin-right:2px}
 /* ================= STILE LIQUID GLASS ================= */
 body.glass{--g1:#22d3ee;--g2:#a855f7;--gbg:rgba(255,255,255,.055);--gbd:rgba(160,210,255,.18);--gtx:#e8ecf4;--gmut:#9aa3b5;
  font-family:'Inter',system-ui,Arial,sans-serif;color:var(--gtx);background:#14161b;
@@ -235,29 +249,29 @@ table.xl tr{cursor:pointer}
 <body>
 <header>
  <div class="hrow">
-  <h1>🚌 Tabellone Carrozzeria<small><span id="dot" class="dot"></span><span id="sub">Deposito ATM San Donato</span></small></h1>
+  <h1><i data-ic="bus" class="logo"></i>Tabellone Carrozzeria<small><span id="dot" class="dot"></span><span id="sub">Deposito ATM San Donato</span></small></h1>
   <div style="display:flex;gap:6px">
-   <div class="vbtn"><button id="vC" onclick="setView('schede')" title="Vista schede">🗂<span> Schede</span></button><button id="vT" onclick="setView('tabella')" title="Vista come Excel">📊<span> Tabella</span></button></div>
-   <button class="btn ghost" id="bUser" onclick="userBtn()">🔒 Sblocca</button>
-   <button class="btn ghost" onclick="openTools()" title="Strumenti">⚙️</button>
+   <div class="vbtn"><button id="vC" onclick="setView('schede')" title="Vista schede"><i data-ic="layout-grid"></i><span> Schede</span></button><button id="vT" onclick="setView('tabella')" title="Vista come Excel"><i data-ic="table"></i><span> Tabella</span></button></div>
+   <button class="btn ghost" id="bUser" onclick="userBtn()"><i data-ic="lock"></i>Sblocca</button>
+   <button class="btn ghost" onclick="openTools()" title="Strumenti"><i data-ic="settings"></i></button>
   </div>
  </div>
  <div class="stats" id="stats"></div>
  <div class="tabs" id="tabs"></div>
 </header>
 <main>
- <div class="ro" id="ro">👀 Sola lettura. Premi <b>🔒 Sblocca</b> e scrivi la password per modificare.</div>
+ <div class="ro" id="ro"><i data-ic="eye"></i> Sola lettura. Premi <b>Sblocca</b> e scrivi la password per modificare.</div>
  <div class="filters">
-  <input id="q" type="search" placeholder="🔍 Cerca vettura, danno, note…" oninput="render()">
+  <div class="srch"><i data-ic="search"></i><input id="q" type="search" placeholder="Cerca vettura, danno, note…" oninput="render()"></div>
   <select id="fDove" onchange="render()"></select>
   <select id="fPrio" onchange="render()"></select>
   <select id="fSort" onchange="render()">
-   <option value="prio">↕ Priorità</option>
-   <option value="giorni">↕ Giorni</option>
-   <option value="vettura">↕ N° vettura</option>
+   <option value="prio">Ordina: priorità</option>
+   <option value="giorni">Ordina: giorni</option>
+   <option value="vettura">Ordina: n° vettura</option>
   </select>
   <label class="chk"><input type="checkbox" id="fF" onchange="render()"> Solo ferme</label>
-  <label class="chk"><input type="checkbox" id="fS" onchange="render()"> 🔔 Da sollecitare</label>
+  <label class="chk"><input type="checkbox" id="fS" onchange="render()"> Da sollecitare</label>
  </div>
  <div class="grid" id="list"></div>
 </main>
@@ -274,6 +288,9 @@ table.xl tr{cursor:pointer}
 /* ===== Tabellone Carrozzeria SD — Firebase (progetto depotrack-d1d28), modifiche sbloccate da password ===== */
 const CFG={apiKey:"AIzaSyB6iU__138sUB4Tw_9DKWeat4WkN2RkVng",authDomain:"depotrack-d1d28.firebaseapp.com",databaseURL:"https://depotrack-d1d28-default-rtdb.europe-west1.firebasedatabase.app",projectId:"depotrack-d1d28",appId:"1:967480447300:web:7e79395a45964cdf348711"};
 const ROOT='depotrack_carrozzeria';
+const ICONS={"bus":"<path d=\"M8 6v6\"/> <path d=\"M15 6v6\"/> <path d=\"M2 12h19.6\"/> <path d=\"M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3\"/> <circle cx=\"7\" cy=\"18\" r=\"2\"/> <path d=\"M9 18h5\"/> <circle cx=\"16\" cy=\"18\" r=\"2\"/>","lock":"<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/> <path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>","lock-open":"<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/> <path d=\"M7 11V7a5 5 0 0 1 9.9-1\"/>","settings":"<path d=\"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915\"/> <circle cx=\"12\" cy=\"12\" r=\"3\"/>","layout-grid":"<rect width=\"7\" height=\"7\" x=\"3\" y=\"3\" rx=\"1\"/> <rect width=\"7\" height=\"7\" x=\"14\" y=\"3\" rx=\"1\"/> <rect width=\"7\" height=\"7\" x=\"14\" y=\"14\" rx=\"1\"/> <rect width=\"7\" height=\"7\" x=\"3\" y=\"14\" rx=\"1\"/>","table":"<path d=\"M12 3v18\"/> <rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/> <path d=\"M3 9h18\"/> <path d=\"M3 15h18\"/>","search":"<path d=\"m21 21-4.34-4.34\"/> <circle cx=\"11\" cy=\"11\" r=\"8\"/>","map-pin":"<path d=\"M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0\"/> <circle cx=\"12\" cy=\"10\" r=\"3\"/>","bell":"<path d=\"M10.268 21a2 2 0 0 0 3.464 0\"/> <path d=\"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326\"/>","bell-off":"<path d=\"M10.268 21a2 2 0 0 0 3.464 0\"/> <path d=\"M17 17H4a1 1 0 0 1-.74-1.673C4.59 13.956 6 12.499 6 8a6 6 0 0 1 .258-1.742\"/> <path d=\"m2 2 20 20\"/> <path d=\"M8.668 3.01A6 6 0 0 1 18 8c0 2.687.77 4.653 1.707 6.05\"/>","phone":"<path d=\"M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384\"/>","circle-check":"<circle cx=\"12\" cy=\"12\" r=\"10\"/> <path d=\"m16 9-5.5 5.5L8 12\"/>","rotate-ccw":"<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"/> <path d=\"M3 3v5h5\"/>","calendar":"<path d=\"M8 2v3\"/> <path d=\"M16 2v3\"/> <rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"/> <path d=\"M3 9h18\"/>","undo-2":"<path d=\"M9 14 4 9l5-5\"/> <path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\"/>","arrow-right":"<path d=\"M5 12h14\"/> <path d=\"m12 5 7 7-7 7\"/>","trash-2":"<path d=\"M10 11v6\"/> <path d=\"M14 11v6\"/> <path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6\"/> <path d=\"M3 6h18\"/> <path d=\"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/>","save":"<path d=\"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z\"/> <path d=\"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7\"/> <path d=\"M7 3v4a1 1 0 0 0 1 1h7\"/>","clipboard-copy":"<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/> <path d=\"M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2\"/> <path d=\"M16 4h2a2 2 0 0 1 2 2v4\"/> <path d=\"M21 14H11\"/> <path d=\"m15 10-4 4 4 4\"/>","printer":"<path d=\"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2\"/> <path d=\"M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6\"/> <rect x=\"6\" y=\"14\" width=\"12\" height=\"8\" rx=\"1\"/>","download":"<path d=\"M12 15V3\"/> <path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/> <path d=\"m7 10 5 5 5-5\"/>","upload":"<path d=\"M12 3v12\"/> <path d=\"m17 8-5-5-5 5\"/> <path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/>","sparkles":"<path d=\"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z\"/> <path d=\"M20 2v4\"/> <path d=\"M22 4h-4\"/> <circle cx=\"4\" cy=\"20\" r=\"2\"/>","palette":"<path d=\"M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z\"/> <circle cx=\"13.5\" cy=\"6.5\" r=\".5\" fill=\"currentColor\"/> <circle cx=\"17.5\" cy=\"10.5\" r=\".5\" fill=\"currentColor\"/> <circle cx=\"6.5\" cy=\"12.5\" r=\".5\" fill=\"currentColor\"/> <circle cx=\"8.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\"/>","factory":"<path d=\"M12 16h.01\"/> <path d=\"M16 16h.01\"/> <path d=\"M3 19a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5a.5.5 0 0 0-.769-.422l-4.462 2.844A.5.5 0 0 1 15 10.5v-2a.5.5 0 0 0-.769-.422L9.77 10.922A.5.5 0 0 1 9 10.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z\"/> <path d=\"M8 16h.01\"/>","file-text":"<path d=\"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z\"/> <path d=\"M14 2v5a1 1 0 0 0 1 1h5\"/> <path d=\"M10 9H8\"/> <path d=\"M16 13H8\"/> <path d=\"M16 17H8\"/>","wrench":"<path d=\"M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z\"/>","archive":"<rect width=\"20\" height=\"5\" x=\"2\" y=\"3\" rx=\"1\"/> <path d=\"M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8\"/> <path d=\"M10 12h4\"/>","eye":"<path d=\"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0\"/> <circle cx=\"12\" cy=\"12\" r=\"3\"/>","timer":"<line x1=\"10\" x2=\"14\" y1=\"2\" y2=\"2\"/> <line x1=\"12\" x2=\"15\" y1=\"14\" y2=\"11\"/> <circle cx=\"12\" cy=\"14\" r=\"8\"/>","triangle-alert":"<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/> <path d=\"M12 9v4\"/> <path d=\"M12 17h.01\"/>","x":"<path d=\"M18 6 6 18\"/> <path d=\"m6 6 12 12\"/>","list-checks":"<path d=\"M13 5h8\"/> <path d=\"M13 12h8\"/> <path d=\"M13 19h8\"/> <path d=\"m3 17 2 2 4-4\"/> <path d=\"m3 7 2 2 4-4\"/>","flame":"<path d=\"M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4\"/>"};
+function ic(n,c){return '<svg class="ic'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[n]||'')+'</svg>'}
+function hydrateIcons(root){(root||document).querySelectorAll('i[data-ic]').forEach(e=>{e.outerHTML=ic(e.dataset.ic,e.className)})}
 const SEED = {"rows": [{"vettura": "2016", "fermo": true, "stato": "Richiesta Solaris / Interservice", "dove": "Deposito SD", "danno": "Montante laterale dx", "data": "2026-11-17", "pratica": "Richiesta capienza economica MOLISE", "prioritaConc": "2 - ALTA", "azione": "Preventivo approvato", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6710", "fermo": true, "stato": "In carrozzeria Molise", "dove": "Molise", "danno": "Porte+ fiancata", "data": "2026-11-18", "pratica": "Vttura in lavorazione MOLISE", "prioritaConc": "3 - MEDIA", "azione": "Già a Molise", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "2023", "fermo": true, "stato": "In STL", "dove": "STL", "danno": "Cantonale + montante DX", "data": "2026-11-09", "pratica": "In lavorazione STL Aggiornato preventivo", "prioritaConc": "2 - ALTA", "azione": "STL", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "2453", "fermo": false, "stato": "Avviso girato in OG-IP", "dove": "Deposito SD", "danno": "Urto laterale", "data": "2026-10-12", "pratica": "Da chiamare per lavorazione Molise", "prioritaConc": "4 - BASSA", "azione": "Chiamare a Molise", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "1247", "fermo": false, "stato": "In SMAV", "dove": "SMAV", "danno": "Riordino carrozzeria+telaio", "data": "2026-11-05", "pratica": "Vettura in lavorazione SMAV", "prioritaConc": "2 - ALTA", "azione": "SMAV", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "3156", "fermo": true, "stato": "Richiesta Molise", "dove": "Deposito SD", "danno": "Parabrezza", "data": "2026-10-26", "pratica": "Richiesto preventivo MOLISE 26/10/2026", "prioritaConc": "2 - ALTA", "azione": "Chiamare a Molise", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "3158", "fermo": true, "stato": "Richiesta preventivo Molise", "dove": "Deposito SD", "danno": "Lunotto posteriore", "data": "2026-11-11", "pratica": "Richiesto preventivo MOLISE 11/11/2026", "prioritaConc": "2 - ALTA", "azione": "Chiamare a Molise", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6625", "fermo": true, "stato": "Lavorazione interna SD", "dove": "Deposito SD", "danno": "Sinistro vetro posteriore", "data": "2026-11-12", "pratica": "In lavorazione 19/11/2026", "prioritaConc": "2 - ALTA", "azione": "Lavorazione interna SD", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6677", "fermo": true, "stato": "In STL", "dove": "STL", "danno": "Urto veletta piu montante DX", "data": "2026-10-26", "pratica": "Ricambio disponibile 2W Dicembre", "prioritaConc": "1 - URGENTE", "azione": "STL", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6700", "fermo": true, "stato": "Richiesta preventivo Molise", "dove": "Deposito SD", "danno": "Pedana disabile", "data": "2026-10-25", "pratica": "Richiesto preventivo MOLISE 25/10/2026", "prioritaConc": "2 - ALTA", "azione": "Attesa preventivo", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "1965", "fermo": true, "stato": "In INCO", "dove": "Deposito SD", "danno": "Ripristino sistema PIRO'", "data": "2026-10-23", "pratica": "In lavorazione presso Pagliani", "prioritaConc": "2 - ALTA", "azione": "Altro fornitore", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "3003", "fermo": true, "stato": "Richiesta preventivo Molise", "dove": "Deposito SD", "danno": "Vetro posteriore", "data": "2026-10-06", "pratica": "Questa lavorazione la gestisce SD", "prioritaConc": "3 - MEDIA", "azione": "Lavorazione interna SD", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6705", "fermo": true, "stato": "Richiesta preventivo Interservice", "dove": "Deposito SD", "danno": "Urto posteriore", "data": "2026-10-20", "pratica": "Richiesto preventivo INTERSERVICE 20/10/2026", "prioritaConc": "2 - ALTA", "azione": "Attesa preventivo", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "3177", "fermo": false, "stato": "Avviso sinistro", "dove": "Molise", "danno": "Anta porta centrale", "data": "2026-11-18", "pratica": "Solo anta in lavorazione Molise", "prioritaConc": "4 - BASSA", "azione": "Già a Molise", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6679", "fermo": true, "stato": "Da mandare a Molise", "dove": "Deposito SD", "danno": "Lunotto posteriore", "data": "2026-10-22", "pratica": "Da portare a Molise 19/11/2026", "prioritaConc": "2 - ALTA", "azione": "Chiamare a Molise", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6690", "fermo": true, "stato": "In carrozzeria Molise", "dove": "Molise", "danno": "Parabrezza", "data": "2026-11-16", "pratica": "Da ritirare 19/11/2026", "prioritaConc": "4 - BASSA", "azione": "Già a Molise", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}, {"vettura": "6711", "fermo": false, "stato": "Lavorazione interna SD", "dove": "Deposito SD", "danno": "Vetro autista", "data": "2026-10-21", "pratica": "Questa lavorazione la gestisce SD", "prioritaConc": "3 - MEDIA", "azione": "Lavorazione interna SD", "dataChiamata": "", "rientro": "", "referente": "", "noteRiunione": "", "noteLavagna": ""}], "lists": {"dove": ["Deposito SD", "Molise", "STL", "SMAV", "INCO", "Solaris / Interservice", "Interservice", "Altro"], "priorita": ["1 - URGENTE", "2 - ALTA", "3 - MEDIA", "4 - BASSA"], "azione": ["Chiamare a Molise", "Già a Molise", "Attesa preventivo", "Preventivo approvato", "Lavorazione interna SD", "Altro fornitore", "In attesa ricambi", "Rientrata / chiusa", "SMAV", "STL"]}};
 const CLOSED='Rientrata / chiusa';
 const PREF='tabelloneCarrSD_pref', CACHE='tabelloneCarrSD_cache';
@@ -311,7 +328,7 @@ function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt
 function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2400)}
 function canEdit(){return UNLOCK}
 function setStatus(s){const d=document.getElementById('dot');d.className='dot '+s;d.title={live:'Collegato a Firebase',off:'Offline: le modifiche partono appena torna la rete',err:'Firebase non raggiungibile',conn:'Connessione…'}[s]||''}
-function werr(e){toast('⚠️ Non salvato: '+(e&&(e.code==='PERMISSION_DENIED'||/permission/i.test(e.message||''))?'Firebase rifiuta la scrittura (permesso negato)':(e&&e.message||e)))}
+function werr(e){toast('Non salvato: '+(e&&(e.code==='PERMISSION_DENIED'||/permission/i.test(e.message||''))?'Firebase rifiuta la scrittura (permesso negato)':(e&&e.message||e)))}
 function needEdit(){if(canEdit())return true;openLogin();return false}
 
 /* ---------- scritture su Firebase ---------- */
@@ -335,31 +352,31 @@ function applyPalette(){
 }
 
 const TABS=[
- ['attive','Attive',r=>!isClosed(r)],
- ['chiamare','📞 Da chiamare a Molise',r=>!isClosed(r)&&r.azione==='Chiamare a Molise'],
- ['molise','🏭 A Molise',r=>!isClosed(r)&&(r.dove==='Molise'||r.azione==='Già a Molise')],
- ['prev','📄 Preventivi',r=>!isClosed(r)&&/preventivo/i.test(r.azione||'')],
- ['esterni','🔧 Altri fornitori',r=>!isClosed(r)&&r.dove!=='Molise'&&r.dove!=='Deposito SD'],
- ['storico','🗂️ Storico',r=>isClosed(r)]
+ ['attive','Attive','list-checks',r=>!isClosed(r)],
+ ['chiamare','Da chiamare a Molise','phone',r=>!isClosed(r)&&r.azione==='Chiamare a Molise'],
+ ['molise','A Molise','factory',r=>!isClosed(r)&&(r.dove==='Molise'||r.azione==='Già a Molise')],
+ ['prev','Preventivi','file-text',r=>!isClosed(r)&&/preventivo/i.test(r.azione||'')],
+ ['esterni','Altri fornitori','wrench',r=>!isClosed(r)&&r.dove!=='Molise'&&r.dove!=='Deposito SD'],
+ ['storico','Storico','archive',r=>isClosed(r)]
 ];
-function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(([k,l,f])=>`<div class="tab ${tab===k?'on':''}" onclick="tab='${k}';statFilter='';render()">${l} (${S.rows.filter(f).length})</div>`).join('')}
+function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(([k,l,icn,f])=>`<div class="tab ${tab===k?'on':''}" onclick="tab='${k}';statFilter='';render()">${ic(icn)}${l} (${S.rows.filter(f).length})</div>`).join('')}
 function renderStats(){
  const a=S.rows.filter(r=>!isClosed(r));
- const items=[['','Attive',a.length],['F','Ferme',a.filter(r=>r.fermo).length],['ALTA','Suggerita ALTA',a.filter(r=>sugg(r)==='ALTA').length],['30','Ferme 30+ gg',a.filter(r=>r.fermo&&(giorni(r)??0)>=30).length],['SOL','🔔 Sollecitare',a.filter(r=>r.sollecitare).length]];
+ const items=[['','Attive',a.length],['F','Ferme',a.filter(r=>r.fermo).length],['ALTA','Suggerita ALTA',a.filter(r=>sugg(r)==='ALTA').length],['30','Ferme 30+ gg',a.filter(r=>r.fermo&&(giorni(r)??0)>=30).length],['SOL','Sollecitare',a.filter(r=>r.sollecitare).length]];
  document.getElementById('stats').innerHTML=items.map(([k,l,n])=>`<div class="st ${statFilter===k&&k?'on':''}" onclick="statFilter=(statFilter==='${k}'?'':'${k}');render()"><b>${n}</b><span>${l}</span></div>`).join('');
  document.getElementById('sub').textContent='Deposito ATM San Donato · '+fmt(today());
 }
 function fillFilters(){
  const fd=document.getElementById('fDove'),fp=document.getElementById('fPrio');const vd=fd.value,vp=fp.value;
- fd.innerHTML='<option value="">📍 Luogo</option>'+S.lists.dove.map(x=>`<option>${esc(x)}</option>`).join('');
- fp.innerHTML='<option value="">⭐ Priorità</option><option value="__none">Non concordata</option>'+S.lists.priorita.map(x=>`<option>${esc(x)}</option>`).join('');
+ fd.innerHTML='<option value="">Tutti i luoghi</option>'+S.lists.dove.map(x=>`<option>${esc(x)}</option>`).join('');
+ fp.innerHTML='<option value="">Tutte le priorità</option><option value="__none">Non concordata</option>'+S.lists.priorita.map(x=>`<option>${esc(x)}</option>`).join('');
  fd.value=vd;fp.value=vp;
 }
 function filtered(){
  const q=document.getElementById('q').value.trim().toLowerCase();
  const fd=document.getElementById('fDove').value,fp=document.getElementById('fPrio').value;
  const fF=document.getElementById('fF').checked,fS=document.getElementById('fS').checked;
- const tf=TABS.find(t=>t[0]===tab)[2];
+ const tf=TABS.find(t=>t[0]===tab)[3];
  let rows=S.rows.filter(tf).filter(r=>{
   if(fd&&r.dove!==fd)return false;
   if(fp==='__none'&&r.prioritaConc)return false;
@@ -387,9 +404,9 @@ function render(){
  document.getElementById('fab').style.display=canEdit()?'block':'none';
  const el=document.getElementById('list');
  if(LOADED&&!S.rows.length){
-  el.innerHTML=`<div class="empty">Il tabellone su Firebase è vuoto.<br><br>${canEdit()?`<button class="btn" onclick="seedDB()">⬆️ Carica le ${SEED.rows.length} vetture del file del 18/11</button>`:'Sblocca con la password per caricare i dati.'}</div>`;return;
+  el.innerHTML=`<div class="empty">Il tabellone su Firebase è vuoto.<br><br>${canEdit()?`<button class="btn" onclick="seedDB()">${ic('upload')}Carica le ${SEED.rows.length} vetture del file del 18/11</button>`:'Sblocca con la password per caricare i dati.'}</div>`;return;
  }
- if(!LOADED&&!S.rows.length){el.innerHTML='<div class="empty">'+(typeof firebase==='undefined'?'⚠️ Firebase non raggiungibile: controlla la connessione e ricarica la pagina.':'Collegamento a Firebase…')+'</div>';return}
+ if(!LOADED&&!S.rows.length){el.innerHTML='<div class="empty">'+(typeof firebase==='undefined'?ic('triangle-alert')+' Firebase non raggiungibile: controlla la connessione e ricarica la pagina.':'Collegamento a Firebase…')+'</div>';return}
  const rows=filtered();
  if(!rows.length){el.innerHTML='<div class="empty">Nessuna vettura con questi filtri.</div>';return}
  const ed=canEdit();
@@ -400,26 +417,26 @@ function render(){
   const border=pn===1?'#f43f5e':pn===2?'#f97316':pn===3?'#facc15':pn===4?'#22c55e':(document.body.classList.contains('glass')?'#22d3ee':'var(--acc2)');
   return `<div class="card ${cl?'closed':''}" style="border-left-color:${border};--pc:${border}" onclick="openEdit('${r.id}')">
    <div class="ctop"><span class="num">${esc(r.vettura)}</span>
-    ${r.fermo?'<span class="badge bF">FERMA</span>':''}${r.sollecitare?'<span class="badge bS">🔔 SOLLECITARE</span>':''}
+    ${r.fermo?'<span class="badge bF">FERMA</span>':''}${r.sollecitare?'<span class="badge bS">'+ic('bell')+' SOLLECITARE</span>':''}
     <div class="days ${g!==null&&g>=30?'hot':''}">${g===null?'<b>—</b>senza data':`<b>${g}</b>gg dal ${fmt(r.data)}`}</div></div>
    ${r.danno?`<div class="line"><span class="k">Danno</span><b>${esc(r.danno)}</b></div>`:''}
-   <div class="line"><span class="k">Stato</span>${esc(r.stato)||'—'} · 📍 ${esc(r.dove)||'—'}</div>
+   <div class="line"><span class="k">Stato</span>${esc(r.stato)||'—'} · ${ic('map-pin')} ${esc(r.dove)||'—'}</div>
    ${r.pratica?`<div class="line"><span class="k">Aggiorn.</span>${esc(r.pratica)}</div>`:''}
    ${r.noteRiunione?`<div class="line"><span class="k">Riunione</span>${esc(r.noteRiunione)}</div>`:''}
    <div class="chips">
     ${r.prioritaConc?`<span class="chip pc${pn}">${esc(r.prioritaConc)}</span>`:'<span class="chip">Priorità da concordare</span>'}
     <span class="chip p-${sgc}">Sugg.: ${sg}</span>
-    ${r.azione?`<span class="chip">➜ ${esc(r.azione)}</span>`:''}
-    ${r.dataChiamata?`<span class="chip">📅 ${fmt(r.dataChiamata)}</span>`:''}
-    ${r.rientro?`<span class="chip">↩ ${esc(r.rientro)}</span>`:''}
+    ${r.azione?`<span class="chip">${ic('arrow-right')}${esc(r.azione)}</span>`:''}
+    ${r.dataChiamata?`<span class="chip">${ic('calendar')}${fmt(r.dataChiamata)}</span>`:''}
+    ${r.rientro?`<span class="chip">${ic('undo-2')}${esc(r.rientro)}</span>`:''}
     ${cl&&r.chiusaIl?`<span class="chip">Chiusa il ${fmt(r.chiusaIl)}</span>`:''}
    </div>
    ${r.updated?`<div style="font-size:10.5px;color:var(--mut);margin-top:6px">Modificata ${fmtTs(r.updated)}${r.updatedBy?' da '+esc(r.updatedBy):''}</div>`:''}
    ${ed?`<div class="qa" onclick="event.stopPropagation()">
-    ${cl?`<button onclick="riapri('${r.id}')">↺ Riapri</button>`:`
-    <button onclick="toggleSol('${r.id}')">${r.sollecitare?'🔕 Sollecitata':'🔔 Sollecita'}</button>
-    <button onclick="quickAz('${r.id}','Chiamare a Molise')">📞 Chiama Molise</button>
-    <button onclick="chiudi('${r.id}')">✅ Rientrata</button>`}
+    ${cl?`<button onclick="riapri('${r.id}')">${ic('rotate-ccw')}Riapri</button>`:`
+    <button onclick="toggleSol('${r.id}')">${r.sollecitare?ic('bell-off')+'Sollecitata':ic('bell')+'Sollecita'}</button>
+    <button onclick="quickAz('${r.id}','Chiamare a Molise')">${ic('phone')}Chiama Molise</button>
+    <button onclick="chiudi('${r.id}')">${ic('circle-check')}Rientrata</button>`}
    </div>`:''}</div>`;
  }).join('');
 }
@@ -437,7 +454,7 @@ function inlineSet(id,field,val){
  writeRow(r,(field==='azione'?'azione → ':'priorità → ')+(val||'—')).then(()=>toast(r.vettura+' aggiornata'),()=>render());
 }
 function renderTable(el,rows,ed){
- const H=['Vettura','Fermo (F)','Stato attuale','Dove si trova','Lavorazione / danno','Data stato','Giorni trascorsi','Pratica / aggiornamento','Priorità suggerita (auto)','Priorità concordata','Azione concordata','Data chiamata / spostamento','Rientro previsto','Referente carrozzeria','Note riunione','Note lavagna','🔔'];
+ const H=['Vettura','Fermo (F)','Stato attuale','Dove si trova','Lavorazione / danno','Data stato','Giorni trascorsi','Pratica / aggiornamento','Priorità suggerita (auto)','Priorità concordata','Azione concordata','Data chiamata / spostamento','Rientro previsto','Referente carrozzeria','Note riunione','Note lavagna',ic('bell')];
  const W=[60,48,170,120,170,82,64,220,90,130,150,92,110,110,200,140,34];
  el.innerHTML=`<div class="xwrap"><table class="xl"><colgroup>${W.map(w=>`<col style="width:${w}px">`).join('')}</colgroup>
  <thead><tr>${H.map((h,i)=>`<th class="${i===0?'v':''}">${h}</th>`).join('')}</tr></thead><tbody>
@@ -447,7 +464,7 @@ function renderTable(el,rows,ed){
   <td class="c">${fmt(r.data)}</td><td class="c ${g!==null&&g>=30?'hot':''}">${g??''}</td><td>${esc(r.pratica)}</td><td class="${sc}">${sg}</td>
   <td class="inp">${selCell(r,'prioritaConc',S.lists.priorita)}</td><td class="inp">${selCell(r,'azione',S.lists.azione)}</td>
   <td class="inp c">${fmt(r.dataChiamata)}</td><td class="inp">${esc(r.rientro)}</td><td class="inp">${esc(r.referente)}</td><td class="inp">${esc(r.noteRiunione)}</td><td>${esc(r.noteLavagna)}</td>
-  <td class="c">${r.sollecitare?'🔔':''}</td></tr>`}).join('')}
+  <td class="c">${r.sollecitare?ic('bell'):''}</td></tr>`}).join('')}
  </tbody></table></div>
  <div class="hint" style="color:#fff;opacity:.8;font-size:12px;margin-top:6px">Clic su una riga per aprire la scheda completa${ed?' · Priorità e Azione si cambiano direttamente dalla tabella':''}.</div>`;
 }
@@ -464,19 +481,19 @@ function openEdit(id){
  const r=id?find(id):{id:'',vettura:'',fermo:true,stato:'',dove:'Deposito SD',danno:'',data:today(),pratica:'',prioritaConc:'',azione:'',dataChiamata:'',rientro:'',referente:'',noteRiunione:'',noteLavagna:'',sollecitare:false};
  const g=id?giorni(r):null;
  document.getElementById('editBody').innerHTML=`
- <h2>${id?'Vettura '+esc(r.vettura):'Nuova vettura'}<button class="x" onclick="closeM('mEdit')">×</button></h2>
+ <h2>${id?'Vettura '+esc(r.vettura):'Nuova vettura'}<button class="x" onclick="closeM('mEdit')">${ic('x')}</button></h2>
  <fieldset ${dis} style="border:0;padding:0;margin:0">
  <div class="fg">
   <label class="f">N° vettura<input id="e_vettura" inputmode="numeric" value="${esc(r.vettura)}"></label>
   <label class="f">Data stato<input id="e_data" type="date" value="${esc(r.data)}"></label>
   <label class="chk"><input type="checkbox" id="e_fermo" ${r.fermo?'checked':''}> <b>Ferma (F)</b></label>
-  <label class="chk"><input type="checkbox" id="e_sol" ${r.sollecitare?'checked':''}> 🔔 Da sollecitare</label>
+  <label class="chk"><input type="checkbox" id="e_sol" ${r.sollecitare?'checked':''}> Da sollecitare</label>
   <label class="f full">Lavorazione / danno<input id="e_danno" value="${esc(r.danno)}"></label>
   <label class="f">Stato attuale<input id="e_stato" value="${esc(r.stato)}"></label>
   <label class="f">Dove si trova<select id="e_dove">${opts(S.lists.dove,r.dove)}</select></label>
   <label class="f full">Pratica / aggiornamento<input id="e_pratica" value="${esc(r.pratica)}"></label>
  </div>
- ${id?`<div class="sugg" style="margin-top:10px">⏱ ${g===null?'Senza data':g+' giorni dal '+fmt(r.data)} · Priorità suggerita: <b>${sugg(r)}</b></div>`:''}
+ ${id?`<div class="sugg" style="margin-top:10px">${ic('timer')} ${g===null?'Senza data':g+' giorni dal '+fmt(r.data)} · Priorità suggerita: <b>${sugg(r)}</b></div>`:''}
  <div class="sec-t">Riunione con la carrozzeria</div>
  <div class="fg">
   <label class="f">Priorità concordata<select id="e_prio">${opts(S.lists.priorita,r.prioritaConc)}</select></label>
@@ -488,9 +505,9 @@ function openEdit(id){
   <label class="f full">Note lavagna<input id="e_nl" value="${esc(r.noteLavagna)}"></label>
  </div></fieldset>
  <div class="acts">
-  ${ed&&id?`<button class="btn red" onclick="delRow('${r.id}')">🗑 Elimina</button>`:''}
+  ${ed&&id?`<button class="btn red" onclick="delRow('${r.id}')">${ic('trash-2')}Elimina</button>`:''}
   <button class="btn sec" onclick="closeM('mEdit')">${ed?'Annulla':'Chiudi'}</button>
-  ${ed?`<button class="btn green" onclick="saveRow('${r.id}')">💾 Salva</button>`:''}
+  ${ed?`<button class="btn green" onclick="saveRow('${r.id}')">${ic('save')}Salva</button>`:''}
  </div>
  ${id&&r.updated?`<div style="font-size:11px;color:var(--mut);margin-top:8px">Ultima modifica: ${fmtTs(r.updated)}${r.updatedBy?' · '+esc(r.updatedBy):''}</div>`:''}`;
  document.getElementById('mEdit').classList.add('on');
@@ -525,17 +542,17 @@ function seedDB(){
 function openTools(){
  const ed=canEdit();
  document.getElementById('toolsBody').innerHTML=`
- <h2>⚙️ Strumenti<button class="x" onclick="closeM('mTools')">×</button></h2>
+ <h2>${ic('settings')} Strumenti<button class="x" onclick="closeM('mTools')">${ic('x')}</button></h2>
  <div class="sec-t">Per la riunione</div>
  <div class="acts" style="margin-top:0">
-  <button class="btn sec" onclick="copyList()">📋 Copia lista per WhatsApp</button>
-  <button class="btn sec" onclick="printList()">🖨 Stampa / PDF</button>
+  <button class="btn sec" onclick="copyList()">${ic('clipboard-copy')}Copia lista per WhatsApp</button>
+  <button class="btn sec" onclick="printList()">${ic('printer')}Stampa / PDF</button>
  </div>
  <div style="font-size:12px;color:var(--mut);margin-top:6px">Copiano e stampano le vetture che stai vedendo ora (scheda e filtri attivi).</div>
  <div class="sec-t">Excel</div>
  <div class="acts" style="margin-top:0">
-  <button class="btn sec" onclick="exportXlsx()">⬇️ Esporta Excel</button>
-  ${ed?`<button class="btn sec" onclick="document.getElementById('fileXlsx').click()">⬆️ Importa Excel</button>`:''}
+  <button class="btn sec" onclick="exportXlsx()">${ic('download')}Esporta Excel</button>
+  ${ed?`<button class="btn sec" onclick="document.getElementById('fileXlsx').click()">${ic('upload')}Importa Excel</button>`:''}
  </div>
  ${ed?`<div class="sec-t">Liste dei menu (una voce per riga) — valgono per tutti</div>
  <div class="fg">
@@ -547,7 +564,7 @@ function openTools(){
  <div class="sec-t">Ultime modifiche</div>
  <div class="log" id="logBox">${LOG.length?LOG.map(l=>`<div><b>${fmtTs(l.ts)}</b> · ${esc(l.by)} · ${l.vet?'<b>'+esc(l.vet)+'</b> ':''}${esc(l.what)}</div>`).join(''):'Nessuna modifica registrata.'}</div>`:''}
  <div class="sec-t">Aspetto (solo su questo dispositivo)</div>
- <div class="vbtn" style="width:max-content;margin-bottom:10px"><button class="${P.style!=='classico'?'on':''}" onclick="P.style='glass';savePref();applyPalette();render();openTools()">✨ Liquid Glass</button><button class="${P.style==='classico'?'on':''}" onclick="P.style='classico';savePref();applyPalette();render();openTools()">🎨 Classico</button></div>
+ <div class="vbtn" style="width:max-content;margin-bottom:10px"><button class="${P.style!=='classico'?'on':''}" onclick="P.style='glass';savePref();applyPalette();render();openTools()">${ic('sparkles')}Liquid Glass</button><button class="${P.style==='classico'?'on':''}" onclick="P.style='classico';savePref();applyPalette();render();openTools()">${ic('palette')}Classico</button></div>
  <div style="font-size:12px;color:var(--mut);margin-bottom:6px">Le palette qui sotto valgono per lo stile Classico.</div>
  <div class="pal">${Object.entries(PALETTES).map(([k,p])=>`<button class="${P.palette===k?'on':''}" onclick="P.palette='${k}';savePref();applyPalette();openTools()"><span class="sw">${p.c.slice(0,4).map(c=>`<i style="background:${c}"></i>`).join('')}</span>${p.n}</button>`).join('')}</div>
  <label class="chk" style="margin-top:10px"><input type="checkbox" ${P.pattern?'checked':''} onchange="P.pattern=this.checked;savePref();applyPalette()"> Sfondo mandala</label>`;
@@ -624,9 +641,9 @@ function copyList(){
  const t=TABS.find(x=>x[0]===tab)[1].replace(/^[^\wÀ-ÿ]+/,'');
  let s='*Carrozzeria SD – '+t+'* ('+fmt(today())+')\n';
  rows.forEach(r=>{const g=giorni(r);s+='\n• *'+r.vettura+'*'+(r.fermo?' (ferma)':'')+' – '+(r.danno||r.stato||'')+(g!==null?' – '+g+' gg':'')+(r.prioritaConc?' – '+r.prioritaConc:'')+(r.azione?' – '+r.azione:'')});
- if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(s).then(()=>toast('Lista copiata ✔'),()=>fallbackCopy(s));else fallbackCopy(s);
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(s).then(()=>toast('Lista copiata'),()=>fallbackCopy(s));else fallbackCopy(s);
 }
-function fallbackCopy(s){const ta=document.createElement('textarea');ta.value=s;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Lista copiata ✔')}catch(e){prompt('Copia il testo:',s)}ta.remove()}
+function fallbackCopy(s){const ta=document.createElement('textarea');ta.value=s;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Lista copiata')}catch(e){prompt('Copia il testo:',s)}ta.remove()}
 function printList(){
  const rows=filtered(),t=TABS.find(x=>x[0]===tab)[1];
  document.getElementById('printarea').innerHTML=`<h2 style="margin:0 0 4px">Tabellone Carrozzeria SD – ${esc(t)}</h2><div style="margin-bottom:8px">Stampato il ${fmt(today())} · ${rows.length} vetture</div>
@@ -644,12 +661,12 @@ const TAB_EMAIL='tabellone.carrozzeria.sd@depotrack-d1d28.app';
 let AUTH=null,UNLOCK=false,MYNAME='';
 try{MYNAME=localStorage.getItem('tabCarrSD_nome')||''}catch(e){}
 async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}
-function paintUser(){const b=document.getElementById('bUser');b.textContent=UNLOCK?('🔓 '+(MYNAME||'Blocca')):'🔒 Sblocca';ME.name=MYNAME}
+function paintUser(){const b=document.getElementById('bUser');b.innerHTML=UNLOCK?(ic('lock-open')+esc(MYNAME||'Blocca')):(ic('lock')+'Sblocca');ME.name=MYNAME}
 function userBtn(){if(!UNLOCK){openLogin();return}lock('Tabellone bloccato')}
 function lock(msg){if(AUTH&&AUTH.currentUser)AUTH.signOut();UNLOCK=false;paintUser();render();if(msg)toast(msg)}
 function openLogin(){
  if(!AUTH){toast('Firebase non raggiungibile: controlla la connessione');return}
- document.getElementById('loginBody').innerHTML=`<h2>🔒 Sblocca il tabellone<button class="x" onclick="closeM('mLogin')">×</button></h2>
+ document.getElementById('loginBody').innerHTML=`<h2>${ic('lock')} Sblocca il tabellone<button class="x" onclick="closeM('mLogin')">${ic('x')}</button></h2>
  <div class="fg"><label class="f full">Password<input id="lp" type="password" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()"></label>
  <label class="f full">Il tuo nome (compare nel registro modifiche)<input id="ln" value="${esc(MYNAME)}" placeholder="es. Mauro"></label></div>
  <div class="err" id="lerr"></div>
@@ -689,7 +706,7 @@ function resetInact(){if(inact){clearTimeout(inact);inact=null}if(!UNLOCK)return
 ['mousedown','keydown','touchstart','click'].forEach(ev=>document.addEventListener(ev,resetInact,{passive:true}));
 
 /* ---------- avvio ---------- */
-applyPalette();cacheLoad();fillFilters();paintUser();render();resetInact();
+hydrateIcons();applyPalette();cacheLoad();fillFilters();paintUser();render();resetInact();
 setInterval(render,10*60*1000); // i giorni si aggiornano anche se la pagina resta aperta
 if(typeof firebase==='undefined'){setStatus('err');toast('Firebase non raggiungibile: mostro l\'ultima copia salvata');LOADED=!!S.rows.length;render()}
 else{
