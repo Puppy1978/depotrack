@@ -35,7 +35,7 @@ h1 small{display:block;font-size:11px;opacity:.75;font-weight:normal;margin-top:
 .tab.on{background:var(--hi);color:var(--bg2);font-weight:bold}
 main{max-width:1100px;margin:0 auto;padding:12px 12px 90px}
 .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;background:rgba(255,255,255,.95);padding:10px;border-radius:12px}
-.filters input[type=search]{flex:1 1 100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-size:14px}
+.filters input[type=search]{flex:1 1 260px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-size:14px}
 .filters select{flex:1 1 30%;min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-size:14px;background:#fff;color:var(--ink)}
 .chk{display:flex;align-items:center;gap:5px;font-size:13px;flex:0 0 auto;white-space:nowrap}
 .chk input{width:18px;height:18px;margin:0}
@@ -83,6 +83,29 @@ label.f textarea{min-height:64px;resize:vertical}
 .pal button.on{border-color:var(--ink)}
 .sw{display:inline-flex}.sw i{width:12px;height:18px;display:block}
 .printarea{display:none}
+main.wide{max-width:none}
+.xwrap{background:#fff;border-radius:10px;overflow:auto;max-height:calc(100vh - 250px);box-shadow:0 3px 10px rgba(0,0,0,.18)}
+table.xl{border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:1500px;width:100%}
+table.xl th{position:sticky;top:0;z-index:2;background:#1F3864;color:#fff;font-weight:bold;padding:7px 6px;border:1px solid #999;text-align:center;white-space:normal;line-height:1.2}
+table.xl td{border:1px solid #c8c8c8;padding:5px 6px;vertical-align:middle;background:#fff;color:#111}
+table.xl tbody tr:hover td{background:#eef4ff}
+table.xl tr.cl td{color:#a6a6a6;text-decoration:line-through}
+table.xl td.v{font-weight:bold;font-size:13.5px;text-align:center;position:sticky;left:0;z-index:1}
+table.xl th.v{left:0;z-index:3}
+table.xl td.c{text-align:center}
+table.xl td.inp{background:#FFF2CC}
+table.xl tbody tr:hover td.inp{background:#ffe8a3}
+table.xl td.fF{color:#C00000;font-weight:bold;text-align:center}
+table.xl td.hot{color:#C00000;font-weight:bold}
+table.xl td.sA{background:#F8CBAD;color:#9C0006;font-weight:bold;text-align:center}
+table.xl td.sM{background:#FCE4D6;text-align:center}
+table.xl td.sB{background:#C6EFCE;text-align:center}
+table.xl td.sMo{background:#DDEBF7;text-align:center}
+table.xl select{font-size:12px;padding:3px;border:1px solid #d6b656;border-radius:4px;background:#fffbe9;max-width:150px;font-family:inherit}
+table.xl tr{cursor:pointer}
+.vbtn{display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.25)}
+.vbtn button{border:0;padding:8px 10px;background:rgba(255,255,255,.1);color:var(--hi);font-size:13px;cursor:pointer;font-weight:bold}
+.vbtn button.on{background:var(--acc);color:#111}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;margin-right:5px;vertical-align:middle}
 .dot.live{background:#22c55e;box-shadow:0 0 6px #22c55e}.dot.off{background:#f59e0b}.dot.err{background:#ef4444}
 .ro{background:#fef3c7;color:#78350f;border-radius:10px;padding:8px 12px;font-size:13px;margin-bottom:10px;display:none}
@@ -104,6 +127,7 @@ label.f textarea{min-height:64px;resize:vertical}
  <div class="hrow">
   <h1>🚌 Tabellone Carrozzeria<small><span id="dot" class="dot"></span><span id="sub">Deposito ATM San Donato</span></small></h1>
   <div style="display:flex;gap:6px">
+   <div class="vbtn"><button id="vC" onclick="setView('schede')" title="Vista schede">🗂 Schede</button><button id="vT" onclick="setView('tabella')" title="Vista come Excel">📊 Tabella</button></div>
    <button class="btn ghost" id="bUser" onclick="userBtn()">🔒 Sblocca</button>
    <button class="btn ghost" onclick="openTools()" title="Strumenti">⚙️</button>
   </div>
@@ -161,7 +185,7 @@ let LOG=[];
 let DB=null,ME={name:''},LOADED=false;
 let tab='attive', statFilter='';
 
-function loadPref(){try{return Object.assign({palette:'navy',pattern:true},JSON.parse(localStorage.getItem(PREF)||'{}'))}catch(e){return{palette:'navy',pattern:true}}}
+function loadPref(){const dv=(window.innerWidth>=900?'tabella':'schede');try{return Object.assign({palette:'navy',pattern:true,view:dv},JSON.parse(localStorage.getItem(PREF)||'{}'))}catch(e){return{palette:'navy',pattern:true,view:dv}}}
 function savePref(){try{localStorage.setItem(PREF,JSON.stringify(P))}catch(e){}}
 function cacheSave(){try{localStorage.setItem(CACHE,JSON.stringify({rows:S.rows,lists:S.lists}))}catch(e){}}
 function cacheLoad(){try{const d=JSON.parse(localStorage.getItem(CACHE)||'null');if(d&&d.rows){S.rows=d.rows;if(d.lists)S.lists=d.lists}}catch(e){}}
@@ -247,7 +271,7 @@ function filtered(){
  return rows;
 }
 function render(){
- renderStats();renderTabs();
+ renderStats();renderTabs();paintView();
  document.getElementById('ro').style.display=canEdit()?'none':'block';
  document.getElementById('fab').style.display=canEdit()?'block':'none';
  const el=document.getElementById('list');
@@ -258,6 +282,7 @@ function render(){
  const rows=filtered();
  if(!rows.length){el.innerHTML='<div class="empty">Nessuna vettura con questi filtri.</div>';return}
  const ed=canEdit();
+ if(P.view==='tabella'){renderTable(el,rows,ed);return}
  el.innerHTML=rows.map(r=>{
   const g=giorni(r),sg=sugg(r),pn=prioN(r),cl=isClosed(r);
   const sgc=sg==='A MOLISE'?'MOL':sg;
@@ -286,6 +311,34 @@ function render(){
     <button onclick="chiudi('${r.id}')">✅ Rientrata</button>`}
    </div>`:''}</div>`;
  }).join('');
+}
+
+function setView(v){P.view=v;savePref();render()}
+function paintView(){document.getElementById('list').style.display=P.view==='tabella'?'block':'';document.getElementById('vC').classList.toggle('on',P.view!=='tabella');document.getElementById('vT').classList.toggle('on',P.view==='tabella');document.querySelector('main').classList.toggle('wide',P.view==='tabella')}
+function selCell(r,field,list){
+ const val=r[field]||'';
+ if(!canEdit())return esc(val);
+ return `<select onclick="event.stopPropagation()" onchange="inlineSet('${r.id}','${field}',this.value)">${opts(list,val)}</select>`;
+}
+function inlineSet(id,field,val){
+ const r={...find(id)};const old=r[field];r[field]=val;
+ if(field==='azione'){if(val===CLOSED&&old!==CLOSED){r.chiusaIl=today();r.prevAz=old;r.sollecitare=false}if(val!==CLOSED)r.chiusaIl=''}
+ writeRow(r,(field==='azione'?'azione → ':'priorità → ')+(val||'—')).then(()=>toast(r.vettura+' aggiornata'),()=>render());
+}
+function renderTable(el,rows,ed){
+ const H=['Vettura','Fermo (F)','Stato attuale','Dove si trova','Lavorazione / danno','Data stato','Giorni trascorsi','Pratica / aggiornamento','Priorità suggerita (auto)','Priorità concordata','Azione concordata','Data chiamata / spostamento','Rientro previsto','Referente carrozzeria','Note riunione','Note lavagna','🔔'];
+ const W=[60,48,170,120,170,82,64,220,90,130,150,92,110,110,200,140,34];
+ el.innerHTML=`<div class="xwrap"><table class="xl"><colgroup>${W.map(w=>`<col style="width:${w}px">`).join('')}</colgroup>
+ <thead><tr>${H.map((h,i)=>`<th class="${i===0?'v':''}">${h}</th>`).join('')}</tr></thead><tbody>
+ ${rows.map(r=>{const g=giorni(r),sg=sugg(r),sc={ALTA:'sA',MEDIA:'sM',BASSA:'sB','A MOLISE':'sMo'}[sg];
+  return `<tr class="${isClosed(r)?'cl':''}" onclick="openEdit('${r.id}')">
+  <td class="v">${esc(r.vettura)}</td><td class="fF">${r.fermo?'F':''}</td><td>${esc(r.stato)}</td><td>${esc(r.dove)}</td><td>${esc(r.danno)}</td>
+  <td class="c">${fmt(r.data)}</td><td class="c ${g!==null&&g>=30?'hot':''}">${g??''}</td><td>${esc(r.pratica)}</td><td class="${sc}">${sg}</td>
+  <td class="inp">${selCell(r,'prioritaConc',S.lists.priorita)}</td><td class="inp">${selCell(r,'azione',S.lists.azione)}</td>
+  <td class="inp c">${fmt(r.dataChiamata)}</td><td class="inp">${esc(r.rientro)}</td><td class="inp">${esc(r.referente)}</td><td class="inp">${esc(r.noteRiunione)}</td><td>${esc(r.noteLavagna)}</td>
+  <td class="c">${r.sollecitare?'🔔':''}</td></tr>`}).join('')}
+ </tbody></table></div>
+ <div style="color:#fff;opacity:.8;font-size:12px;margin-top:6px">Clic su una riga per aprire la scheda completa${ed?' · Priorità e Azione si cambiano direttamente dalla tabella':''}.</div>`;
 }
 function find(id){return S.rows.find(r=>r.id===id)}
 function toggleSol(id){const r={...find(id)};r.sollecitare=!r.sollecitare;writeRow(r,r.sollecitare?'da sollecitare':'sollecito tolto')}
