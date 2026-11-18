@@ -100,6 +100,15 @@ body.glass .tab .ic{opacity:.85}body.glass .tab.on .ic{color:#67e8f9;opacity:1}
 body.glass .qa button .ic{color:#67e8f9}
 body.glass .btn:not(.ghost):not(.sec):not(.red) .ic{color:#fff}
 .bS .ic{width:.95em;height:.95em;margin-right:2px}
+
+/* caselle uniformi (fix iPhone: input data più larghi/alti della colonna) */
+.fg{align-items:end}
+label.f input,label.f select{height:44px;box-sizing:border-box;display:block}
+label.f input[type=date]{-webkit-appearance:none;appearance:none;width:100%;min-width:0;max-width:100%;line-height:normal;text-align:left;padding-top:0;padding-bottom:0}
+label.f input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
+label.f input[type=date]::-webkit-datetime-edit{padding:0}
+label.f{white-space:nowrap}
+label.f input,label.f select,label.f textarea{white-space:normal}
 /* ================= STILE LIQUID GLASS ================= */
 body.glass{--g1:#22d3ee;--g2:#a855f7;--g1rgb:34,211,238;--g2rgb:168,85,247;--gbase:#14161b;--gbg:rgba(255,255,255,.055);--gbd:rgba(160,210,255,.18);--gtx:#e8ecf4;--gmut:#9aa3b5;
  font-family:'Inter',system-ui,Arial,sans-serif;color:var(--gtx);background:var(--gbase);
@@ -514,7 +523,7 @@ function openEdit(id){
  <div class="fg">
   <label class="f">Priorità concordata<select id="e_prio">${opts(S.lists.priorita,r.prioritaConc)}</select></label>
   <label class="f">Azione concordata<select id="e_azione">${opts(S.lists.azione,r.azione)}</select></label>
-  <label class="f">Data chiamata / spostamento<input id="e_dch" type="date" value="${esc(r.dataChiamata)}"></label>
+  <label class="f">Data chiamata<input id="e_dch" type="date" value="${esc(r.dataChiamata)}"></label>
   <label class="f">Rientro previsto<input id="e_rientro" value="${esc(r.rientro)}" placeholder="es. 2ª sett. dicembre"></label>
   <label class="f full">Referente carrozzeria<input id="e_ref" value="${esc(r.referente)}"></label>
   <label class="f full">Note riunione<textarea id="e_nr">${esc(r.noteRiunione)}</textarea></label>
