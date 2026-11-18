@@ -124,8 +124,8 @@ body.bgfoto.glass header{background:rgba(16,18,28,.55)}
 h1 small{margin-top:5px}
 body.glass .tc-brand svg{filter:drop-shadow(0 0 10px rgba(var(--g1rgb),.25))}
 @media(min-width:1100px){body.glass .tc-brand .tc-full{width:236px}}
-@media(max-width:1099px){.tc-brand .tc-full{width:178px}}
-@media(max-width:700px){.tc-brand .tc-full{width:128px}h1 small{font-size:10px}}
+@media(max-width:1099px){header .hrow{gap:8px}header h1{flex:1 1 auto;min-width:0}.tc-brand .tc-full{width:100%;max-width:300px}}
+@media(max-width:700px){h1 small{font-size:10px}#bUser .ulab{display:none}#bUser .ic{margin-right:0}header .btn.ghost,header .vbtn button{padding:8px}}
 @media(max-width:360px){.tc-brand .tc-full{display:none}.tc-brand .tc-icon{display:block}}
 /* ================= STILE LIQUID GLASS ================= */
 body.glass{--g1:#22d3ee;--g2:#a855f7;--g1rgb:34,211,238;--g2rgb:168,85,247;--gbase:#14161b;--gbg:rgba(255,255,255,.055);--gbd:rgba(160,210,255,.18);--gtx:#e8ecf4;--gmut:#9aa3b5;
@@ -741,7 +741,7 @@ const TAB_EMAIL='tabellone.carrozzeria.sd@depotrack-d1d28.app';
 let AUTH=null,UNLOCK=false,MYNAME='';
 try{MYNAME=localStorage.getItem('tabCarrSD_nome')||''}catch(e){}
 async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}
-function paintUser(){const b=document.getElementById('bUser');b.innerHTML=UNLOCK?(ic('lock-open')+esc(MYNAME||'Blocca')):(ic('lock')+'Sblocca');ME.name=MYNAME}
+function paintUser(){const b=document.getElementById('bUser');b.innerHTML=UNLOCK?(ic('lock-open')+'<span class="ulab">'+esc(MYNAME||'Blocca')+'</span>'):(ic('lock')+'<span class="ulab">Sblocca</span>');b.title=UNLOCK?'Blocca ('+(MYNAME||'')+')':'Sblocca';ME.name=MYNAME}
 function userBtn(){if(!UNLOCK){openLogin();return}lock('Tabellone bloccato')}
 function lock(msg){if(AUTH&&AUTH.currentUser)AUTH.signOut();UNLOCK=false;paintUser();render();if(msg)toast(msg)}
 function openLogin(){
