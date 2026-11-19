@@ -459,6 +459,24 @@ body.neo .card{padding-left:26px}
 /* pulsante + trascinabile */
 .fab{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
 .fab.drag{cursor:grabbing;transition:none!important;transform:scale(1.08)}
+
+/* tabella su telefono: 4 colonne leggibili */
+table.xl.xm{font-size:13px!important}
+table.xl.xm td,table.xl.xm th{padding:8px 6px;overflow-wrap:break-word;hyphens:none;word-break:normal}
+table.xl.xm th{font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+table.xl.xm .mv{font-size:16px;font-weight:700;letter-spacing:.3px}
+table.xl.xm .mf{display:inline-block;margin-top:3px;font-size:9.5px;font-weight:700;color:#fecaca;background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.55);border-radius:5px;padding:1px 4px}
+table.xl.xm td.v .ic.bell-y{display:block;margin:4px auto 0;width:16px;height:16px}
+table.xl.xm .md{font-weight:600}
+table.xl.xm .ms{font-size:11.5px;opacity:.7;margin-top:2px}
+table.xl.xm .mg{font-size:15px;font-weight:700}
+table.xl.xm .mp{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+table.xl.xm .mp .chip{font-size:10.5px;padding:2px 6px;white-space:nowrap}
+table.xl.xm .msg{font-size:10px;font-weight:700;padding:2px 5px;border-radius:5px;white-space:nowrap}
+table.xl.xm .ma{font-size:11.5px;opacity:.8;margin-top:4px}
+table.xl.xm td.v{white-space:normal;text-align:center}
+@media(max-width:899px){.xwrap{max-height:none!important;overflow:visible!important}}
+@media(max-width:700px){.ro{font-size:12px;padding:6px 10px}header{position:relative!important}}
 /* ---- animazioni ---- */
 @keyframes rowIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
@@ -767,7 +785,22 @@ function fitTable(){
  x.style.maxHeight=h+'px';
 }
 window.addEventListener('resize',()=>requestAnimationFrame(fitTable));
+function renderTableMobile(el,rows,ed){
+ el.innerHTML=`<div class="xwrap"><table class="xl xm"><colgroup><col style="width:19%"><col style="width:39%"><col style="width:11%"><col style="width:31%"></colgroup>
+ <thead><tr><th class="v">Vettura</th><th>Danno · stato</th><th>Gg</th><th>Priorità · azione</th></tr></thead><tbody>
+ ${rows.map((r,ix)=>{const g=giorni(r),sg=sugg(r),sc={ALTA:'sA',MEDIA:'sM',BASSA:'sB','A MOLISE':'sMo'}[sg],pn=prioN(r);
+  return `<tr class="${isClosed(r)?'cl':''}${isFlash(r.id)?' flash':''}" style="--i:${Math.min(ix,30)}" onclick="openEdit('${r.id}')">
+  <td class="v"><div class="mv">${esc(r.vettura)}</div>${r.fermo?'<span class="mf">FERMA</span>':''}${r.sollecitare?ic('bell','bell-y'):''}</td>
+  <td><div class="md">${esc(r.danno)||'—'}</div><div class="ms">${esc(r.stato)}${r.dove?' · '+esc(r.dove):''}</div></td>
+  <td class="c mg ${g!==null&&g>=30?'hot':''}">${g??'—'}</td>
+  <td><div class="mp"><span class="chip pc${pn}">${esc(r.prioritaConc)||'—'}</span><span class="msg ${sc}">${sg}</span></div><div class="ma">${esc(r.azione)}</div></td></tr>`}).join('')}
+ </tbody></table></div>
+ <div class="hint" style="color:#fff;opacity:.8;font-size:12px;margin-top:6px">Tocca una riga per vedere e modificare tutti i campi.</div>`;
+}
+let WASMOB=window.innerWidth<900;
+window.addEventListener('resize',()=>{const m=window.innerWidth<900;if(m!==WASMOB){WASMOB=m;render()}});
 function renderTable(el,rows,ed){
+ if(window.innerWidth<900){renderTableMobile(el,rows,ed);return}
  const H=['Vettura','F','Stato attuale','Dove si trova','Lavorazione / danno','Data stato','Gg','Pratica / aggiornamento','Priorità sugg.','Priorità concordata','Azione concordata','Data chiamata','Rientro previsto','Referente','Note riunione','Note lavagna',ic('bell')];
  const W=[62,22,136,94,136,68,34,178,74,128,140,68,78,78,166,110,26];const WT=W.reduce((a,b)=>a+b,0);
  el.innerHTML=`<div class="xwrap"><table class="xl"><colgroup>${W.map(w=>`<col style="width:${(w/WT*100).toFixed(2)}%">`).join('')}</colgroup>
