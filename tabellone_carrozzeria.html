@@ -485,6 +485,7 @@ function render(){
  if(LOADED&&!S.rows.length){
   el.innerHTML=`<div class="empty">Il tabellone su Firebase è vuoto.<br><br>${canEdit()?`<button class="btn" onclick="seedDB()">${ic('upload')}Carica le ${SEED.rows.length} vetture del file del 18/11</button>`:'Sblocca con la password per caricare i dati.'}</div>`;return;
  }
+ if(READERR&&!UNLOCK&&!S.rows.length){el.innerHTML='<div class="empty">'+ic('lock')+' Premi <b>Sblocca</b> e scrivi la password per vedere le vetture.</div>';return}
  if(!LOADED&&!S.rows.length){el.innerHTML='<div class="empty">'+(typeof firebase==='undefined'?ic('triangle-alert')+' Firebase non raggiungibile: controlla la connessione e ricarica la pagina.':'Collegamento a Firebase…')+'</div>';return}
  const rows=filtered();
  if(!rows.length){el.innerHTML='<div class="empty">Nessuna vettura con questi filtri.</div>';return}
@@ -778,7 +779,23 @@ function onAuth(user){
  const ok=!!(user&&user.email===TAB_EMAIL);
  if(user&&!ok){AUTH.signOut();return}
  const was=UNLOCK;UNLOCK=ok;paintUser();render();
+ if(ok!==was||READERR)attachDB();
  if(ok&&!was){resetInact();toast('Sbloccato'+(MYNAME?' · '+MYNAME:''))}
+}
+
+/* listener del database: si ricollegano a ogni sblocco/blocco.
+   Se il database chiede l'accesso anche per leggere, il primo ascolto (da bloccato) viene rifiutato
+   e Firebase lo chiude: senza ricollegarlo le vetture comparivano solo ricaricando la pagina. */
+let READERR=false,REFS=[];
+function attachDB(){
+ if(!DB)return;
+ REFS.forEach(r=>{try{r.off()}catch(e){}});REFS=[];READERR=false;
+ const rRows=DB.ref(ROOT+'/rows'),rLists=DB.ref(ROOT+'/lists'),rLog=DB.ref(ROOT+'/log').orderByKey().limitToLast(60);
+ REFS=[rRows,rLists,rLog];
+ rRows.on('value',s=>{const o=s.val()||{};S.rows=Object.keys(o).map(k=>({...o[k],id:k,vettura:String(o[k].vettura??'')}));LOADED=true;READERR=false;cacheSave();setStatus('live');render()},
+  ()=>{READERR=true;setStatus(UNLOCK?'err':'off');if(UNLOCK)toast('Accesso al database negato');render()});
+ rLists.on('value',s=>{const l=s.val();if(l&&l.dove){S.lists={dove:l.dove||[],azione:l.azione||[],priorita:l.priorita||[]};cacheSave();fillFilters();render()}},()=>{});
+ rLog.on('value',s=>{const o=s.val()||{};LOG=Object.keys(o).map(k=>o[k]).sort((a,b)=>b.ts-a.ts);const lb=document.getElementById('logBox');if(lb)lb.innerHTML=LOG.length?LOG.map(l=>`<div><b>${fmtTs(l.ts)}</b> · ${esc(l.by)} · ${l.vet?'<b>'+esc(l.vet)+'</b> ':''}${esc(l.what)}</div>`).join(''):'Nessuna modifica registrata.'},()=>{});
 }
 /* 20 minuti senza toccare niente = si blocca di nuovo */
 let inact=null;
@@ -794,9 +811,7 @@ else{
  try{AUTH=firebase.auth();AUTH.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{});AUTH.onAuthStateChanged(onAuth)}catch(e){AUTH=null}
  if(DB){
   setStatus('conn');
-  DB.ref(ROOT+'/rows').on('value',s=>{const o=s.val()||{};S.rows=Object.keys(o).map(k=>({...o[k],id:k,vettura:String(o[k].vettura??'')}));LOADED=true;cacheSave();setStatus('live');render()},()=>{setStatus('err');toast('Accesso al database negato')});
-  DB.ref(ROOT+'/lists').on('value',s=>{const l=s.val();if(l&&l.dove){S.lists={dove:l.dove||[],azione:l.azione||[],priorita:l.priorita||[]};cacheSave();fillFilters();render()}});
-  DB.ref(ROOT+'/log').orderByKey().limitToLast(60).on('value',s=>{const o=s.val()||{};LOG=Object.keys(o).map(k=>o[k]).sort((a,b)=>b.ts-a.ts);const lb=document.getElementById('logBox');if(lb)lb.innerHTML=LOG.length?LOG.map(l=>`<div><b>${fmtTs(l.ts)}</b> · ${esc(l.by)} · ${l.vet?'<b>'+esc(l.vet)+'</b> ':''}${esc(l.what)}</div>`).join(''):'Nessuna modifica registrata.'});
+  attachDB();
   DB.ref('.info/connected').on('value',s=>{if(LOADED)setStatus(s.val()?'live':'off')});
  }
 }
