@@ -8,12 +8,12 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0B2545;--bg2:#13315C;--card:#ffffff;--ink:#14213d;--mut:#6b7280;--acc:#F28705;--acc2:#035AA6;--line:#e5e7eb;--hi:#FFFFFF;
 --alta:#fde2e1;--altaT:#9f1239;--media:#ffedd5;--mediaT:#9a3412;--bassa:#dcfce7;--bassaT:#166534;--mol:#dbeafe;--molT:#1e40af;--urg:#7f1d1d}
 *{box-sizing:border-box}
-html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg)}
+html,body{margin:0;font-family:'Space Grotesk','Inter',Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg)}
 body{min-height:100vh;background-color:var(--bg);background-image:var(--pattern,none);background-size:120px 120px;background-attachment:fixed}
 header{position:sticky;top:0;z-index:20;background:var(--bg2);color:var(--hi);padding:10px 14px calc(8px) 14px;box-shadow:0 2px 10px rgba(0,0,0,.25);border-bottom:3px solid var(--acc)}
 .hrow{display:flex;align-items:center;gap:10px;justify-content:space-between}
@@ -175,7 +175,7 @@ body.glass .clk{background:rgba(255,255,255,.05);border-color:var(--gbd);box-sha
 .clk #clkT .sep{display:flex;flex-direction:column;gap:6px;width:6px;align-items:center}
 .clk #clkT .sep i{width:4px;height:4px;border-radius:50%;background:var(--acc);opacity:.9}
 body.glass .clk #clkT .sep i{background:var(--g1);box-shadow:0 0 6px var(--g1)}
-.clk #clkT .fp{--h:36px;--w:25px;position:relative;display:block;width:var(--w);height:var(--h);perspective:120px;font:700 26px/36px 'Inter',Arial,sans-serif;color:var(--txt);text-align:center;font-variant-numeric:tabular-nums}
+.clk #clkT .fp{--h:36px;--w:25px;position:relative;display:block;width:var(--w);height:var(--h);perspective:120px;font:700 26px/36px 'Space Grotesk','Inter',Arial,sans-serif;color:var(--txt);text-align:center;font-variant-numeric:tabular-nums}
 .clk #clkT .fp.s{--h:28px;--w:19px;font-size:20px;line-height:28px}
 .clk #clkT .fp>span{position:absolute;left:0;right:0;height:50%;overflow:hidden;font:inherit;color:inherit;background:linear-gradient(180deg,#2a2f42,var(--surf));backface-visibility:hidden}
 .clk #clkT .fp .t,.clk #clkT .fp .ft{top:0;border-radius:5px 5px 0 0;transform-origin:50% 100%}
@@ -204,7 +204,7 @@ body.glass .xwrap{scrollbar-color:rgba(var(--g1rgb),.55) transparent}
 body.glass .xwrap::-webkit-scrollbar-thumb{background:linear-gradient(rgba(var(--g1rgb),.7),rgba(var(--g2rgb),.7))}
 /* ================= STILE LIQUID GLASS ================= */
 body.glass{--g1:#22d3ee;--g2:#a855f7;--g1rgb:34,211,238;--g2rgb:168,85,247;--gbase:#14161b;--gbg:rgba(255,255,255,.055);--gbd:rgba(160,210,255,.18);--gtx:#e8ecf4;--gmut:#9aa3b5;
- font-family:'Inter',system-ui,Arial,sans-serif;color:var(--gtx);background:var(--gbase);
+ font-family:'Space Grotesk','Inter',system-ui,Arial,sans-serif;color:var(--gtx);background:var(--gbase);
  background-image:radial-gradient(600px 420px at 8% 12%,rgba(var(--g1rgb),.16),transparent 70%),radial-gradient(700px 500px at 92% 20%,rgba(var(--g2rgb),.16),transparent 70%),radial-gradient(600px 500px at 60% 100%,rgba(249,115,22,.10),transparent 70%),var(--pattern,none);
  background-size:auto,auto,auto,120px 120px;background-attachment:fixed}
 body.glass .gl,body.glass header,body.glass .filters,body.glass .card,body.glass .sheet,body.glass .xwrap,body.glass .toast,body.glass .ro{
@@ -357,7 +357,7 @@ body.neo{--nb:#222428;--nb2:#1b1d20;--nl:rgba(255,255,255,.045);--nd:rgba(0,0,0,
  --rz:7px 7px 16px rgba(0,0,0,.6),-5px -5px 12px rgba(255,255,255,.035),inset 0 1px 0 rgba(255,255,255,.05);
  --rzs:4px 4px 9px rgba(0,0,0,.55),-3px -3px 7px rgba(255,255,255,.035),inset 0 1px 0 rgba(255,255,255,.05);
  --ins:inset 3px 3px 7px rgba(0,0,0,.65),inset -2px -2px 5px rgba(255,255,255,.04);
- background-color:var(--gbase)!important;font-family:'Inter',system-ui,Arial,sans-serif}
+ background-color:var(--gbase)!important;font-family:'Space Grotesk','Inter',system-ui,Arial,sans-serif}
 body.neo:not(.bgfoglie):not(.bgfoto){background-image:var(--pattern,none)!important}
 body.neo.bgfoglie,body.neo.bgfoto,body.glass.bgfoglie,body.glass.bgfoto{background:transparent!important}
 html:has(body.bgfoto),html:has(body.bgfoglie){background-image:none!important}
@@ -433,6 +433,15 @@ body.neo .filters,body.glass .filters{border-radius:12px}
 .st>span{text-transform:uppercase;letter-spacing:.5px;font-weight:600}
 @media(min-width:1100px){body.vtab .st>span{font-size:10.5px}}
 @media(min-width:1100px) and (max-width:1450px){body.vtab .st>span{font-size:9.5px;letter-spacing:.3px}body.vtab .st .ic{width:22px;height:22px}body.vtab .st{column-gap:4px;padding:6px 8px}}
+
+/* navigazione: etichetta + numero in ovale */
+.tab{display:inline-flex;align-items:center;gap:7px}
+.tab .tc{font-style:normal;font-size:11.5px;font-weight:600;min-width:22px;text-align:center;padding:1px 7px;border-radius:999px;background:rgba(0,0,0,.25);color:inherit;line-height:1.5}
+.tab.on .tc{background:var(--acc);color:#111}
+body.glass .tab .tc{background:rgba(0,0,0,.35);color:#c9ccd2;box-shadow:inset 1px 1px 3px rgba(0,0,0,.5)}
+body.glass .tab.on .tc{background:var(--g1);color:#0d0f14;box-shadow:0 0 10px rgba(var(--g1rgb),.5)}
+@media(min-width:1100px){body.glass.vcard .tab .tl{flex:1}body.glass.vcard .tabs::before{letter-spacing:1.6px;font-weight:600;font-size:11px}body.glass.vcard .tab{font-size:14px;font-weight:500;gap:10px}body.glass.vcard .tab.on{font-weight:600}}
+body{letter-spacing:.1px}
 /* ---- animazioni ---- */
 @keyframes rowIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
@@ -632,7 +641,7 @@ const TABS=[
  ['esterni','Altri fornitori','wrench',r=>!isClosed(r)&&r.dove!=='Molise'&&r.dove!=='Deposito SD'],
  ['storico','Storico','archive',r=>isClosed(r)]
 ];
-function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(([k,l,icn,f])=>`<div class="tab ${tab===k?'on':''}" onclick="tab='${k}';statFilter='';render()">${ic(icn)}${l} (${S.rows.filter(f).length})</div>`).join('')}
+function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(([k,l,icn,f])=>`<div class="tab ${tab===k?'on':''}" onclick="tab='${k}';statFilter='';render()">${ic(icn)}<span class="tl">${l}</span><em class="tc">${S.rows.filter(f).length}</em></div>`).join('')}
 function renderStats(){
  const a=S.rows.filter(r=>!isClosed(r));
  const items=[['','Attive',a.length],['F','Ferme',a.filter(r=>r.fermo).length],['ALTA','Suggerita ALTA',a.filter(r=>sugg(r)==='ALTA').length],['30','Ferme 30+ gg',a.filter(r=>r.fermo&&(giorni(r)??0)>=30).length],['SOL','Sollecitare',a.filter(r=>r.sollecitare).length]];
