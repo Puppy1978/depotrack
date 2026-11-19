@@ -356,6 +356,8 @@ body.neo{--nb:#222428;--nb2:#1b1d20;--nl:rgba(255,255,255,.045);--nd:rgba(0,0,0,
  --ins:inset 3px 3px 7px rgba(0,0,0,.65),inset -2px -2px 5px rgba(255,255,255,.04);
  background-color:var(--gbase)!important;font-family:'Inter',system-ui,Arial,sans-serif}
 body.neo:not(.bgfoglie):not(.bgfoto){background-image:var(--pattern,none)!important}
+body.neo.bgfoglie,body.neo.bgfoto,body.glass.bgfoglie,body.glass.bgfoto{background:transparent!important}
+html:has(body.bgfoto),html:has(body.bgfoglie){background-image:none!important}
 body.neo::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 body.neo .gl,body.neo header,body.neo .filters,body.neo .card,body.neo .sheet,body.neo .xwrap,body.neo .toast,body.neo .ro{
  background:var(--nb)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border:1px solid rgba(255,255,255,.035)!important;box-shadow:var(--rz)!important}
