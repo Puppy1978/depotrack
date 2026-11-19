@@ -29,6 +29,8 @@ h1 small{display:block;font-size:11px;opacity:.75;font-weight:normal;margin-top:
 .stats::-webkit-scrollbar{display:none}
 .st{flex:0 0 auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:5px 10px;text-align:center;cursor:pointer;min-width:74px}
 .st b{display:block;font-size:19px;color:var(--acc)}
+.st>.ic{display:none}
+@media(min-width:1100px){body.vtab .st>.ic{display:block}}
 .st span{font-size:10.5px;opacity:.9}
 .st.on{background:var(--acc);color:#111}.st.on b{color:#111}
 .tabs{display:flex;gap:6px;margin-top:8px;overflow-x:auto;scrollbar-width:none}
@@ -137,26 +139,53 @@ body.glass .ic.bell-y{color:#facc15;fill:rgba(250,204,21,.35);filter:drop-shadow
 
 /* PC in vista Tabella: dashboard in alto a tutta larghezza, tabella sotto */
 @media(min-width:1100px){
- body.vtab header{padding:10px 18px 10px}
- body.vtab header .hrow{align-items:center}
- body.vtab .tc-brand .tc-full{width:210px}
- body.vtab .stats{display:flex;gap:8px;padding:8px 0 0}
- body.vtab .st{min-width:96px;padding:4px 12px}
- body.vtab .tabs{margin-top:8px}
- body.vtab main{max-width:none;margin:0;padding:12px 16px 80px}
- body.vtab .xwrap{max-height:calc(100vh - 300px)}
- body.vtab header{display:grid;grid-template-columns:220px minmax(0,1fr) auto;grid-template-areas:"logo stats btn" "logo tabs btn";column-gap:22px;row-gap:6px;align-items:center}
+ body.vtab header{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;grid-template-areas:"logo clock stats btn" "tabs tabs tabs tabs";column-gap:14px;row-gap:10px;align-items:stretch;padding:12px 16px}
  body.vtab header .hrow{display:contents}
- body.vtab header h1{grid-area:logo;width:220px}
+ body.vtab header h1{grid-area:logo;display:flex;flex-direction:column;justify-content:center;margin:0}
+ body.vtab .tc-brand .tc-full{width:210px}
  body.vtab header h1 small{white-space:nowrap;font-size:10.5px}
- body.vtab header .hrow>div{grid-area:btn;align-self:start}
- body.vtab .stats{grid-area:stats;padding:0}
- body.vtab .tabs{grid-area:tabs;margin-top:0;min-width:0;max-width:100%;flex-wrap:wrap;width:auto}
- body.vtab .stats{min-width:0;flex-wrap:wrap}
- body.vtab .filters{flex-wrap:nowrap;align-items:center}
+ body.vtab .clk{grid-area:clock;display:flex}
+ body.vtab header .hbtns{grid-area:btn;display:grid!important;grid-template-columns:auto auto;gap:6px;align-content:center}
+ body.vtab header .hbtns .vbtn{grid-column:1/-1;justify-content:stretch}
+ body.vtab header .hbtns .vbtn button{flex:1}
+ body.vtab .stats{grid-area:stats;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;padding:0;overflow:visible;min-width:0}
+ body.vtab .st{min-width:0;display:flex;flex-direction:column;justify-content:center;padding:6px 8px}
+ body.vtab .st b{font-size:26px;line-height:1.1}
+ body.vtab .st span{font-size:11.5px}
+ body.vtab .tabs,body.glass.vtab .tabs{grid-area:tabs;display:flex;margin:0;width:auto;max-width:none;min-width:0;overflow:hidden}
+ body.vtab header .hbtns .vbtn button{display:flex;align-items:center;justify-content:center}
+ body.vtab .st[data-k] b{-webkit-text-fill-color:currentColor;background:none}
+ body.vtab .st[data-k=F] b{color:#fb7185}body.vtab .st[data-k=ALTA] b{color:#fb923c}body.vtab .st[data-k='30'] b{color:#f43f5e}body.vtab .st[data-k=SOL] b{color:#facc15}
+ body.vtab .st{position:relative;overflow:hidden}
+ body.vtab .st .ic{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:34px;height:34px;opacity:.14}
+ body.vtab .tab{flex:1 1 0;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+ body.vtab main{max-width:none;margin:0;padding:12px 16px 0}
+ body.vtab .filters{flex-wrap:nowrap;align-items:center;margin-bottom:10px}
  body.vtab .filters .srch{flex:2 1 220px}
  body.vtab .filters select{flex:1 1 150px}
- body.vtab .xwrap{max-height:calc(100vh - 235px)}
+}
+/* orologio a palette (come DepoTrack Aurora) */
+.clk{display:none;flex-direction:column;justify-content:center;align-items:center;gap:4px;padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);--surf:#1d2130;--txt:#fff}
+body.glass .clk{background:rgba(255,255,255,.05);border-color:var(--gbd);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.clk #clkD{font-size:11px;color:rgba(255,255,255,.75);text-transform:capitalize;white-space:nowrap;letter-spacing:.2px}
+.clk #clkT{display:flex;align-items:center;gap:3px;font-size:0;letter-spacing:0}
+.clk #clkT .sep{display:flex;flex-direction:column;gap:6px;width:6px;align-items:center}
+.clk #clkT .sep i{width:4px;height:4px;border-radius:50%;background:var(--acc);opacity:.9}
+body.glass .clk #clkT .sep i{background:var(--g1);box-shadow:0 0 6px var(--g1)}
+.clk #clkT .fp{--h:36px;--w:25px;position:relative;display:block;width:var(--w);height:var(--h);perspective:120px;font:700 26px/36px 'Inter',Arial,sans-serif;color:var(--txt);text-align:center;font-variant-numeric:tabular-nums}
+.clk #clkT .fp.s{--h:28px;--w:19px;font-size:20px;line-height:28px}
+.clk #clkT .fp>span{position:absolute;left:0;right:0;height:50%;overflow:hidden;font:inherit;color:inherit;background:linear-gradient(180deg,#2a2f42,var(--surf));backface-visibility:hidden}
+.clk #clkT .fp .t,.clk #clkT .fp .ft{top:0;border-radius:5px 5px 0 0;transform-origin:50% 100%}
+.clk #clkT .fp .b,.clk #clkT .fp .fb{bottom:0;border-radius:0 0 5px 5px;transform-origin:50% 0;background:linear-gradient(180deg,#161925,#1b1f2c)}
+.clk #clkT .fp>span>b{display:block;height:var(--h);font:inherit}
+.clk #clkT .fp .b>b,.clk #clkT .fp .fb>b{margin-top:calc(var(--h) / -2)}
+.clk #clkT .fp::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;margin-top:-.5px;background:rgba(0,0,0,.6);z-index:5}
+.clk #clkT .fp .ft{z-index:3;transform:rotateX(0)}.clk #clkT .fp .fb{z-index:2;transform:rotateX(90deg)}
+.clk #clkT .fp.go .ft{animation:fpTop .26s ease-in forwards}
+.clk #clkT .fp.go .fb{animation:fpBot .26s .26s ease-out forwards}
+@keyframes fpTop{to{transform:rotateX(-90deg)}}
+@keyframes fpBot{to{transform:rotateX(0)}}
+@media(min-width:1100px){body.glass.vcard .clk{display:flex;margin-top:4px}}
 }
 
 /* PC vista Tabella: niente scorrimento della pagina, scorre solo la tabella */
@@ -332,7 +361,8 @@ table.xl tr{cursor:pointer}
 <header>
  <div class="hrow">
   <h1><span class="tc-brand" title="Tabellone Carrozzeria"><svg class="tc-full" viewBox="0 0 2183 720" role="img" aria-label="Tabellone Carrozzeria"><use href="#tcLogoArt"/></svg><svg class="tc-icon" viewBox="0 0 875 720" aria-hidden="true"><use href="#tcLogoArt"/></svg><span class="sr">Tabellone Carrozzeria</span></span><small><span id="dot" class="dot"></span><span id="sub">Deposito ATM San Donato</span></small></h1>
-  <div style="display:flex;gap:6px">
+  <div class="clk" id="clk"><b id="clkT" role="timer" aria-label="Ora"></b><span id="clkD"></span></div>
+  <div class="hbtns" style="display:flex;gap:6px">
    <div class="vbtn"><button id="vC" onclick="setView('schede')" title="Vista schede"><i data-ic="layout-grid"></i><span> Schede</span></button><button id="vT" onclick="setView('tabella')" title="Vista come Excel"><i data-ic="table"></i><span> Tabella</span></button></div>
    <button class="btn ghost" id="bUser" onclick="userBtn()"><i data-ic="lock"></i>Sblocca</button>
    <button class="btn ghost" onclick="openTools()" title="Strumenti"><i data-ic="settings"></i></button>
@@ -488,7 +518,8 @@ function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(([k,l,i
 function renderStats(){
  const a=S.rows.filter(r=>!isClosed(r));
  const items=[['','Attive',a.length],['F','Ferme',a.filter(r=>r.fermo).length],['ALTA','Suggerita ALTA',a.filter(r=>sugg(r)==='ALTA').length],['30','Ferme 30+ gg',a.filter(r=>r.fermo&&(giorni(r)??0)>=30).length],['SOL','Sollecitare',a.filter(r=>r.sollecitare).length]];
- document.getElementById('stats').innerHTML=items.map(([k,l,n])=>`<div class="st ${statFilter===k&&k?'on':''}" onclick="statFilter=(statFilter==='${k}'?'':'${k}');render()"><b>${n}</b><span>${l}</span></div>`).join('');
+ const SI={'':'list-checks',F:'triangle-alert',ALTA:'flame','30':'timer',SOL:'bell'};
+ document.getElementById('stats').innerHTML=items.map(([k,l,n])=>`<div class="st ${statFilter===k&&k?'on':''}" ${k?`data-k="${k}"`:''} onclick="statFilter=(statFilter==='${k}'?'':'${k}');render()">${ic(SI[k])}<b>${n}</b><span>${l}</span></div>`).join('');
  document.getElementById('sub').textContent='Deposito ATM San Donato · '+fmt(today());
 }
 function fillFilters(){
@@ -869,6 +900,26 @@ let inact=null;
 function resetInact(){if(inact){clearTimeout(inact);inact=null}if(!UNLOCK)return;inact=setTimeout(()=>{if(UNLOCK)lock('Bloccato per inattività')},20*60*1000)}
 ['mousedown','keydown','touchstart','click'].forEach(ev=>document.addEventListener(ev,resetInact,{passive:true}));
 
+
+/* ---------- orologio a palette (stesso funzionamento di DepoTrack Aurora) ---------- */
+let FLAP=null;
+function flapBuild(c){let h='';for(let i=0;i<6;i++){if(i===2||i===4)h+='<span class="sep" aria-hidden="true"><i></i><i></i></span>';h+='<span class="fp'+(i>3?' s':'')+'" aria-hidden="true"><span class="t"><b></b></span><span class="b"><b></b></span><span class="ft"><b></b></span><span class="fb"><b></b></span></span>'}
+ c.innerHTML=h;FLAP=[...c.querySelectorAll('.fp')].map(el=>({el,v:null}))}
+function flapSet(f,nv){
+ if(f.v===nv)return;const ov=f.v===null?nv:f.v,q=x=>f.el.querySelector(x+'>b');
+ const red=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ f.v=nv;f.el.classList.remove('go');q('.t').textContent=nv;q('.ft').textContent=ov;q('.fb').textContent=nv;q('.b').textContent=ov;
+ if(red||ov===nv){q('.b').textContent=nv;q('.ft').textContent=nv;return}
+ void f.el.offsetWidth;f.el.classList.add('go');
+ clearTimeout(f.tm);f.tm=setTimeout(()=>{q('.b').textContent=nv;q('.ft').textContent=nv;f.el.classList.remove('go')},560);
+}
+function tickClock(){const d=new Date(),p=n=>('0'+n).slice(-2),c=document.getElementById('clkT');if(!c)return;
+ const t=p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());
+ if(!FLAP||!c.querySelector('.fp'))flapBuild(c);c.setAttribute('aria-label','Ora '+t.slice(0,2)+':'+t.slice(2,4));
+ for(let i=0;i<6;i++)flapSet(FLAP[i],t.charAt(i));
+ document.getElementById('clkD').textContent=d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+(function loop(){tickClock();setTimeout(loop,1000-(Date.now()%1000)+15)})();
 /* ---------- avvio ---------- */
 hydrateIcons();applyPalette();cacheLoad();fillFilters();paintUser();render();resetInact();
 setInterval(render,10*60*1000); // i giorni si aggiornano anche se la pagina resta aperta
