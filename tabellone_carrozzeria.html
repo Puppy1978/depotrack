@@ -452,6 +452,13 @@ body{letter-spacing:.1px}
  body.glass.vcard .tab{font-size:13px!important;white-space:nowrap;padding:10px 8px!important;gap:8px!important}
  body.neo.vcard .tabs::before{border-bottom:1px solid rgba(0,0,0,.45);box-shadow:0 1px 0 rgba(255,255,255,.03)}
 }
+
+/* contenuto delle schede staccato dalla striscia colorata */
+body.glass .card{padding-left:24px}
+body.neo .card{padding-left:26px}
+/* pulsante + trascinabile */
+.fab{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.fab.drag{cursor:grabbing;transition:none!important;transform:scale(1.08)}
 /* ---- animazioni ---- */
 @keyframes rowIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
@@ -518,7 +525,7 @@ body.neo table.xl tbody tr:hover td{box-shadow:inset 0 1px 0 rgba(255,255,255,.0
  </div>
  <div class="grid" id="list"></div>
 </main>
-<button class="btn fab" id="fab" onclick="openEdit()">+</button>
+<button class="btn fab" id="fab" title="Nuova vettura (trascinalo per spostarlo)">+</button>
 <div class="modal" id="mLogin"><div class="sheet" id="loginBody"></div></div>
 
 <div class="modal" id="mEdit"><div class="sheet" id="editBody"></div></div>
@@ -1082,6 +1089,26 @@ function tickClock(){const d=new Date(),p=n=>('0'+n).slice(-2),c=document.getEle
  document.getElementById('clkD').textContent=d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 }
 (function loop(){tickClock();setTimeout(loop,1000-(Date.now()%1000)+15)})();
+
+/* ---------- pulsante + spostabile (posizione ricordata su questo dispositivo) ---------- */
+(function(){
+ const f=document.getElementById('fab');if(!f)return;
+ const KEYP='tabCarrSD_fab';
+ function place(x,y){const w=f.offsetWidth||58,h=f.offsetHeight||58;
+  x=Math.max(8,Math.min(innerWidth-w-8,x));y=Math.max(8,Math.min(innerHeight-h-8,y));
+  f.style.left=x+'px';f.style.top=y+'px';f.style.right='auto';f.style.bottom='auto';return [x,y]}
+ function load(){try{const p=JSON.parse(localStorage.getItem(KEYP)||'null');if(p)place(p.rx*innerWidth,p.ry*innerHeight)}catch(e){}}
+ let sx=0,sy=0,ox=0,oy=0,moved=false,down=false;
+ f.addEventListener('pointerdown',e=>{down=true;moved=false;sx=e.clientX;sy=e.clientY;const r=f.getBoundingClientRect();ox=r.left;oy=r.top;f.setPointerCapture(e.pointerId)});
+ f.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-sx,dy=e.clientY-sy;
+  if(!moved&&Math.hypot(dx,dy)<8)return;moved=true;f.classList.add('drag');place(ox+dx,oy+dy)});
+ f.addEventListener('pointerup',e=>{if(!down)return;down=false;f.classList.remove('drag');
+  if(moved){const r=f.getBoundingClientRect();try{localStorage.setItem(KEYP,JSON.stringify({rx:r.left/innerWidth,ry:r.top/innerHeight}))}catch(e){}}
+  else openEdit()});
+ f.addEventListener('pointercancel',()=>{down=false;f.classList.remove('drag')});
+ f.addEventListener('dblclick',e=>{e.preventDefault()});
+ window.addEventListener('resize',load);load();
+})();
 /* ---------- avvio ---------- */
 hydrateIcons();applyPalette();cacheLoad();fillFilters();paintUser();render();resetInact();
 setInterval(render,10*60*1000); // i giorni si aggiornano anche se la pagina resta aperta
