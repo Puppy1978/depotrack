@@ -419,6 +419,37 @@ body.neo .pal button,body.neo .log{background:var(--nb2);box-shadow:var(--ins);b
 body.neo .pal button.on{box-shadow:var(--rzs);background:var(--nb);border-color:rgba(var(--g1rgb),.5)}
 body.neo .xwrap::-webkit-scrollbar-thumb{background:rgba(var(--g1rgb),.55)}
 @media(min-width:1100px){body.neo.vcard header{background:linear-gradient(180deg,#26282d,#202226)!important}}
+
+/* bordi tabella meno arrotondati: la barra di scorrimento non esce più dall'angolo */
+.xwrap,body.glass .xwrap,body.neo .xwrap{border-radius:8px!important;scrollbar-gutter:stable}
+.xwrap::-webkit-scrollbar-track{margin:4px 0}
+.xwrap::-webkit-scrollbar{width:7px}
+.xwrap::-webkit-scrollbar-thumb{border:1px solid transparent;background-clip:padding-box}
+body.neo .filters,body.glass .filters{border-radius:12px}
+/* ---- animazioni ---- */
+@keyframes rowIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+#list.anim-in tbody tr{animation:rowIn .38s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*22ms)}
+#list.anim-in .card{animation:cardIn .45s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*35ms)}
+@keyframes flashRow{0%{background:rgba(var(--g1rgb,34,211,238),.38)}100%{background:transparent}}
+table.xl tr.flash td{animation:flashRow 1.8s ease-out}
+@keyframes flashCard{0%{box-shadow:0 0 0 2px rgba(var(--g1rgb,34,211,238),.9),0 0 26px rgba(var(--g1rgb,34,211,238),.6)}100%{box-shadow:0 0 0 0 transparent}}
+.card.flash{animation:flashCard 1.8s ease-out}
+@keyframes ring{0%,84%,100%{transform:rotate(0)}86%{transform:rotate(16deg)}88%{transform:rotate(-14deg)}90%{transform:rotate(10deg)}92%{transform:rotate(-7deg)}94%{transform:rotate(3deg)}}
+.ic.bell-y,.bS .ic{transform-origin:50% 12%;animation:ring 4.5s ease-in-out infinite}
+@keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.07)}100%{transform:scale(1)}}
+.st.bump{animation:bump .5s ease}
+@keyframes pulseDot{0%{box-shadow:0 0 0 0 rgba(34,197,94,.65)}70%{box-shadow:0 0 0 7px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.dot.live{animation:pulseDot 2.2s infinite}
+.toast{transform:translateX(-50%) translateY(16px)!important;transition:opacity .25s,transform .35s cubic-bezier(.2,.8,.2,1)!important}
+.toast.on{transform:translateX(-50%) translateY(0)!important}
+@keyframes sheetIn{from{opacity:0;transform:translateY(24px) scale(.98)}to{opacity:1;transform:none}}
+.modal.on .sheet{animation:sheetIn .3s cubic-bezier(.2,.8,.2,1)}
+.tab,.st,.btn,.qa button,.vbtn button{transition:background .2s,box-shadow .2s,color .2s,transform .12s}
+.tab:active,.st:active{transform:scale(.97)}
+table.xl tbody tr{transition:background .15s}
+body.neo table.xl tbody tr:hover td{box-shadow:inset 0 1px 0 rgba(255,255,255,.03),inset 0 -1px 0 rgba(0,0,0,.4)}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -599,7 +630,8 @@ function renderStats(){
  const a=S.rows.filter(r=>!isClosed(r));
  const items=[['','Attive',a.length],['F','Ferme',a.filter(r=>r.fermo).length],['ALTA','Suggerita ALTA',a.filter(r=>sugg(r)==='ALTA').length],['30','Ferme 30+ gg',a.filter(r=>r.fermo&&(giorni(r)??0)>=30).length],['SOL','Sollecitare',a.filter(r=>r.sollecitare).length]];
  const SI={'':'list-checks',F:'triangle-alert',ALTA:'flame','30':'timer',SOL:'bell'};
- document.getElementById('stats').innerHTML=items.map(([k,l,n])=>`<div class="st ${statFilter===k&&k?'on':''}" ${k?`data-k="${k}"`:''} onclick="statFilter=(statFilter==='${k}'?'':'${k}');render()">${ic(SI[k])}<b>${n}</b><span>${l}</span></div>`).join('');
+ document.getElementById('stats').innerHTML=items.map(([k,l,n])=>`<div class="st ${statFilter===k&&k?'on':''}" ${k?`data-k="${k}"`:''} onclick="statFilter=(statFilter==='${k}'?'':'${k}');render()">${ic(SI[k])}<b data-n="${n}">${PREVN[k]??n}</b><span>${l}</span></div>`).join('');
+ countUp();
  document.getElementById('sub').textContent='Deposito ATM San Donato · '+fmt(today());
 }
 function fillFilters(){
@@ -648,11 +680,11 @@ function render(){
  if(!rows.length){const qv=document.getElementById('q').value.trim();el.innerHTML='<div class="empty">Nessuna vettura con questi filtri'+(qv?' (ricerca: <b>'+esc(qv)+'</b>)':'')+'.<br><br><button class="btn sec" onclick="resetFilters()">'+ic('rotate-ccw')+'Azzera filtri e ricerca</button></div>';return}
  const ed=canEdit();
  if(P.view==='tabella'){renderTable(el,rows,ed);return}
- el.innerHTML=rows.map(r=>{
+ el.innerHTML=rows.map((r,ix)=>{
   const g=giorni(r),sg=sugg(r),pn=prioN(r),cl=isClosed(r);
   const sgc=sg==='A MOLISE'?'MOL':sg;
   const border=pn===1?'#f43f5e':pn===2?'#f97316':pn===3?'#facc15':pn===4?'#22c55e':(document.body.classList.contains('glass')?'var(--g1)':'var(--acc2)');
-  return `<div class="card ${cl?'closed':''}" style="border-left-color:${border};--pc:${border}" onclick="openEdit('${r.id}')">
+  return `<div class="card ${cl?'closed':''}${isFlash(r.id)?' flash':''}" style="border-left-color:${border};--pc:${border};--i:${Math.min(ix,24)}" onclick="openEdit('${r.id}')">
    <div class="ctop"><span class="num">${esc(r.vettura)}</span>
     ${r.fermo?'<span class="badge bF">FERMA</span>':''}${r.sollecitare?'<span class="badge bS">'+ic('bell')+' SOLLECITARE</span>':''}
     <div class="days ${g!==null&&g>=30?'hot':''}">${g===null?'<b>—</b>senza data':`<b>${g}</b>gg dal ${fmt(r.data)}`}</div></div>
@@ -707,8 +739,8 @@ function renderTable(el,rows,ed){
  const W=[62,22,136,94,136,68,34,178,74,128,140,68,78,78,166,110,26];const WT=W.reduce((a,b)=>a+b,0);
  el.innerHTML=`<div class="xwrap"><table class="xl"><colgroup>${W.map(w=>`<col style="width:${(w/WT*100).toFixed(2)}%">`).join('')}</colgroup>
  <thead><tr>${H.map((h,i)=>`<th class="${i===0?'v':''}">${h}</th>`).join('')}</tr></thead><tbody>
- ${rows.map(r=>{const g=giorni(r),sg=sugg(r),sc={ALTA:'sA',MEDIA:'sM',BASSA:'sB','A MOLISE':'sMo'}[sg];
-  return `<tr class="${isClosed(r)?'cl':''}" onclick="openEdit('${r.id}')">
+ ${rows.map((r,ix)=>{const g=giorni(r),sg=sugg(r),sc={ALTA:'sA',MEDIA:'sM',BASSA:'sB','A MOLISE':'sMo'}[sg];
+  return `<tr class="${isClosed(r)?'cl':''}${isFlash(r.id)?' flash':''}" style="--i:${Math.min(ix,30)}" onclick="openEdit('${r.id}')">
   <td class="v">${esc(r.vettura)}</td><td class="fF">${r.fermo?'F':''}</td><td>${esc(r.stato)}</td><td>${esc(r.dove)}</td><td>${esc(r.danno)}</td>
   <td class="c nw">${fmtS(r.data)}</td><td class="c nw ${g!==null&&g>=30?'hot':''}">${g??''}</td><td>${esc(r.pratica)}</td><td class="${sc} nw">${sg}</td>
   <td class="inp">${selCell(r,'prioritaConc',S.lists.priorita)}</td><td class="inp">${selCell(r,'azione',S.lists.azione)}</td>
@@ -724,7 +756,31 @@ function clearSearch(){const q=document.getElementById('q');q.value='';render();
 function resetFilters(){['q','fDove','fPrio'].forEach(i=>{const e=document.getElementById(i);if(e)e.value=''});['fF','fS'].forEach(i=>{const e=document.getElementById(i);if(e)e.checked=false});statFilter='';render()}
 ['load','pageshow','focus'].forEach(ev=>window.addEventListener(ev,()=>{if(cleanSearch())render()}));
 setTimeout(()=>{if(cleanSearch())render()},800);setTimeout(()=>{if(cleanSearch())render()},2500);
-const _render0=render;render=function(){_render0();requestAnimationFrame(fitTable)};
+
+/* ---------- animazioni ---------- */
+const RED=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let PREVN={},FLASH={},LASTKEY='',SEEN=null;
+function countUp(){
+ document.querySelectorAll('#stats .st b[data-n]').forEach(b=>{
+  const k=b.parentElement.dataset.k||'',to=+b.dataset.n,from=PREVN[k]??to;PREVN[k]=to;
+  if(from===to||RED()){b.textContent=to;return}
+  b.parentElement.classList.remove('bump');void b.offsetWidth;b.parentElement.classList.add('bump');
+  const t0=performance.now(),d=600;(function f(t){const x=Math.min(1,(t-t0)/d),e=1-Math.pow(1-x,3);b.textContent=Math.round(from+(to-from)*e);if(x<1)requestAnimationFrame(f)})(t0);
+ });
+}
+function isFlash(id){const t=FLASH[id];return !!(t&&Date.now()-t<1800)}
+function markChanges(rows){
+ const now=Date.now(),m={};rows.forEach(r=>m[r.id]=r.updated||0);
+ if(SEEN){rows.forEach(r=>{if(SEEN[r.id]===undefined||SEEN[r.id]!==m[r.id])FLASH[r.id]=now})}
+ SEEN=m;
+}
+function animKey(){return [tab,statFilter,P.view,document.getElementById('q').value,document.getElementById('fDove').value,document.getElementById('fPrio').value,document.getElementById('fF').checked,document.getElementById('fS').checked,document.getElementById('fSort').value].join('|')}
+function animList(){
+ const el=document.getElementById('list'),k=animKey();
+ if(k!==LASTKEY&&!RED()){el.classList.remove('anim-in');void el.offsetWidth;el.classList.add('anim-in');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('anim-in'),1400)}
+ LASTKEY=k;
+}
+const _render0=render;render=function(){_render0();animList();requestAnimationFrame(fitTable)};
 function find(id){return S.rows.find(r=>r.id===id)}
 function toggleSol(id){const r={...find(id)};r.sollecitare=!r.sollecitare;writeRow(r,r.sollecitare?'da sollecitare':'sollecito tolto')}
 function quickAz(id,a){const r={...find(id)};r.azione=a;writeRow(r,'azione → '+a).then(()=>toast(r.vettura+' → '+a),()=>{})}
@@ -970,7 +1026,7 @@ function attachDB(){
  REFS.forEach(r=>{try{r.off()}catch(e){}});REFS=[];READERR=false;
  const rRows=DB.ref(ROOT+'/rows'),rLists=DB.ref(ROOT+'/lists'),rLog=DB.ref(ROOT+'/log').orderByKey().limitToLast(60);
  REFS=[rRows,rLists,rLog];
- rRows.on('value',s=>{const o=s.val()||{};S.rows=Object.keys(o).map(k=>({...o[k],id:k,vettura:String(o[k].vettura??'')}));LOADED=true;READERR=false;cacheSave();setStatus('live');render()},
+ rRows.on('value',s=>{const o=s.val()||{};S.rows=Object.keys(o).map(k=>({...o[k],id:k,vettura:String(o[k].vettura??'')}));markChanges(S.rows);LOADED=true;READERR=false;cacheSave();setStatus('live');render()},
   ()=>{READERR=true;setStatus(UNLOCK?'err':'off');if(UNLOCK)toast('Accesso al database negato');render()});
  rLists.on('value',s=>{const l=s.val();if(l&&l.dove){S.lists={dove:l.dove||[],azione:l.azione||[],priorita:l.priorita||[]};cacheSave();fillFilters();render()}},()=>{});
  rLog.on('value',s=>{const o=s.val()||{};LOG=Object.keys(o).map(k=>o[k]).sort((a,b)=>b.ts-a.ts);const lb=document.getElementById('logBox');if(lb)lb.innerHTML=LOG.length?LOG.map(l=>`<div><b>${fmtTs(l.ts)}</b> · ${esc(l.by)} · ${l.vet?'<b>'+esc(l.vet)+'</b> ':''}${esc(l.what)}</div>`).join(''):'Nessuna modifica registrata.'},()=>{});
