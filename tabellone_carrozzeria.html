@@ -127,6 +127,9 @@ body.glass .tc-brand svg{filter:drop-shadow(0 0 10px rgba(var(--g1rgb),.25))}
 @media(max-width:1099px){header .hrow{gap:8px}header h1{flex:1 1 auto;min-width:0}.tc-brand .tc-full{width:100%;max-width:300px}}
 @media(max-width:700px){h1 small{font-size:10px}#bUser .ulab{display:none}#bUser .ic{margin-right:0}header .btn.ghost,header .vbtn button{padding:8px}}
 @media(max-width:360px){.tc-brand .tc-full{display:none}.tc-brand .tc-icon{display:block}}
+table.xl td.solY{background:#fff3b0}body.glass table.xl td.solY{background:rgba(250,204,21,.14)}
+.ic.bell-y{width:19px;height:19px;color:#a16207;fill:#facc15;vertical-align:-4px}
+body.glass .ic.bell-y{color:#facc15;fill:rgba(250,204,21,.35);filter:drop-shadow(0 0 5px rgba(250,204,21,.75))}
 /* ================= STILE LIQUID GLASS ================= */
 body.glass{--g1:#22d3ee;--g2:#a855f7;--g1rgb:34,211,238;--g2rgb:168,85,247;--gbase:#14161b;--gbg:rgba(255,255,255,.055);--gbd:rgba(160,210,255,.18);--gtx:#e8ecf4;--gmut:#9aa3b5;
  font-family:'Inter',system-ui,Arial,sans-serif;color:var(--gtx);background:var(--gbase);
@@ -544,7 +547,7 @@ function renderTable(el,rows,ed){
   <td class="c">${fmt(r.data)}</td><td class="c ${g!==null&&g>=30?'hot':''}">${g??''}</td><td>${esc(r.pratica)}</td><td class="${sc}">${sg}</td>
   <td class="inp">${selCell(r,'prioritaConc',S.lists.priorita)}</td><td class="inp">${selCell(r,'azione',S.lists.azione)}</td>
   <td class="inp c">${fmt(r.dataChiamata)}</td><td class="inp">${esc(r.rientro)}</td><td class="inp">${esc(r.referente)}</td><td class="inp">${esc(r.noteRiunione)}</td><td>${esc(r.noteLavagna)}</td>
-  <td class="c">${r.sollecitare?ic('bell'):''}</td></tr>`}).join('')}
+  <td class="c${r.sollecitare?' solY':''}">${r.sollecitare?ic('bell','bell-y'):''}</td></tr>`}).join('')}
  </tbody></table></div>
  <div class="hint" style="color:#fff;opacity:.8;font-size:12px;margin-top:6px">Clic su una riga per aprire la scheda completa${ed?' · Priorità e Azione si cambiano direttamente dalla tabella':''}.</div>`;
 }
