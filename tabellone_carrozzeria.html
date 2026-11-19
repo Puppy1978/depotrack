@@ -134,6 +134,30 @@ body.glass .ic.bell-y{color:#facc15;fill:rgba(250,204,21,.35);filter:drop-shadow
 .srch .qx::before,.srch .qx::after{content:'';position:absolute;left:7px;top:12px;width:12px;height:2px;background:currentColor;color:#9aa3b5;transform:rotate(45deg)}.srch .qx::after{transform:rotate(-45deg)}
 .srch input:not(:placeholder-shown)+.qx{display:block}
 .filters .srch input[type=search]::-webkit-search-cancel-button{display:none}
+
+/* PC in vista Tabella: dashboard in alto a tutta larghezza, tabella sotto */
+@media(min-width:1100px){
+ body.vtab header{padding:10px 18px 10px}
+ body.vtab header .hrow{align-items:center}
+ body.vtab .tc-brand .tc-full{width:210px}
+ body.vtab .stats{display:flex;gap:8px;padding:8px 0 0}
+ body.vtab .st{min-width:96px;padding:4px 12px}
+ body.vtab .tabs{margin-top:8px}
+ body.vtab main{max-width:none;margin:0;padding:12px 16px 80px}
+ body.vtab .xwrap{max-height:calc(100vh - 300px)}
+ body.vtab header{display:grid;grid-template-columns:220px minmax(0,1fr) auto;grid-template-areas:"logo stats btn" "logo tabs btn";column-gap:22px;row-gap:6px;align-items:center}
+ body.vtab header .hrow{display:contents}
+ body.vtab header h1{grid-area:logo;width:220px}
+ body.vtab header h1 small{white-space:nowrap;font-size:10.5px}
+ body.vtab header .hrow>div{grid-area:btn;align-self:start}
+ body.vtab .stats{grid-area:stats;padding:0}
+ body.vtab .tabs{grid-area:tabs;margin-top:0;min-width:0;max-width:100%;flex-wrap:wrap;width:auto}
+ body.vtab .stats{min-width:0;flex-wrap:wrap}
+ body.vtab .filters{flex-wrap:nowrap;align-items:center}
+ body.vtab .filters .srch{flex:2 1 220px}
+ body.vtab .filters select{flex:1 1 150px}
+ body.vtab .xwrap{max-height:calc(100vh - 235px)}
+}
 /* ================= STILE LIQUID GLASS ================= */
 body.glass{--g1:#22d3ee;--g2:#a855f7;--g1rgb:34,211,238;--g2rgb:168,85,247;--gbase:#14161b;--gbg:rgba(255,255,255,.055);--gbd:rgba(160,210,255,.18);--gtx:#e8ecf4;--gmut:#9aa3b5;
  font-family:'Inter',system-ui,Arial,sans-serif;color:var(--gtx);background:var(--gbase);
@@ -227,19 +251,19 @@ body.glass{color-scheme:dark}
 @media(max-width:700px){.vbtn button span{display:none}h1{font-size:15px}#bUser{max-width:110px;overflow:hidden;text-overflow:ellipsis}.hrow>div{gap:5px!important}.btn.ghost{padding:8px 9px}}
 /* PC: barra laterale come NoteWise */
 @media(min-width:1100px){
- body.glass header{position:fixed;top:14px;left:14px;bottom:14px;width:270px;border-radius:20px;border:1px solid var(--gbd);padding:18px 14px;display:flex;flex-direction:column;gap:6px;overflow:auto;background:rgba(28,31,40,.62)}
- body.glass header::after{display:none}
- body.glass header .hrow{flex-direction:column;align-items:stretch;gap:12px}
- body.glass header .hrow>div{flex-wrap:wrap}
- body.glass .stats{display:grid;grid-template-columns:1fr 1fr;overflow:visible;gap:8px;padding-top:14px}
- body.glass .st{min-width:0}
- body.glass .tabs{flex-direction:column;width:auto;overflow:visible;margin-top:14px;background:transparent;border:0;padding:0;gap:4px}
- body.glass .tabs::before{content:'Navigazione';font-size:11.5px;color:var(--gmut);text-transform:uppercase;letter-spacing:.6px;margin:0 0 4px 4px}
- body.glass .tab{text-align:left;padding:10px 12px;font-size:13.5px;position:relative}
- body.glass .tab.on{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12);box-shadow:none}
- body.glass .tab.on::before{content:'';position:absolute;left:-1px;top:8px;bottom:8px;width:3px;border-radius:2px;background:linear-gradient(var(--g1),var(--g2));box-shadow:0 0 8px var(--g1)}
- body.glass main{margin-left:298px;max-width:none;padding:20px 22px 90px 8px}
- body.glass .xwrap{max-height:calc(100vh - 170px)}
+ body.glass.vcard header{position:fixed;top:14px;left:14px;bottom:14px;width:270px;border-radius:20px;border:1px solid var(--gbd);padding:18px 14px;display:flex;flex-direction:column;gap:6px;overflow:auto;background:rgba(28,31,40,.62)}
+ body.glass.vcard header::after{display:none}
+ body.glass.vcard header .hrow{flex-direction:column;align-items:stretch;gap:12px}
+ body.glass.vcard header .hrow>div{flex-wrap:wrap}
+ body.glass.vcard .stats{display:grid;grid-template-columns:1fr 1fr;overflow:visible;gap:8px;padding-top:14px}
+ body.glass.vcard .st{min-width:0}
+ body.glass.vcard .tabs{flex-direction:column;width:auto;overflow:visible;margin-top:14px;background:transparent;border:0;padding:0;gap:4px}
+ body.glass.vcard .tabs::before{content:'Navigazione';font-size:11.5px;color:var(--gmut);text-transform:uppercase;letter-spacing:.6px;margin:0 0 4px 4px}
+ body.glass.vcard .tab{text-align:left;padding:10px 12px;font-size:13.5px;position:relative}
+ body.glass.vcard .tab.on{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12);box-shadow:none}
+ body.glass.vcard .tab.on::before{content:'';position:absolute;left:-1px;top:8px;bottom:8px;width:3px;border-radius:2px;background:linear-gradient(var(--g1),var(--g2));box-shadow:0 0 8px var(--g1)}
+ body.glass.vcard main{margin-left:298px;max-width:none;padding:20px 22px 90px 8px}
+ body.glass.vcard .xwrap{max-height:calc(100vh - 170px)}
 }
 main.wide{max-width:none}
 .xwrap{background:#fff;border-radius:10px;overflow-x:hidden;overflow-y:auto;max-height:calc(100vh - 250px);box-shadow:0 3px 10px rgba(0,0,0,.18)}
@@ -532,7 +556,7 @@ function render(){
 }
 
 function setView(v){P.view=v;savePref();render()}
-function paintView(){document.getElementById('list').style.display=P.view==='tabella'?'block':'';document.getElementById('vC').classList.toggle('on',P.view!=='tabella');document.getElementById('vT').classList.toggle('on',P.view==='tabella');document.querySelector('main').classList.toggle('wide',P.view==='tabella')}
+function paintView(){document.body.classList.toggle('vtab',P.view==='tabella');document.body.classList.toggle('vcard',P.view!=='tabella');document.getElementById('list').style.display=P.view==='tabella'?'block':'';document.getElementById('vC').classList.toggle('on',P.view!=='tabella');document.getElementById('vT').classList.toggle('on',P.view==='tabella');document.querySelector('main').classList.toggle('wide',P.view==='tabella')}
 function selCell(r,field,list){
  const val=r[field]||'';
  if(!canEdit())return esc(val);
