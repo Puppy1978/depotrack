@@ -158,6 +158,18 @@ body.glass .ic.bell-y{color:#facc15;fill:rgba(250,204,21,.35);filter:drop-shadow
  body.vtab .filters select{flex:1 1 150px}
  body.vtab .xwrap{max-height:calc(100vh - 235px)}
 }
+
+/* PC vista Tabella: niente scorrimento della pagina, scorre solo la tabella */
+@media(min-width:1100px){
+ html.fitpage,html.fitpage body{height:100%;overflow:hidden}
+ html.fitpage main{padding-bottom:0}
+}
+/* barre di scorrimento sottili e in tema */
+.xwrap{scrollbar-width:thin;scrollbar-color:rgba(127,140,170,.55) transparent}
+.xwrap::-webkit-scrollbar{width:8px;height:8px}.xwrap::-webkit-scrollbar-track{background:transparent}
+.xwrap::-webkit-scrollbar-thumb{background:rgba(127,140,170,.5);border-radius:8px}
+body.glass .xwrap{scrollbar-color:rgba(var(--g1rgb),.55) transparent}
+body.glass .xwrap::-webkit-scrollbar-thumb{background:linear-gradient(rgba(var(--g1rgb),.7),rgba(var(--g2rgb),.7))}
 /* ================= STILE LIQUID GLASS ================= */
 body.glass{--g1:#22d3ee;--g2:#a855f7;--g1rgb:34,211,238;--g2rgb:168,85,247;--gbase:#14161b;--gbg:rgba(255,255,255,.055);--gbd:rgba(160,210,255,.18);--gtx:#e8ecf4;--gmut:#9aa3b5;
  font-family:'Inter',system-ui,Arial,sans-serif;color:var(--gtx);background:var(--gbase);
@@ -567,6 +579,18 @@ function inlineSet(id,field,val){
  if(field==='azione'){if(val===CLOSED&&old!==CLOSED){r.chiusaIl=today();r.prevAz=old;r.sollecitare=false}if(val!==CLOSED)r.chiusaIl=''}
  writeRow(r,(field==='azione'?'azione → ':'priorità → ')+(val||'—')).then(()=>toast(r.vettura+' aggiornata'),()=>render());
 }
+
+/* in vista Tabella su PC la tabella occupa esattamente l'altezza libera dello schermo */
+function fitTable(){
+ const big=window.innerWidth>=1100&&P.view==='tabella';
+ document.documentElement.classList.toggle('fitpage',big);
+ const x=document.querySelector('.xwrap');if(!x)return;
+ if(!big){x.style.maxHeight='';x.style.height='';return}
+ const hint=x.nextElementSibling,hh=hint?hint.getBoundingClientRect().height+8:0;
+ const h=Math.max(200,window.innerHeight-x.getBoundingClientRect().top-hh-10);
+ x.style.maxHeight=h+'px';
+}
+window.addEventListener('resize',()=>requestAnimationFrame(fitTable));
 function renderTable(el,rows,ed){
  const H=['Vettura','F','Stato attuale','Dove si trova','Lavorazione / danno','Data stato','Gg','Pratica / aggiornamento','Priorità sugg.','Priorità concordata','Azione concordata','Data chiamata','Rientro previsto','Referente','Note riunione','Note lavagna',ic('bell')];
  const W=[62,22,136,94,136,68,34,178,74,128,140,68,78,78,166,110,26];const WT=W.reduce((a,b)=>a+b,0);
@@ -589,6 +613,7 @@ function clearSearch(){const q=document.getElementById('q');q.value='';render();
 function resetFilters(){['q','fDove','fPrio'].forEach(i=>{const e=document.getElementById(i);if(e)e.value=''});['fF','fS'].forEach(i=>{const e=document.getElementById(i);if(e)e.checked=false});statFilter='';render()}
 ['load','pageshow','focus'].forEach(ev=>window.addEventListener(ev,()=>{if(cleanSearch())render()}));
 setTimeout(()=>{if(cleanSearch())render()},800);setTimeout(()=>{if(cleanSearch())render()},2500);
+const _render0=render;render=function(){_render0();requestAnimationFrame(fitTable)};
 function find(id){return S.rows.find(r=>r.id===id)}
 function toggleSol(id){const r={...find(id)};r.sollecitare=!r.sollecitare;writeRow(r,r.sollecitare?'da sollecitare':'sollecito tolto')}
 function quickAz(id,a){const r={...find(id)};r.azione=a;writeRow(r,'azione → '+a).then(()=>toast(r.vettura+' → '+a),()=>{})}
