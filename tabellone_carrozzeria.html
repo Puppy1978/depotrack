@@ -130,6 +130,10 @@ body.glass .tc-brand svg{filter:drop-shadow(0 0 10px rgba(var(--g1rgb),.25))}
 table.xl td.solY{background:#fff3b0}body.glass table.xl td.solY{background:rgba(250,204,21,.14)}
 .ic.bell-y{width:19px;height:19px;color:#a16207;fill:#facc15;vertical-align:-4px}
 body.glass .ic.bell-y{color:#facc15;fill:rgba(250,204,21,.35);filter:drop-shadow(0 0 5px rgba(250,204,21,.75))}
+.srch .qx{display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:0;border-radius:50%;background:rgba(127,127,127,.25);cursor:pointer}
+.srch .qx::before,.srch .qx::after{content:'';position:absolute;left:7px;top:12px;width:12px;height:2px;background:currentColor;color:#9aa3b5;transform:rotate(45deg)}.srch .qx::after{transform:rotate(-45deg)}
+.srch input:not(:placeholder-shown)+.qx{display:block}
+.filters .srch input[type=search]::-webkit-search-cancel-button{display:none}
 /* ================= STILE LIQUID GLASS ================= */
 body.glass{--g1:#22d3ee;--g2:#a855f7;--g1rgb:34,211,238;--g2rgb:168,85,247;--gbase:#14161b;--gbg:rgba(255,255,255,.055);--gbd:rgba(160,210,255,.18);--gtx:#e8ecf4;--gmut:#9aa3b5;
  font-family:'Inter',system-ui,Arial,sans-serif;color:var(--gtx);background:var(--gbase);
@@ -302,7 +306,7 @@ table.xl tr{cursor:pointer}
 <main>
  <div class="ro" id="ro"><i data-ic="eye"></i> Sola lettura. Premi <b>Sblocca</b> e scrivi la password per modificare.</div>
  <div class="filters">
-  <div class="srch"><i data-ic="search"></i><input id="q" type="search" placeholder="Cerca vettura, danno, note…" oninput="render()"></div>
+  <div class="srch"><i data-ic="search"></i><input id="q" type="search" name="cerca_tabellone" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" placeholder="Cerca vettura, danno, note…" oninput="render()"><button type="button" id="qx" class="qx" title="Cancella ricerca" onclick="clearSearch()"></button></div>
   <select id="fDove" onchange="render()"></select>
   <select id="fPrio" onchange="render()"></select>
   <select id="fSort" onchange="render()">
@@ -481,7 +485,7 @@ function filtered(){
  return rows;
 }
 function render(){
- renderStats();renderTabs();paintView();
+ cleanSearch();renderStats();renderTabs();paintView();
  document.getElementById('ro').style.display=canEdit()?'none':'block';
  document.getElementById('fab').style.display=canEdit()?'block':'none';
  const el=document.getElementById('list');
@@ -491,7 +495,7 @@ function render(){
  if(READERR&&!UNLOCK&&!S.rows.length){el.innerHTML='<div class="empty">'+ic('lock')+' Premi <b>Sblocca</b> e scrivi la password per vedere le vetture.</div>';return}
  if(!LOADED&&!S.rows.length){el.innerHTML='<div class="empty">'+(typeof firebase==='undefined'?ic('triangle-alert')+' Firebase non raggiungibile: controlla la connessione e ricarica la pagina.':'Collegamento a Firebase…')+'</div>';return}
  const rows=filtered();
- if(!rows.length){el.innerHTML='<div class="empty">Nessuna vettura con questi filtri.</div>';return}
+ if(!rows.length){const qv=document.getElementById('q').value.trim();el.innerHTML='<div class="empty">Nessuna vettura con questi filtri'+(qv?' (ricerca: <b>'+esc(qv)+'</b>)':'')+'.<br><br><button class="btn sec" onclick="resetFilters()">'+ic('rotate-ccw')+'Azzera filtri e ricerca</button></div>';return}
  const ed=canEdit();
  if(P.view==='tabella'){renderTable(el,rows,ed);return}
  el.innerHTML=rows.map(r=>{
@@ -551,6 +555,13 @@ function renderTable(el,rows,ed){
  </tbody></table></div>
  <div class="hint" style="color:#fff;opacity:.8;font-size:12px;margin-top:6px">Clic su una riga per aprire la scheda completa${ed?' · Priorità e Azione si cambiano direttamente dalla tabella':''}.</div>`;
 }
+
+/* la casella di ricerca non deve mai prendere l'email salvata dal browser */
+function cleanSearch(){const q=document.getElementById('q');if(q&&/@|^\S+\.\S+@/.test(q.value)){q.value='';return true}return false}
+function clearSearch(){const q=document.getElementById('q');q.value='';render();q.focus()}
+function resetFilters(){['q','fDove','fPrio'].forEach(i=>{const e=document.getElementById(i);if(e)e.value=''});['fF','fS'].forEach(i=>{const e=document.getElementById(i);if(e)e.checked=false});statFilter='';render()}
+['load','pageshow','focus'].forEach(ev=>window.addEventListener(ev,()=>{if(cleanSearch())render()}));
+setTimeout(()=>{if(cleanSearch())render()},800);setTimeout(()=>{if(cleanSearch())render()},2500);
 function find(id){return S.rows.find(r=>r.id===id)}
 function toggleSol(id){const r={...find(id)};r.sollecitare=!r.sollecitare;writeRow(r,r.sollecitare?'da sollecitare':'sollecito tolto')}
 function quickAz(id,a){const r={...find(id)};r.azione=a;writeRow(r,'azione → '+a).then(()=>toast(r.vettura+' → '+a),()=>{})}
@@ -751,7 +762,8 @@ function lock(msg){if(AUTH&&AUTH.currentUser)AUTH.signOut();UNLOCK=false;paintUs
 function openLogin(){
  if(!AUTH){toast('Firebase non raggiungibile: controlla la connessione');return}
  document.getElementById('loginBody').innerHTML=`<h2>${ic('lock')} Sblocca il tabellone<button class="x" onclick="closeM('mLogin')">${ic('x')}</button></h2>
- <div class="fg"><label class="f full">Password<input id="lp" type="password" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()"></label>
+ <input type="text" name="username" autocomplete="username" value="tabellone-carrozzeria" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+ <div class="fg"><label class="f full">Password<input id="lp" type="password" inputmode="numeric" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></label>
  <label class="f full">Il tuo nome (compare nel registro modifiche)<input id="ln" value="${esc(MYNAME)}" placeholder="es. Mauro"></label></div>
  <div class="err" id="lerr"></div>
  <div class="acts"><button class="btn sec" onclick="closeM('mLogin')">Annulla</button><button class="btn green" id="lgo" onclick="doLogin()">Sblocca</button></div>`;
@@ -783,7 +795,7 @@ function onAuth(user){
  if(user&&!ok){AUTH.signOut();return}
  const was=UNLOCK;UNLOCK=ok;paintUser();render();
  if(ok!==was||READERR)attachDB();
- if(ok&&!was){resetInact();toast('Sbloccato'+(MYNAME?' · '+MYNAME:''))}
+ if(ok&&!was){cleanSearch();resetInact();toast('Sbloccato'+(MYNAME?' · '+MYNAME:''))}
 }
 
 /* listener del database: si ricollegano a ogni sblocco/blocco.
