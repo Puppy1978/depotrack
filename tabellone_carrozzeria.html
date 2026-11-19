@@ -442,6 +442,16 @@ body.glass .tab .tc{background:rgba(0,0,0,.35);color:#c9ccd2;box-shadow:inset 1p
 body.glass .tab.on .tc{background:var(--g1);color:#0d0f14;box-shadow:0 0 10px rgba(var(--g1rgb),.5)}
 @media(min-width:1100px){body.glass.vcard .tab .tl{flex:1}body.glass.vcard .tabs::before{letter-spacing:1.6px;font-weight:600;font-size:11px}body.glass.vcard .tab{font-size:14px;font-weight:500;gap:10px}body.glass.vcard .tab.on{font-weight:600}}
 body{letter-spacing:.1px}
+
+/* titolo NAVIGAZIONE centrato nella sua fascia, più grande */
+@media(min-width:1100px){
+ body.glass.vcard .tabs::before{display:flex!important;align-items:center;justify-content:center;align-self:stretch;
+  min-height:46px;margin:2px 0 6px!important;padding:0 10px;font-size:15px!important;font-weight:700!important;letter-spacing:4px!important;
+  color:var(--gtx)!important;text-align:center;border-bottom:1px solid rgba(255,255,255,.06)}
+ body.glass.vcard .tabs{padding:8px!important}
+ body.glass.vcard .tab{font-size:13px!important;white-space:nowrap;padding:10px 8px!important;gap:8px!important}
+ body.neo.vcard .tabs::before{border-bottom:1px solid rgba(0,0,0,.45);box-shadow:0 1px 0 rgba(255,255,255,.03)}
+}
 /* ---- animazioni ---- */
 @keyframes rowIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
