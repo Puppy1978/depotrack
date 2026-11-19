@@ -128,7 +128,7 @@ body.glass .tc-brand svg{filter:drop-shadow(0 0 10px rgba(var(--g1rgb),.25))}
 @media(max-width:700px){h1 small{font-size:10px}#bUser .ulab{display:none}#bUser .ic{margin-right:0}header .btn.ghost,header .vbtn button{padding:8px}}
 @media(max-width:360px){.tc-brand .tc-full{display:none}.tc-brand .tc-icon{display:block}}
 table.xl td.solY{background:#fff3b0}body.glass table.xl td.solY{background:rgba(250,204,21,.14)}
-.ic.bell-y{width:19px;height:19px;color:#a16207;fill:#facc15;vertical-align:-4px}
+.ic.bell-y{width:min(19px,1.6em);height:min(19px,1.6em);color:#a16207;fill:#facc15;vertical-align:-4px}
 body.glass .ic.bell-y{color:#facc15;fill:rgba(250,204,21,.35);filter:drop-shadow(0 0 5px rgba(250,204,21,.75))}
 .srch .qx{display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:0;border-radius:50%;background:rgba(127,127,127,.25);cursor:pointer}
 .srch .qx::before,.srch .qx::after{content:'';position:absolute;left:7px;top:12px;width:12px;height:2px;background:currentColor;color:#9aa3b5;transform:rotate(45deg)}.srch .qx::after{transform:rotate(-45deg)}
@@ -242,10 +242,10 @@ body.glass{color-scheme:dark}
  body.glass .xwrap{max-height:calc(100vh - 170px)}
 }
 main.wide{max-width:none}
-.xwrap{background:#fff;border-radius:10px;overflow:auto;max-height:calc(100vh - 250px);box-shadow:0 3px 10px rgba(0,0,0,.18)}
-table.xl{border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:1500px;width:100%}
-table.xl th{position:sticky;top:0;z-index:2;background:#1F3864;color:#fff;font-weight:bold;padding:7px 6px;border:1px solid #999;text-align:center;white-space:normal;line-height:1.2}
-table.xl td{border:1px solid #c8c8c8;padding:5px 6px;vertical-align:middle;background:#fff;color:#111}
+.xwrap{background:#fff;border-radius:10px;overflow-x:hidden;overflow-y:auto;max-height:calc(100vh - 250px);box-shadow:0 3px 10px rgba(0,0,0,.18)}
+table.xl{border-collapse:separate;border-spacing:0;font-size:clamp(8.5px,.82vw,12.5px);width:100%;table-layout:fixed}
+table.xl th{position:sticky;top:0;z-index:2;background:#1F3864;color:#fff;font-weight:bold;padding:6px 3px;overflow-wrap:anywhere;hyphens:auto;border:1px solid #999;text-align:center;white-space:normal;line-height:1.2}
+table.xl td{border:1px solid #c8c8c8;padding:4px 4px;vertical-align:middle;overflow-wrap:break-word;hyphens:auto;background:#fff;color:#111}
 table.xl tbody tr:hover td{background:#eef4ff}
 table.xl tr.cl td{color:#a6a6a6;text-decoration:line-through}
 table.xl td.v{font-weight:bold;font-size:13.5px;text-align:center;position:sticky;left:0;z-index:1}
@@ -259,7 +259,9 @@ table.xl td.sA{background:#F8CBAD;color:#9C0006;font-weight:bold;text-align:cent
 table.xl td.sM{background:#FCE4D6;text-align:center}
 table.xl td.sB{background:#C6EFCE;text-align:center}
 table.xl td.sMo{background:#DDEBF7;text-align:center}
-table.xl select{font-size:12px;padding:3px;border:1px solid #d6b656;border-radius:4px;background:#fffbe9;max-width:150px;font-family:inherit}
+table.xl td.v,table.xl td.nw{white-space:nowrap;overflow-wrap:normal;overflow:hidden;text-overflow:clip}
+table.xl td.nw{font-size:.92em;padding-left:2px;padding-right:2px}
+table.xl select{font-size:inherit;padding:2px 1px;border:1px solid #d6b656;border-radius:4px;background:#fffbe9;width:100%;max-width:100%;min-width:0;font-family:inherit;text-overflow:ellipsis}
 table.xl tr{cursor:pointer}
 .vbtn{display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.25)}
 .vbtn button{border:0;padding:8px 10px;background:rgba(255,255,255,.1);color:var(--hi);font-size:13px;cursor:pointer;font-weight:bold}
@@ -369,6 +371,7 @@ function cacheSave(){try{localStorage.setItem(CACHE,JSON.stringify({rows:S.rows,
 function cacheLoad(){try{const d=JSON.parse(localStorage.getItem(CACHE)||'null');if(d&&d.rows){S.rows=d.rows;if(d.lists)S.lists=d.lists}}catch(e){}}
 function uid(){return 'c_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function fmtS(s){if(!s)return'';const[a,m,g]=s.split('-');return g+'/'+m+'/'+a.slice(2)}
 function fmt(s){if(!s)return'';const[a,m,g]=s.split('-');return g+'/'+m+'/'+a}
 function fmtTs(t){const d=new Date(t);return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
 function giorni(r){if(!r.data)return null;const t=new Date(today()+'T00:00:00'),d=new Date(r.data+'T00:00:00');return Math.round((t-d)/864e5)}
@@ -541,16 +544,16 @@ function inlineSet(id,field,val){
  writeRow(r,(field==='azione'?'azione → ':'priorità → ')+(val||'—')).then(()=>toast(r.vettura+' aggiornata'),()=>render());
 }
 function renderTable(el,rows,ed){
- const H=['Vettura','Fermo (F)','Stato attuale','Dove si trova','Lavorazione / danno','Data stato','Giorni trascorsi','Pratica / aggiornamento','Priorità suggerita (auto)','Priorità concordata','Azione concordata','Data chiamata / spostamento','Rientro previsto','Referente carrozzeria','Note riunione','Note lavagna',ic('bell')];
- const W=[60,48,170,120,170,82,64,220,90,130,150,92,110,110,200,140,34];
- el.innerHTML=`<div class="xwrap"><table class="xl"><colgroup>${W.map(w=>`<col style="width:${w}px">`).join('')}</colgroup>
+ const H=['Vettura','F','Stato attuale','Dove si trova','Lavorazione / danno','Data stato','Gg','Pratica / aggiornamento','Priorità sugg.','Priorità concordata','Azione concordata','Data chiamata','Rientro previsto','Referente','Note riunione','Note lavagna',ic('bell')];
+ const W=[62,22,136,94,136,68,34,178,74,128,140,68,78,78,166,110,26];const WT=W.reduce((a,b)=>a+b,0);
+ el.innerHTML=`<div class="xwrap"><table class="xl"><colgroup>${W.map(w=>`<col style="width:${(w/WT*100).toFixed(2)}%">`).join('')}</colgroup>
  <thead><tr>${H.map((h,i)=>`<th class="${i===0?'v':''}">${h}</th>`).join('')}</tr></thead><tbody>
  ${rows.map(r=>{const g=giorni(r),sg=sugg(r),sc={ALTA:'sA',MEDIA:'sM',BASSA:'sB','A MOLISE':'sMo'}[sg];
   return `<tr class="${isClosed(r)?'cl':''}" onclick="openEdit('${r.id}')">
   <td class="v">${esc(r.vettura)}</td><td class="fF">${r.fermo?'F':''}</td><td>${esc(r.stato)}</td><td>${esc(r.dove)}</td><td>${esc(r.danno)}</td>
-  <td class="c">${fmt(r.data)}</td><td class="c ${g!==null&&g>=30?'hot':''}">${g??''}</td><td>${esc(r.pratica)}</td><td class="${sc}">${sg}</td>
+  <td class="c nw">${fmtS(r.data)}</td><td class="c nw ${g!==null&&g>=30?'hot':''}">${g??''}</td><td>${esc(r.pratica)}</td><td class="${sc} nw">${sg}</td>
   <td class="inp">${selCell(r,'prioritaConc',S.lists.priorita)}</td><td class="inp">${selCell(r,'azione',S.lists.azione)}</td>
-  <td class="inp c">${fmt(r.dataChiamata)}</td><td class="inp">${esc(r.rientro)}</td><td class="inp">${esc(r.referente)}</td><td class="inp">${esc(r.noteRiunione)}</td><td>${esc(r.noteLavagna)}</td>
+  <td class="inp c nw">${fmtS(r.dataChiamata)}</td><td class="inp">${esc(r.rientro)}</td><td class="inp">${esc(r.referente)}</td><td class="inp">${esc(r.noteRiunione)}</td><td>${esc(r.noteLavagna)}</td>
   <td class="c${r.sollecitare?' solY':''}">${r.sollecitare?ic('bell','bell-y'):''}</td></tr>`}).join('')}
  </tbody></table></div>
  <div class="hint" style="color:#fff;opacity:.8;font-size:12px;margin-top:6px">Clic su una riga per aprire la scheda completa${ed?' · Priorità e Azione si cambiano direttamente dalla tabella':''}.</div>`;
