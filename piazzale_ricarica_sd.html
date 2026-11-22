@@ -95,10 +95,10 @@ svg.i{width:18px;height:18px;flex:0 0 18px;fill:none;stroke:currentColor;stroke-
 .yscroll{overflow-x:auto;padding-bottom:4px}
 .yard{position:relative;width:1180px;margin:0 auto}
 .rows{width:1070px;padding-left:40px;position:relative}.rows::before{content:"";position:absolute;left:4px;top:8px;bottom:8px;width:30px;border-radius:15px;background:linear-gradient(#eaf2fb,#eaf2fb00 96%)}
-.lane{height:20px;position:relative}
-.lane .ar{position:absolute;top:2px;color:#1d5f99}
-.lane .ar svg{width:34px;height:20px}
-.lane .ar.dn{top:-6px}.lane .ar.dn svg{width:20px;height:36px}
+.lane{height:32px;position:relative}
+.lane .ar{position:absolute;top:9px;color:#1d5f99;line-height:0}
+.lane .ar svg{width:28px;height:14px}
+.lane .ar.dn{top:-2px}.lane .ar.dn svg{width:18px;height:36px}
 .yrow{height:60px;display:flex;align-items:stretch;justify-content:space-between;position:relative;padding-right:26px}
 .yrow .lt{position:absolute;right:4px;top:50%;transform:translateY(-50%);font-weight:800;font-size:15px}
 .grp{display:flex;gap:2px}
@@ -783,9 +783,9 @@ function drawYard(){
   // colonna destra: fila M + shelter 4/3
   const M=P.filter(p=>p.slot[0]==='M').sort((a,b)=>+b.slot.slice(1)-+a.slot.slice(1));
   h+='<div class="rcol">'+M.map((p,i)=>tileHTML(p).replace('class="t ','style="top:'+(i*64)+'px" class="t ')).join('')
-    +`<span class="mlt" style="top:212px">M</span>`
-    +shBox('S4','style="top:200px"')+shBox('S3','style="top:270px"')
-    +`<span class="ar" style="top:360px">${ARROW_U}</span><span class="ar" style="top:440px">${ARROW_U}</span></div>`;
+    +`<span class="mlt" style="top:248px">M</span>`
+    +shBox('S4','style="top:236px"')+shBox('S3','style="top:320px"')
+    +`<span class="ar" style="top:408px">${ARROW_U}</span><span class="ar" style="top:500px">${ARROW_U}</span></div>`;
   h+=`<div class="yfoot"><div class="stack">${shBox('OC')}${shBox('S1')}${shBox('S10')}</div><div class="notes">In <b style="color:var(--red)">rosso</b> punto di ricarica guasto (indisponibile)<br>In <b style="color:#b88a00">giallo</b> punto di ricarica degradato (potenza ridotta)<br>In <b style="color:var(--purple)">viola</b> punto coinvolto in sinistro (indisponibile)</div></div>`;
   $('yard').innerHTML=h;
   /* accensione in sequenza: da destra (shelter) verso sinistra, fila per fila */
