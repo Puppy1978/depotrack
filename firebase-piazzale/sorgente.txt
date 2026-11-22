@@ -62,7 +62,7 @@ svg.i{width:18px;height:18px;flex:0 0 18px;fill:none;stroke:currentColor;stroke-
 .btn.red{color:#b4232b;border-color:#f0c5c8;background:#fff7f7}
 .btn.sm{height:30px;font-size:12px;padding:0 9px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px}
-.grid2{display:grid;grid-template-columns:minmax(0,1fr) 456px;gap:14px;align-items:start}.lcol .ph{margin-bottom:10px}.grid2>*{min-width:0}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:14px;align-items:start}.lcol .ph{margin-bottom:10px}.grid2>*{min-width:0}
 
 /* ---------- FILTRI popover ---------- */
 .fwrap{position:relative}
@@ -797,7 +797,7 @@ function drawYard(){
 function laneHTML(arr){return '<div class="lane">'+arr.map(([x,d])=>`<span class="ar ${d==='d'?'dn':''}" style="left:${d==='d'?'-35px':x+'%'}">${d==='d'?ARROW_D:ARROW_L}</span>`).join('')+'</div>'}
 function fitYard(){const sc=$('yscroll'),y=$('yard');if(!sc||!sc.clientWidth)return;const de=document.documentElement,mob=de.classList.contains('mob'),kiosk=typeof KIOSK!=='undefined'&&KIOSK;
   let z=Math.min(1.6,(sc.clientWidth-12)/1180);
-  if(!mob&&!kiosk&&document.querySelector('#pg-piazzale.on')){            /* anche in altezza: la scheda mappa deve finire dentro la finestra */
+  if(!mob&&!kiosk&&!de.classList.contains('bigmap')&&document.querySelector('#pg-piazzale.on')){            /* anche in altezza: la scheda mappa deve finire dentro la finestra */
     const cur=parseFloat(y.style.zoom)||1,H=y.getBoundingClientRect().height,card=document.querySelector('.map').getBoundingClientRect();
     if(H>0){const room=innerHeight-18-(card.bottom-H);z=Math.min(z,cur*room/H)}}
   z=mob?Math.max(.55,z):Math.max(.3,z);
@@ -806,8 +806,8 @@ function fitYard(){const sc=$('yscroll'),y=$('yard');if(!sc||!sc.clientWidth)ret
 function fitSide(){const rs=document.querySelector('.rside');if(!rs)return;const de=document.documentElement,kiosk=typeof KIOSK!=='undefined'&&KIOSK;
   if(de.classList.contains('mob')||de.classList.contains('bigmap')||kiosk||!document.querySelector('#pg-piazzale.on')){rs.style.zoom='';rs.style.maxHeight='';rs.style.width='';rs.style.overflow='';return}
   rs.style.zoom=1;rs.style.width='';rs.style.maxHeight='none';rs.style.overflow='visible';
-  const r=rs.getBoundingClientRect(),avail=innerHeight-r.top-8,k=Math.max(.6,Math.min(1,avail/r.height));
-  rs.style.zoom=k<.999?k:''}
+  const BASE=.9;rs.style.zoom=BASE;const r=rs.getBoundingClientRect(),avail=innerHeight-r.top-8,k=Math.max(.55,Math.min(BASE,BASE*avail/r.height));
+  rs.style.zoom=k}
 if(window.ResizeObserver)new ResizeObserver(()=>requestAnimationFrame(fitYard)).observe(document.getElementById('yscroll')||document.body);
 let WAVE_FROM=null;
 function refreshTiles(s){
