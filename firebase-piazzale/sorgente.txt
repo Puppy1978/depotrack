@@ -108,10 +108,10 @@ svg.i{width:18px;height:18px;flex:0 0 18px;fill:none;stroke:currentColor;stroke-
 .t .sl{font-size:10px;font-weight:600;color:#4c5a68}
 .t:hover{outline:2px dashed var(--blue);outline-offset:2px;z-index:3}
 .t.sel{outline:3px solid var(--blue)!important;outline-offset:2px;box-shadow:0 0 0 6px #1d6fd126;z-index:4}
-.t.ko{background:var(--red);border-color:#a8161f;color:#fff}.t.ko .sl{color:#ffe1e3}
+.t.ko,.t.sin{z-index:2}.t.ko{background:var(--red);border-color:#a8161f;color:#fff}.t.ko .sl{color:#ffe1e3}
 .t.deg{background:repeating-linear-gradient(135deg,#ffd23f 0 6px,#ffe27a 6px 12px);border-color:#c79200;color:#3d2c00}.t.deg .sl{color:#5d4600}
 .t.sin{background:var(--purple);border-color:#4f2286;color:#fff}.t.sin .sl{color:#eadcff}
-.t .flag{position:absolute;top:-7px;right:-6px;font-size:8px;font-weight:900;border-radius:3px;padding:1px 3px;background:#fff;border:1px solid currentColor;display:none}
+.t .flag{position:absolute;top:-9px;right:1px;z-index:6;box-shadow:0 1px 2px #0003;font-size:8px;font-weight:900;border-radius:3px;padding:1px 3px;background:#fff;border:1px solid currentColor;display:none}
 .t.ko .flag,.t.sin .flag{display:block;color:#b4232b}.t.sin .flag{color:var(--purple)}
 .t.dim{opacity:.18}
 .t.hit{box-shadow:0 0 0 3px #ff9f1a}
