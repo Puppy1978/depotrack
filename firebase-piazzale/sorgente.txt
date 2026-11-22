@@ -410,8 +410,6 @@ html.mob .hintbox{margin-left:0}}
         <div class="mtitle">
           <h2>DEPOSITO SAN DONATO<small>Rev. 3</small></h2>
           <div class="l">SITUAZIONE PIAZZALE &nbsp;&nbsp;&nbsp; Al <span id="mapDate">—</span></div>
-          <div class="l"><u>Potenza installata&nbsp; <span id="mapKw">10.380 kW</span></u></div>
-          <div class="l"><u>Punti di ricarica totali&nbsp; <span id="mapN">114</span></u></div>
         </div>
         <button class="btn sm" id="btnPdf" title="Crea un PDF A3 della pagina così come la vedi">⬇ PDF A3</button>
         <button class="btn sm" id="btnBig" title="Sposta la dashboard sotto la mappa per ingrandire il piazzale">⤢ Mappa grande</button>
@@ -848,7 +846,7 @@ function tween(id,to,f){const el=$(id),from=el.dataset.v==null?to:+el.dataset.v;
 function render(){
   const s=calc(),c=S.cfg,now=S.upd||new Date().toISOString();
   $('updTxt').textContent=dt(now,true);$('mapDate').textContent=dt(now,true);
-  $('mapKw').textContent=fmt(KW)+' kW';$('mapN').textContent=N;
+  
   const on=$('online');on.className='online'+(s.lv>=3?' bad':s.lv>=2?' warn':'');on.querySelector('span').textContent=s.lv>=2?s.sub:'Impianto online';
   const anom=s.un.length+s.deg.length;$('bellN').textContent=anom;$('bellN').style.display=anom?'grid':'none';
   $('boxKo').innerHTML=sbox(IC_KO,'Indisponibili',s.un,s.pct,true);
