@@ -47,7 +47,7 @@ svg.i{width:18px;height:18px;flex:0 0 18px;fill:none;stroke:currentColor;stroke-
 .nav{display:flex;align-items:center;gap:9px;padding:8px 8px;border:0;border-radius:8px;background:none;color:#d7e4f2;font-weight:600;text-align:left}
 .nav:hover{background:#ffffff12}
 .nav.on{background:var(--blue);color:#fff}
-.main{padding:14px;min-width:0}
+.main{padding:14px;min-width:0}.main:has(#pg-piazzale.on){padding-bottom:0}
 .page{display:none}.page.on{display:block}
 .ph{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
 .ph .ic{width:42px;height:42px;border-radius:10px;background:var(--blue-l);color:var(--blue);display:grid;place-items:center}
@@ -795,7 +795,19 @@ function drawYard(){
   $('yard').querySelectorAll('[data-sh]').forEach(b=>b.addEventListener('click',()=>openShelter(b.dataset.sh)));
 }
 function laneHTML(arr){return '<div class="lane">'+arr.map(([x,d])=>`<span class="ar ${d==='d'?'dn':''}" style="left:${d==='d'?'-35px':x+'%'}">${d==='d'?ARROW_D:ARROW_L}</span>`).join('')+'</div>'}
-function fitYard(){const sc=$('yscroll');if(!sc||!sc.clientWidth)return;const w=sc.clientWidth-12,mob=document.documentElement.classList.contains('mob');const z=Math.min(1.6,w/1180);$('yard').style.zoom=mob?Math.max(.55,z):Math.max(.2,z)}
+function fitYard(){const sc=$('yscroll'),y=$('yard');if(!sc||!sc.clientWidth)return;const de=document.documentElement,mob=de.classList.contains('mob'),kiosk=typeof KIOSK!=='undefined'&&KIOSK;
+  let z=Math.min(1.6,(sc.clientWidth-12)/1180);
+  if(!mob&&!kiosk&&document.querySelector('#pg-piazzale.on')){            /* anche in altezza: la scheda mappa deve finire dentro la finestra */
+    const cur=parseFloat(y.style.zoom)||1,H=y.getBoundingClientRect().height,card=document.querySelector('.map').getBoundingClientRect();
+    if(H>0){const room=innerHeight-18-(card.bottom-H);z=Math.min(z,cur*room/H)}}
+  z=mob?Math.max(.55,z):Math.max(.3,z);
+  const old=parseFloat(y.style.zoom)||0;if(Math.abs(old-z)>.002)y.style.zoom=z;fitSide()}
+/* pannello di destra: se la finestra è bassa si rimpicciolisce invece di mostrare una barra */
+function fitSide(){const rs=document.querySelector('.rside');if(!rs)return;const de=document.documentElement,kiosk=typeof KIOSK!=='undefined'&&KIOSK;
+  if(de.classList.contains('mob')||de.classList.contains('bigmap')||kiosk||!document.querySelector('#pg-piazzale.on')){rs.style.zoom='';rs.style.maxHeight='';rs.style.width='';rs.style.overflow='';return}
+  rs.style.zoom=1;rs.style.width='';rs.style.maxHeight='none';rs.style.overflow='visible';
+  const r=rs.getBoundingClientRect(),avail=innerHeight-r.top-8,k=Math.max(.6,Math.min(1,avail/r.height));
+  rs.style.zoom=k<.999?k:''}
 if(window.ResizeObserver)new ResizeObserver(()=>requestAnimationFrame(fitYard)).observe(document.getElementById('yscroll')||document.body);
 let WAVE_FROM=null;
 function refreshTiles(s){
@@ -873,7 +885,7 @@ function render(){
   // ultime
   $('lastEv').innerHTML=evTable(S.hist.slice(0,S.sel?3:4),false,S.sel);
   $('fullEv').innerHTML=evTable(S.hist,true);
-  refreshTiles(s);renderPages(s);renderUscite();
+  refreshTiles(s);renderPages(s);renderUscite();requestAnimationFrame(fitYard);
 }
 function evTable(list,full,sel){if(!list.length&&!sel)return'<tr><td class="muted" style="padding:14px">Nessuna segnalazione registrata.</td></tr>';
   const sp=sel&&BY[sel];
