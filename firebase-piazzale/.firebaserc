@@ -1,0 +1,8 @@
+{
+  "projects": { "default": "depotrack-d1d28" },
+  "targets": {
+    "depotrack-d1d28": {
+      "hosting": { "piazzale": ["ricarica-sandonato"] }
+    }
+  }
+}
