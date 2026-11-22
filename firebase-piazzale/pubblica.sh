@@ -3,6 +3,8 @@
 # Uso (da Google Cloud Shell):  bash depotrack/firebase-piazzale/pubblica.sh
 set -u
 cd "$(dirname "$0")"
+# la pagina sta in sorgente.txt (cosi' GitHub Pages non la pubblica come copia funzionante)
+mkdir -p public && cp sorgente.txt public/index.html
 FB="firebase"; command -v firebase >/dev/null 2>&1 || FB="npx -y firebase-tools"
 echo "== Controllo accesso Firebase =="
 if ! $FB projects:list >/dev/null 2>&1; then
